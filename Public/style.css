@@ -98,27 +98,25 @@
   display: grid;
   border-left: 1px solid #0D0D0D; /* Grid line color */
   border-bottom: 1px solid #0D0D0D; /* Grid line color */
-  align-items: stretch; /* Ensure grid children fill full height */
-  margin-bottom: -1px; /* Overlap with next row to connect vertical lines */
+  align-items: center; /* Center bars vertically */
+  /* Vertical grid lines are now rendered via background-image in JS */
 }
+
+.gantt-bar-area.task {
+  /* Background color is set but grid lines (background-image) will layer on top */
+  background-color: #354259; /* Task row background */
+}
+
 .gantt-bar-area.task:hover {
-  background-color: #383838; /* Match label hover */
+  /* On hover, we need to preserve both the color AND the grid lines */
+  /* The background-image is already set via inline style, this just changes the base color */
+  background-color: #383838; /* Hover effect */
   cursor: pointer;
 }
 
 .gantt-bar-area.swimlane {
-  background-color: #0c2340; /* Match the label background */
-  border-bottom: 1px solid #0D0D0D; /* Match label border */
-}
-
-/* Vertical grid lines */
-.gantt-bar-area span[data-col] {
-  border-right: 1px solid #0D0D0D; /* Grid line color */
-  align-self: stretch; /* Ensure spans fill full height of grid cell */
-  height: calc(100% + 1px); /* Extend 1px beyond to connect with next row */
-  position: relative;
-  z-index: 3; /* Above bars (z-index: 2) so lines are visible through bars */
-  pointer-events: none; /* Allow clicks to pass through to bars */
+  background-color: #0c2340; /* Swimlane background */
+  border-bottom: 1px solid #0D0D0D;
 }
 
 /* 12. The Actual Bar */
@@ -128,7 +126,7 @@
   margin: 6px 4px; /* Vertical centering, small horizontal gap */
   border-radius: 4px;
   color: white;
-  z-index: 2; 
+  z-index: 1; /* Above background but allows interactions */
   overflow: hidden;
   grid-row: 1; /* Always on the first (and only) row of its container */
 }

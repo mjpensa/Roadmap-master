@@ -200,13 +200,18 @@ function setupChart(ganttData) {
     barAreaEl.className = `gantt-bar-area ${isSwimlane ? 'swimlane' : 'task'}`;
     barAreaEl.style.gridColumn = `2 / span ${numCols}`;
     barAreaEl.style.gridTemplateColumns = `repeat(${numCols}, 1fr)`;
-    
-    // Add empty cells for vertical grid lines
-    for (let i = 1; i <= numCols; i++) {
-      const cell = document.createElement('span');
-      cell.setAttribute('data-col', i);
-      barAreaEl.appendChild(cell);
+
+    // Create vertical grid lines using background (more reliable than borders)
+    const gradients = [];
+    for (let i = 1; i < numCols; i++) {
+      const position = `${(i / numCols) * 100}%`;
+      gradients.push(`linear-gradient(to right, transparent ${position}, #0D0D0D ${position}, #0D0D0D calc(${position} + 1px), transparent calc(${position} + 1px))`);
     }
+    if (gradients.length > 0) {
+      barAreaEl.style.backgroundImage = gradients.join(', ');
+    }
+    // Store the gradient pattern as a data attribute for hover state preservation
+    barAreaEl.setAttribute('data-grid-lines', gradients.join(', '));
 
     // 3. Add the bar (if it's a task and has bar data)
     if (!isSwimlane && row.bar && row.bar.startCol != null) {
