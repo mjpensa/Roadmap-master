@@ -95,28 +95,30 @@
 .gantt-bar-area {
   position: relative;
   display: grid;
-  border-left: 1px solid #0D0D0D; /* Grid line color */
-  border-bottom: 1px solid #0D0D0D; /* Grid line color */
   align-items: center; /* Center bars vertically */
-  /* Vertical grid lines are now rendered via background-image in JS */
+  min-height: 32px; /* Ensure minimum height for rows */
 }
 
 .gantt-bar-area.task {
-  /* Background color is set but grid lines (background-image) will layer on top */
   background-color: #383838; /* Task row background */
 }
 
 .gantt-bar-area.task:hover,
 .gantt-bar-area.task.row-hover {
-  /* On hover, we need to preserve both the color AND the grid lines */
-  /* The background-image is already set via inline style, this just changes the base color */
   background-color: #354259; /* Hover effect */
   cursor: pointer;
 }
 
 .gantt-bar-area.swimlane {
   background-color: #0c2340; /* Swimlane background */
-  border-bottom: 1px solid #0D0D0D;
+}
+
+/* 11a. Time Cell (individual cells within bar area for grid lines) */
+.gantt-time-cell {
+  grid-row: 1;
+  pointer-events: none; /* Allow clicks to pass through to bar area */
+  background: transparent; /* Inherit background from bar area */
+  z-index: 1; /* Above bar area background, below bars */
 }
 
 /* 12. The Actual Bar */
@@ -126,7 +128,7 @@
   margin: 6px 4px; /* Vertical centering, small horizontal gap */
   border-radius: 4px;
   color: white;
-  z-index: 1; /* Above background but allows interactions */
+  z-index: 2; /* Above time cells (which are z-index 1) */
   overflow: hidden;
   grid-row: 1; /* Always on the first (and only) row of its container */
 }
@@ -135,37 +137,40 @@
 .gantt-bar[data-color="priority-red"] { background-color: #EF4444; } /* Bright Red */
 .gantt-bar[data-color="medium-red"] { background-color: #FB923C; } /* Orange */
 .gantt-bar[data-color="mid-grey"] { background-color: #14B8A6; } /* Teal */
-.gantt-bar[data-color="light-grey"] { background-color: #A78BFA; } /* Purple */
+.gantt-bar[data-color="light-grey"] { background-color: #E879F9; } /* Bright Pink-Purple */
 .gantt-bar[data-color="white"] { background-color: #FFFFFF; } /* White */
-.gantt-bar[data-color="dark-blue"] { background-color: #60A5FA; } /* Bright Blue */
+.gantt-bar[data-color="dark-blue"] { background-color: #3B82F6; } /* Bright Blue */
 
 
 /* 13. Export Button Styling */
 .export-container {
   display: flex;
   justify-content: center;
-  padding: 20px 0 0 0;
+  padding: 32px 0 24px 0; /* Increased padding for more prominence */
   font-family: 'Work Sans', sans-serif; /* CHANGED */
 }
 .export-button {
   font-family: 'Work Sans', sans-serif; /* CHANGED */
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 20px; /* Increased from 14px */
+  font-weight: 700; /* Increased from 600 for more prominence */
   color: #ffffff;
   background-color: #50AF7B; /* Use one of the old dark mode colors (Green) */
   border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
+  border-radius: 8px; /* Increased from 6px */
+  padding: 16px 48px; /* Increased from 10px 20px */
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: background-color 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3); /* Stronger shadow */
+  transition: all 0.2s; /* Transition all properties */
 }
 .export-button:hover {
   background-color: #3C8D62;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4); /* Even stronger shadow on hover */
+  transform: translateY(-2px); /* Slight lift on hover */
 }
 .export-button:disabled {
   background-color: #4a4a4a;
   cursor: not-allowed;
+  transform: none; /* No lift when disabled */
 }
 
 /* ------------------------------------------------------------------- */
@@ -455,50 +460,53 @@
 /* --- GANTT LEGEND STYLES --- */
 /* ------------------------------------------------------------------- */
 .gantt-legend {
-  padding: 20px 24px; /* Increased padding */
-  border-top: 1px solid #0D0D0D; /* Grid line color */
+  padding: 32px 36px; /* Increased padding for more prominence */
+  border-top: 2px solid #0D0D0D; /* Thicker border for separation */
   background-color: #0C2340; /* Set background to match swimlanes */
   color: #FFFFFF;
 }
 
 .legend-title {
-  font-size: 40px; /* CHANGED from 32px */
-  font-weight: 600;
-  margin: 0 0 24px 0; /* CHANGED from 16px */
+  font-size: 44px; /* Increased from 40px for better visibility */
+  font-weight: 700; /* Increased from 600 for more prominence */
+  margin: 0 0 28px 0; /* Increased bottom margin */
   color: #FFFFFF;
 }
 
 .legend-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px; /* CHANGED from 20px */
+  gap: 40px; /* Increased from 30px for better spacing */
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 15px; /* CHANGED from 10px */
+  gap: 18px; /* Increased from 15px for more breathing room */
 }
 
 .legend-color-box {
-  width: 28px; /* CHANGED from 18px */
-  height: 28px; /* CHANGED from 18px */
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Added subtle border */
+  width: 36px; /* Increased from 28px for better visibility */
+  height: 36px; /* Increased from 28px for better visibility */
+  border-radius: 4px; /* Slightly larger radius to match size */
+  border: 2px solid rgba(255, 255, 255, 0.3); /* Thicker, more visible border */
+  flex-shrink: 0; /* Prevent box from shrinking */
 }
 
 /* Use data-color attributes for legend (HIGH CONTRAST PALETTE) */
 .legend-color-box[data-color="priority-red"] { background-color: #EF4444; } /* Bright Red */
 .legend-color-box[data-color="medium-red"] { background-color: #FB923C; } /* Orange */
 .legend-color-box[data-color="mid-grey"] { background-color: #14B8A6; } /* Teal */
-.legend-color-box[data-color="light-grey"] { background-color: #A78BFA; } /* Purple */
+.legend-color-box[data-color="light-grey"] { background-color: #E879F9; } /* Bright Pink-Purple */
 .legend-color-box[data-color="white"] { background-color: #FFFFFF; } /* White */
-.legend-color-box[data-color="dark-blue"] { background-color: #60A5FA; } /* Bright Blue */
+.legend-color-box[data-color="dark-blue"] { background-color: #3B82F6; } /* Bright Blue */
 
 
 .legend-label {
-  font-size: 28px; /* CHANGED from 14px */
-  color: #CCCCCC;
+  font-size: 32px; /* Increased from 28px for better readability */
+  font-weight: 600; /* Added weight for better visibility */
+  color: #FFFFFF; /* Changed from #CCCCCC for maximum contrast */
+  line-height: 1.2; /* Better line spacing */
 }
 
 /* ------------------------------------------------------------------- */

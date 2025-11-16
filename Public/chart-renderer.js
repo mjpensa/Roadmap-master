@@ -149,9 +149,9 @@ function setupChart(ganttData) {
   
   // Apply inline styles for positioning
   logoImg.style.position = 'absolute';
-  logoImg.style.top = '30px'; // Moved down from 28px for better alignment
-  logoImg.style.right = '24px'; // Padding from right edge
-  logoImg.style.height = '40px'; // Slightly smaller than form logo
+  logoImg.style.top = '24px'; // Adjusted for larger logo
+  logoImg.style.right = '32px'; // Padding from right edge
+  logoImg.style.height = '70px'; // Increased from 40px for better visibility
   logoImg.style.width = 'auto';
   logoImg.style.zIndex = '10'; // Ensure it's above the grid
   
@@ -200,18 +200,19 @@ function setupChart(ganttData) {
     barAreaEl.className = `gantt-bar-area ${isSwimlane ? 'swimlane' : 'task'}`;
     barAreaEl.style.gridColumn = `2 / span ${numCols}`;
     barAreaEl.style.gridTemplateColumns = `repeat(${numCols}, 1fr)`;
+    barAreaEl.style.position = 'relative';
+    barAreaEl.style.display = 'grid';
 
-    // Create vertical grid lines using background (more reliable than borders)
-    const gradients = [];
-    for (let i = 1; i < numCols; i++) {
-      const position = `${(i / numCols) * 100}%`;
-      gradients.push(`linear-gradient(to right, transparent ${position}, #0D0D0D ${position}, #0D0D0D calc(${position} + 1px), transparent calc(${position} + 1px))`);
+    // Create individual cell divs within the bar area for proper grid lines
+    for (let colIndex = 1; colIndex <= numCols; colIndex++) {
+      const cellEl = document.createElement('div');
+      cellEl.className = 'gantt-time-cell';
+      cellEl.style.gridColumn = colIndex;
+      cellEl.style.borderLeft = colIndex > 1 ? '1px solid #0D0D0D' : 'none';
+      cellEl.style.borderBottom = '1px solid #0D0D0D';
+      cellEl.style.height = '100%';
+      barAreaEl.appendChild(cellEl);
     }
-    if (gradients.length > 0) {
-      barAreaEl.style.backgroundImage = gradients.join(', ');
-    }
-    // Store the gradient pattern as a data attribute for hover state preservation
-    barAreaEl.setAttribute('data-grid-lines', gradients.join(', '));
 
     // 3. Add the bar (if it's a task and has bar data)
     if (!isSwimlane && row.bar && row.bar.startCol != null) {
