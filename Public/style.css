@@ -83,12 +83,12 @@
   color: #FFFFFF; /* Text Color */
   border-bottom: 1px solid #0D0D0D; /* Grid line color */
   transition: background-color 0.2s;
-  background-color: #354259; /* Set task title background */
+  background-color: #383838; /* Set task title background */
   font-size: 26px; /* Increased from 24px for better readability */
 }
 
 .gantt-row-label.task:hover {
-  background-color: #383838; /* Light hover effect */
+  background-color: #354259; /* Light hover effect */
   cursor: pointer;
 }
 
@@ -104,13 +104,13 @@
 
 .gantt-bar-area.task {
   /* Background color is set but grid lines (background-image) will layer on top */
-  background-color: #354259; /* Task row background */
+  background-color: #383838; /* Task row background */
 }
 
 .gantt-bar-area.task:hover {
   /* On hover, we need to preserve both the color AND the grid lines */
   /* The background-image is already set via inline style, this just changes the base color */
-  background-color: #383838; /* Hover effect */
+  background-color: #354259; /* Hover effect */
   cursor: pointer;
 }
 
