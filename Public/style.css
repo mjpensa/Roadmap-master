@@ -115,7 +115,10 @@
 .gantt-bar-area span[data-col] {
   border-right: 1px solid #0D0D0D; /* Grid line color */
   align-self: stretch; /* Ensure spans fill full height of grid cell */
-  height: 100%; /* Ensure full height */
+  height: calc(100% + 1px); /* Extend 1px beyond to connect with next row */
+  position: relative;
+  z-index: 3; /* Above bars (z-index: 2) so lines are visible through bars */
+  pointer-events: none; /* Allow clicks to pass through to bars */
 }
 
 /* 12. The Actual Bar */
