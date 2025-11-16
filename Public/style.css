@@ -82,13 +82,12 @@
   font-weight: 500; /* Increased from 400 for better readability */
   color: #FFFFFF; /* Text Color */
   border-bottom: 1px solid #0D0D0D; /* Grid line color */
-  transition: background-color 0.2s;
-  background-color: #383838; /* Set task title background */
+  background-color: #354259; /* Set task title background - static blue */
   font-size: 26px; /* Increased from 24px for better readability */
 }
 
 .gantt-row-label.task:hover {
-  background-color: #354259; /* Light hover effect */
+  background-color: #354259; /* Keep static blue on hover */
   cursor: pointer;
 }
 
