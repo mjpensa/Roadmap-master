@@ -216,12 +216,12 @@ function setupChart(ganttData) {
     // 3. Add the bar (if it's a task and has bar data)
     if (!isSwimlane && row.bar && row.bar.startCol != null) {
       const bar = row.bar;
-      
+
       const barEl = document.createElement('div');
       barEl.className = 'gantt-bar';
       barEl.setAttribute('data-color', bar.color || 'default');
       barEl.style.gridColumn = `${bar.startCol} / ${bar.endCol}`;
-      
+
       barAreaEl.appendChild(barEl);
 
       // --- NEW: Add click listener for analysis ---
@@ -232,7 +232,26 @@ function setupChart(ganttData) {
       labelEl.style.cursor = 'pointer';
       barAreaEl.style.cursor = 'pointer';
     }
-    
+
+    // --- NEW: Add synchronized hover effect for task rows ---
+    if (!isSwimlane) {
+      // When hovering over the label, highlight the bar area
+      labelEl.addEventListener('mouseenter', () => {
+        barAreaEl.classList.add('row-hover');
+      });
+      labelEl.addEventListener('mouseleave', () => {
+        barAreaEl.classList.remove('row-hover');
+      });
+
+      // When hovering over the bar area, keep it highlighted
+      barAreaEl.addEventListener('mouseenter', () => {
+        barAreaEl.classList.add('row-hover');
+      });
+      barAreaEl.addEventListener('mouseleave', () => {
+        barAreaEl.classList.remove('row-hover');
+      });
+    }
+
     gridEl.appendChild(barAreaEl);
   }
 

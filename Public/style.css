@@ -106,7 +106,8 @@
   background-color: #383838; /* Task row background */
 }
 
-.gantt-bar-area.task:hover {
+.gantt-bar-area.task:hover,
+.gantt-bar-area.task.row-hover {
   /* On hover, we need to preserve both the color AND the grid lines */
   /* The background-image is already set via inline style, this just changes the base color */
   background-color: #354259; /* Hover effect */
