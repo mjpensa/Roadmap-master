@@ -76,9 +76,10 @@ function safeQuerySelector(selector, context = '') {
   return element;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  let ganttData = null;
+// Global variable to store ganttData (including sessionId)
+let ganttData = null;
 
+document.addEventListener("DOMContentLoaded", async () => {
   // Safely parse ganttData from sessionStorage with error handling
   try {
     const stored = sessionStorage.getItem('ganttData');
@@ -227,7 +228,11 @@ function setupChart(ganttData) {
 
       // --- NEW: Add click listener for analysis ---
       // We make both the label and the bar area clickable
-      const taskIdentifier = { taskName: row.title, entity: row.entity };
+      const taskIdentifier = {
+        taskName: row.title,
+        entity: row.entity,
+        sessionId: ganttData.sessionId // Include session ID for backend
+      };
       labelEl.addEventListener('click', () => showAnalysisModal(taskIdentifier));
       barAreaEl.addEventListener('click', () => showAnalysisModal(taskIdentifier));
       labelEl.style.cursor = 'pointer';
@@ -737,15 +742,16 @@ function addMessageToHistory(content, type, id = null) {
   }
 
   // Sanitize content based on sender type
-  if (type === 'llm') {
-    // LLM responses may have legitimate formatting, use DOMPurify
+  if (type === 'llm' || type === 'spinner') {
+    // LLM responses and spinner HTML may have formatting, use DOMPurify for safety
     msg.innerHTML = DOMPurify.sanitize(content);
   } else if (type === 'user') {
     // User messages should never have HTML
     msg.textContent = content;
   } else {
-    // For other types (like spinner HTML), trust it if it comes from our code
-    msg.innerHTML = content;
+    // Unknown message type - use textContent for safety
+    console.warn(`Unknown message type: ${type}. Using textContent for safety.`);
+    msg.textContent = content;
   }
 
   history.appendChild(msg);
