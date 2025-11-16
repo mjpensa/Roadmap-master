@@ -115,6 +115,7 @@
   border-right: 1px solid #0D0D0D; /* Grid line color */
   align-self: stretch; /* Ensure spans fill full height of grid cell */
   min-height: 100%; /* Fallback to ensure full height */
+  margin-bottom: -1px; /* Extend vertical lines to overlap with parent's bottom border */
 }
 
 /* 12. The Actual Bar */
