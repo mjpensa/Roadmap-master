@@ -131,13 +131,13 @@
   grid-row: 1; /* Always on the first (and only) row of its container */
 }
 
-/* Bar Colors (NEW PALETTE) */
-.gantt-bar[data-color="priority-red"] { background-color: #961111; }
-.gantt-bar[data-color="medium-red"] { background-color: #FC6A62; }
-.gantt-bar[data-color="mid-grey"] { background-color: #7D8A99; }
-.gantt-bar[data-color="light-grey"] { background-color: #DADEE2; }
-.gantt-bar[data-color="white"] { background-color: #FFFFFF; }
-.gantt-bar[data-color="dark-blue"] { background-color: #354259; }
+/* Bar Colors (HIGH CONTRAST PALETTE) */
+.gantt-bar[data-color="priority-red"] { background-color: #EF4444; } /* Bright Red */
+.gantt-bar[data-color="medium-red"] { background-color: #FB923C; } /* Orange */
+.gantt-bar[data-color="mid-grey"] { background-color: #14B8A6; } /* Teal */
+.gantt-bar[data-color="light-grey"] { background-color: #A78BFA; } /* Purple */
+.gantt-bar[data-color="white"] { background-color: #FFFFFF; } /* White */
+.gantt-bar[data-color="dark-blue"] { background-color: #60A5FA; } /* Bright Blue */
 
 
 /* 13. Export Button Styling */
@@ -487,13 +487,13 @@
   border: 1px solid rgba(255, 255, 255, 0.2); /* Added subtle border */
 }
 
-/* Use data-color attributes for legend (NEW PALETTE) */
-.legend-color-box[data-color="priority-red"] { background-color: #961111; }
-.legend-color-box[data-color="medium-red"] { background-color: #FC6A62; }
-.legend-color-box[data-color="mid-grey"] { background-color: #7D8A99; }
-.legend-color-box[data-color="light-grey"] { background-color: #DADEE2; }
-.legend-color-box[data-color="white"] { background-color: #FFFFFF; }
-.legend-color-box[data-color="dark-blue"] { background-color: #354259; }
+/* Use data-color attributes for legend (HIGH CONTRAST PALETTE) */
+.legend-color-box[data-color="priority-red"] { background-color: #EF4444; } /* Bright Red */
+.legend-color-box[data-color="medium-red"] { background-color: #FB923C; } /* Orange */
+.legend-color-box[data-color="mid-grey"] { background-color: #14B8A6; } /* Teal */
+.legend-color-box[data-color="light-grey"] { background-color: #A78BFA; } /* Purple */
+.legend-color-box[data-color="white"] { background-color: #FFFFFF; } /* White */
+.legend-color-box[data-color="dark-blue"] { background-color: #60A5FA; } /* Bright Blue */
 
 
 .legend-label {
