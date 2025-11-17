@@ -275,7 +275,7 @@ export class PresentationSlides {
   }
 
   /**
-   * Renders a risks slide
+   * Renders a risks slide as 3x3 matrix grid
    * @private
    */
   _renderRisksSlide(container, slide) {
@@ -286,27 +286,100 @@ export class PresentationSlides {
     header.className = 'risks-title';
     header.textContent = slide.title || 'Strategic Risk Matrix';
 
-    const risksList = document.createElement('div');
-    risksList.className = 'risks-list';
+    // Create 3x3 risk matrix grid
+    const riskMatrix = document.createElement('div');
+    riskMatrix.className = 'risk-matrix';
 
+    // Group risks by probability and impact for positioning
+    const risksByCell = {};
     if (slide.risks && Array.isArray(slide.risks)) {
       slide.risks.forEach(risk => {
-        const riskItem = document.createElement('div');
-        riskItem.className = 'risk-item';
-        riskItem.innerHTML = `
-          <div class="risk-header">
-            <span class="probability-badge probability-${risk.probability}">${risk.probability.toUpperCase()}</span>
-            <span class="impact-badge impact-${risk.impact}">${risk.impact.toUpperCase()}</span>
-          </div>
-          <p class="risk-description">${risk.description}</p>
-        `;
-        risksList.appendChild(riskItem);
+        const key = `${risk.probability}-${risk.impact}`;
+        if (!risksByCell[key]) {
+          risksByCell[key] = [];
+        }
+        risksByCell[key].push(risk);
       });
     }
 
+    // Build matrix: 4 rows (header + 3 probability levels) x 4 columns (label + 3 impact levels)
+
+    // Row 1: Column headers
+    riskMatrix.appendChild(this._createMatrixLabel('')); // Empty top-left corner
+    riskMatrix.appendChild(this._createMatrixLabel('Low'));
+    riskMatrix.appendChild(this._createMatrixLabel('Medium'));
+    riskMatrix.appendChild(this._createMatrixLabel('High'));
+
+    // Row 2: High Probability
+    riskMatrix.appendChild(this._createMatrixLabel('High'));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'low', risksByCell['high-low']));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'medium', risksByCell['high-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'high', risksByCell['high-high']));
+
+    // Row 3: Medium Probability
+    riskMatrix.appendChild(this._createMatrixLabel('Medium'));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'low', risksByCell['medium-low']));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'medium', risksByCell['medium-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'high', risksByCell['medium-high']));
+
+    // Row 4: Low Probability
+    riskMatrix.appendChild(this._createMatrixLabel('Low'));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'low', risksByCell['low-low']));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'medium', risksByCell['low-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'high', risksByCell['low-high']));
+
+    // Add axis labels
+    const xAxisLabel = document.createElement('span');
+    xAxisLabel.className = 'axis-label x-axis';
+    xAxisLabel.textContent = 'Impact →';
+
+    const yAxisLabel = document.createElement('span');
+    yAxisLabel.className = 'axis-label y-axis';
+    yAxisLabel.textContent = 'Probability';
+
     content.appendChild(header);
-    content.appendChild(risksList);
+
+    // Create wrapper for matrix + axis labels
+    const matrixWrapper = document.createElement('div');
+    matrixWrapper.style.position = 'relative';
+    matrixWrapper.style.display = 'inline-block';
+    matrixWrapper.appendChild(riskMatrix);
+    matrixWrapper.appendChild(xAxisLabel);
+    matrixWrapper.appendChild(yAxisLabel);
+
+    content.appendChild(matrixWrapper);
     container.appendChild(content);
+  }
+
+  /**
+   * Creates a matrix label cell
+   * @private
+   */
+  _createMatrixLabel(text) {
+    const label = document.createElement('div');
+    label.className = 'matrix-label';
+    label.textContent = text;
+    return label;
+  }
+
+  /**
+   * Creates a matrix cell with risks
+   * @private
+   */
+  _createMatrixCell(probability, impact, risks) {
+    const cell = document.createElement('div');
+    cell.className = `matrix-cell ${probability}-${impact}`;
+
+    if (risks && risks.length > 0) {
+      risks.forEach(risk => {
+        const riskItem = document.createElement('div');
+        riskItem.className = 'risk-item';
+        riskItem.innerHTML = `<p class="risk-description">${risk.description}</p>`;
+        cell.appendChild(riskItem);
+      });
+    }
+
+    return cell;
   }
 
   /**
