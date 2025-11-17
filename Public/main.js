@@ -179,6 +179,9 @@ async function pollForJobCompletion(jobId, generateBtn) {
 
       const job = await response.json();
 
+      // Debug: Log job response
+      console.log(`Poll attempt ${attempts}, job status:`, job.status, 'progress:', job.progress);
+
       // Update button text with progress
       if (job.progress && generateBtn) {
         generateBtn.textContent = job.progress;
@@ -187,6 +190,7 @@ async function pollForJobCompletion(jobId, generateBtn) {
       // Check job status
       if (job.status === 'complete') {
         console.log('Job completed successfully');
+        console.log('Job data structure:', Object.keys(job.data || {}));
         return job.data; // Return the chart data
       } else if (job.status === 'error') {
         throw new Error(job.error || 'Job failed with unknown error');
@@ -293,8 +297,14 @@ async function handleChartGenerate(event) {
     // 5. Poll for job completion
     const ganttData = await pollForJobCompletion(jobId, generateBtn);
 
+    // Debug: Log the received data structure
+    console.log('Received ganttData:', ganttData);
+    console.log('Has timeColumns:', !!ganttData?.timeColumns);
+    console.log('Has data:', !!ganttData?.data);
+
     // 6. Validate the data structure
     if (!ganttData || !ganttData.timeColumns || !ganttData.data) {
+      console.error('Invalid data structure. Received:', ganttData);
       throw new Error('Invalid chart data structure received from server');
     }
 
