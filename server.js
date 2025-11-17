@@ -520,6 +520,31 @@ ${researchTextCache}`;
     console.log(`Job ${jobId}: Received ganttData from AI with keys:`, Object.keys(ganttData || {}));
     console.log(`Job ${jobId}: Has timeColumns:`, !!ganttData?.timeColumns, 'Has data:', !!ganttData?.data);
 
+    // *** ENHANCED VALIDATION: Verify data structure before proceeding ***
+    if (!ganttData || typeof ganttData !== 'object') {
+      throw new Error('AI returned invalid data structure (not an object)');
+    }
+
+    if (!ganttData.timeColumns || !Array.isArray(ganttData.timeColumns)) {
+      console.error(`Job ${jobId}: Invalid timeColumns. Type:`, typeof ganttData.timeColumns, 'Value:', ganttData.timeColumns);
+      throw new Error('AI returned invalid timeColumns (not an array)');
+    }
+
+    if (!ganttData.data || !Array.isArray(ganttData.data)) {
+      console.error(`Job ${jobId}: Invalid data. Type:`, typeof ganttData.data, 'Value:', ganttData.data);
+      throw new Error('AI returned invalid data array (not an array)');
+    }
+
+    if (ganttData.timeColumns.length === 0) {
+      throw new Error('AI returned empty timeColumns array');
+    }
+
+    if (ganttData.data.length === 0) {
+      throw new Error('AI returned empty data array');
+    }
+
+    console.log(`Job ${jobId}: Data validation passed - timeColumns: ${ganttData.timeColumns.length} items, data: ${ganttData.data.length} tasks`);
+
     // Update progress
     jobStore.set(jobId, {
       status: 'processing',
@@ -545,6 +570,16 @@ ${researchTextCache}`;
       chartId
     };
     console.log(`Job ${jobId}: Setting complete status with data keys:`, Object.keys(completeData));
+
+    // *** ENHANCED VALIDATION: Verify completeData before storing ***
+    if (!completeData.timeColumns || !completeData.data) {
+      console.error(`Job ${jobId}: Data corruption detected in completeData!`, {
+        hasTimeColumns: !!completeData.timeColumns,
+        hasData: !!completeData.data,
+        keys: Object.keys(completeData)
+      });
+      throw new Error('Data corruption detected when creating completeData');
+    }
 
     jobStore.set(jobId, {
       status: 'complete',
@@ -627,6 +662,25 @@ app.get('/job/:id', apiLimiter, (req, res) => {
   // Return job status
   if (job.status === 'complete') {
     console.log(`Job ${jobId} complete, returning data with keys:`, Object.keys(job.data || {}));
+
+    // *** ENHANCED VALIDATION: Verify data integrity before sending to client ***
+    if (!job.data || typeof job.data !== 'object') {
+      console.error(`Job ${jobId}: Invalid job.data structure. Type:`, typeof job.data);
+      return res.status(500).json({ error: 'Internal server error: Invalid job data structure' });
+    }
+
+    if (!job.data.timeColumns || !Array.isArray(job.data.timeColumns)) {
+      console.error(`Job ${jobId}: Invalid timeColumns in job.data. Type:`, typeof job.data.timeColumns);
+      return res.status(500).json({ error: 'Internal server error: Invalid timeColumns' });
+    }
+
+    if (!job.data.data || !Array.isArray(job.data.data)) {
+      console.error(`Job ${jobId}: Invalid data array in job.data. Type:`, typeof job.data.data);
+      return res.status(500).json({ error: 'Internal server error: Invalid data array' });
+    }
+
+    console.log(`Job ${jobId}: Data validation passed before sending - timeColumns: ${job.data.timeColumns.length}, data: ${job.data.data.length}`);
+
     res.json({
       status: job.status,
       progress: job.progress,
