@@ -4,7 +4,7 @@
  * Handles task analysis modal functionality
  */
 
-import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext } from './Utils.js';
+import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext, buildProgressIndicators, buildAccelerators } from './Utils.js';
 import { ChatInterface } from './ChatInterface.js';
 
 /**
@@ -148,7 +148,7 @@ export class TaskAnalyzer {
     if (modalTitle) modalTitle.textContent = analysis.taskName;
 
     // Build analysis HTML (sanitized to prevent XSS)
-    // ORDER: Status, Dates, Timeline Scenarios (NEW), Risks (NEW), Impact (NEW), Scheduling Context (NEW), Facts, Assumptions, Summary/Rationale
+    // ORDER: Status, Dates, Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
     const analysisHTML = `
       ${buildAnalysisSection('Status', `<span class="status-pill status-${analysis.status.replace(/\s+/g, '-').toLowerCase()}">${DOMPurify.sanitize(analysis.status)}</span>`)}
       ${buildAnalysisSection('Dates', `${DOMPurify.sanitize(analysis.startDate || 'N/A')} to ${DOMPurify.sanitize(analysis.endDate || 'N/A')}`)}
@@ -156,6 +156,8 @@ export class TaskAnalyzer {
       ${buildRiskAnalysis(analysis.risks)}
       ${buildImpactAnalysis(analysis.impact)}
       ${buildSchedulingContext(analysis.schedulingContext)}
+      ${buildProgressIndicators(analysis.progress, analysis.status)}
+      ${buildAccelerators(analysis.accelerators)}
       ${buildAnalysisList('Facts', analysis.facts, 'fact', 'source')}
       ${buildAnalysisList('Assumptions', analysis.assumptions, 'assumption', 'source')}
       ${buildAnalysisSection('Summary', analysis.summary)}
@@ -163,9 +165,39 @@ export class TaskAnalyzer {
     `;
     modalBody.innerHTML = DOMPurify.sanitize(analysisHTML);
 
+    // Add collapsible functionality to major sections
+    this._initializeCollapsibleSections();
+
     // Add chat interface
     this.chatInterface = new ChatInterface(modalBody, taskIdentifier);
     this.chatInterface.render();
+  }
+
+  /**
+   * Initializes collapsible functionality for analysis sections
+   * @private
+   */
+  _initializeCollapsibleSections() {
+    const sections = document.querySelectorAll('.analysis-section.timeline-scenarios-section, .analysis-section.risks-section, .analysis-section.impact-section, .analysis-section.scheduling-section, .analysis-section.progress-section, .analysis-section.accelerators-section');
+
+    sections.forEach(section => {
+      const header = section.querySelector('h4');
+      if (!header) return;
+
+      // Add collapsible class and toggle icon
+      section.classList.add('collapsible');
+      header.classList.add('collapsible-header');
+      header.innerHTML += ' <span class="collapse-toggle">▼</span>';
+
+      // Add click handler
+      header.addEventListener('click', () => {
+        section.classList.toggle('collapsed');
+        const toggle = header.querySelector('.collapse-toggle');
+        if (toggle) {
+          toggle.textContent = section.classList.contains('collapsed') ? '▶' : '▼';
+        }
+      });
+    });
   }
 
   /**

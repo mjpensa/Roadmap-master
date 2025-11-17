@@ -661,6 +661,43 @@
   max-width: 900px; /* Increased from 700px */
 }
 
+/* Collapsible Sections */
+.analysis-section.collapsible {
+  transition: all 0.3s ease;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.collapsible-header:hover {
+  color: #FFFFFF !important;
+  opacity: 0.9;
+}
+
+.collapse-toggle {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  margin-left: 8px;
+}
+
+.analysis-section.collapsed .scenarios-container,
+.analysis-section.collapsed .risks-container,
+.analysis-section.collapsed .impact-content,
+.analysis-section.collapsed .scheduling-content,
+.analysis-section.collapsed .progress-content,
+.analysis-section.collapsed .accelerators-content {
+  display: none;
+}
+
+.analysis-section.collapsed {
+  padding-bottom: 12px;
+}
+
 /* Timeline Scenarios Section */
 .timeline-scenarios-section {
   background-color: #222222;
@@ -962,6 +999,238 @@
   position: absolute;
   left: 0;
   color: #2E7BB1;
+  font-weight: bold;
+}
+
+/* ------------------------------------------------------------------- */
+/* --- PHASE 2 ENHANCEMENTS - PROGRESS & ACCELERATORS STYLES --- */
+/* ------------------------------------------------------------------- */
+
+/* Progress Indicators Section */
+.progress-section {
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.progress-content {
+  margin-top: 12px;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  margin-bottom: 16px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.progress-percent {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.velocity-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.velocity-on-track {
+  background-color: #1A3025;
+  color: #50AF7B;
+}
+
+.velocity-behind {
+  background-color: #2F120F;
+  color: #BA3930;
+}
+
+.velocity-ahead {
+  background-color: #1A2530;
+  color: #66A3D9;
+}
+
+.progress-bar-track {
+  height: 12px;
+  background-color: #383838;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-on-track {
+  background: linear-gradient(90deg, #50AF7B 0%, #6BC794 100%);
+}
+
+.progress-behind {
+  background: linear-gradient(90deg, #BA3930 0%, #D45A51 100%);
+}
+
+.progress-ahead {
+  background: linear-gradient(90deg, #2E7BB1 0%, #66A3D9 100%);
+}
+
+/* Milestones */
+.milestones-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #383838;
+}
+
+.milestones-section h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 12px 0;
+}
+
+.milestones-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.milestone-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #383838;
+}
+
+.milestone-item:last-child {
+  border-bottom: none;
+}
+
+.milestone-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.milestone-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.milestone-name {
+  font-size: 14px;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.milestone-date {
+  font-size: 12px;
+  color: #888888;
+}
+
+.milestone-completed .milestone-name {
+  color: #CCCCCC;
+}
+
+.milestone-pending .milestone-name {
+  color: #FFFFFF;
+}
+
+/* Active Blockers */
+.blockers-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #383838;
+}
+
+.blockers-section h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #BA3930;
+  margin: 0 0 8px 0;
+}
+
+.blockers-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.blockers-list li {
+  font-size: 13px;
+  color: #CCCCCC;
+  padding: 6px 0;
+  line-height: 1.5;
+}
+
+/* Motivators & Accelerators Section */
+.accelerators-section {
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.accelerators-content {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.accelerator-subsection {
+  background-color: #1A1A1A;
+  border: 1px solid #2A2A2A;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.accelerator-subsection h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+  border-bottom: 1px solid #383838;
+  padding-bottom: 6px;
+}
+
+.accelerator-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.accelerator-list li {
+  font-size: 13px;
+  color: #CCCCCC;
+  padding: 4px 0 4px 16px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.accelerator-list li:before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: #50AF7B;
   font-weight: bold;
 }
 

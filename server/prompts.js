@@ -101,11 +101,30 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - 'strategicImpact': Describe effect on strategic goals, company roadmap, competitive position, etc.
     - 'stakeholders': List key stakeholders affected (teams, executives, customers, partners, regulators, etc.)
 
+**PHASE 2 ENHANCEMENT REQUIREMENTS:**
+
+10. **PROGRESS TRACKING:** For in-progress tasks ONLY, provide detailed progress information:
+    - 'percentComplete': Estimate completion percentage (0-100%) based on milestones achieved, time elapsed, and remaining work
+    - 'milestones': List 3-6 key checkpoints with:
+      * 'name': Milestone description
+      * 'completed': true if achieved, false if pending
+      * 'date': Target or actual completion date
+    - 'velocity': Assess current progress - "on-track" (meeting timeline), "behind" (delayed), or "ahead" (early)
+    - 'activeBlockers': List current active issues blocking progress (empty array if none)
+
+11. **ACCELERATORS:** Identify factors that could speed up completion or ensure success:
+    - 'externalDrivers': Market pressures, competitive threats, regulatory deadlines, customer demand (2-4 items)
+    - 'internalIncentives': Team bonuses, executive sponsorship, strategic priorities, budget allocations (2-3 items)
+    - 'efficiencyOpportunities': Parallel workstreams, automation, additional resources, process improvements (2-4 items)
+    - 'successFactors': Critical conditions that must be maintained for on-time delivery (2-4 items)
+
 **IMPORTANT NOTES:**
-- If research data is insufficient for Phase 1 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
-- All Phase 1 fields should be populated when possible - they provide critical decision-making insights.
+- If research data is insufficient for Phase 1 or Phase 2 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
+- All Phase 1 and Phase 2 fields should be populated when possible - they provide critical decision-making insights.
 - Ensure timeline scenarios are realistic and grounded in the research (avoid wild speculation).
-- Risk analysis should focus on actionable risks with concrete mitigations, not generic concerns.`;
+- Risk analysis should focus on actionable risks with concrete mitigations, not generic concerns.
+- Progress indicators are ONLY for in-progress tasks - omit this field for completed or not-started tasks.
+- Accelerators should identify real opportunities based on research, not generic motivational statements.`;
 
 /**
  * Q&A System Prompt Template
@@ -271,6 +290,40 @@ export const TASK_ANALYSIS_SCHEMA = {
         businessImpact: { type: "string" },
         strategicImpact: { type: "string" },
         stakeholders: { type: "array", items: { type: "string" } }
+      }
+    },
+
+    // PHASE 2 ENHANCEMENTS
+
+    // Progress Indicators - For in-progress tasks only
+    progress: {
+      type: "object",
+      properties: {
+        percentComplete: { type: "number" },
+        milestones: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              completed: { type: "boolean" },
+              date: { type: "string" }
+            }
+          }
+        },
+        velocity: { type: "string", enum: ["on-track", "behind", "ahead"] },
+        activeBlockers: { type: "array", items: { type: "string" } }
+      }
+    },
+
+    // Motivators & Accelerators - Factors that can speed up completion
+    accelerators: {
+      type: "object",
+      properties: {
+        externalDrivers: { type: "array", items: { type: "string" } },
+        internalIncentives: { type: "array", items: { type: "string" } },
+        efficiencyOpportunities: { type: "array", items: { type: "string" } },
+        successFactors: { type: "array", items: { type: "string" } }
       }
     }
   },
