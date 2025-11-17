@@ -110,7 +110,9 @@ export class GanttChart {
     this._initializeDragToEdit();
 
     // Restore edit mode state if it was enabled before rendering
+    console.log('🔧 Checking edit mode state after render:', this.isEditMode);
     if (this.isEditMode) {
+      console.log('🔧 Restoring edit mode features after re-render');
       this._enableAllEditFeatures();
     }
   }
@@ -815,6 +817,12 @@ export class GanttChart {
    * @private
    */
   _enableAllEditFeatures() {
+    console.log('🔧 _enableAllEditFeatures called, instances:', {
+      draggable: !!this.draggableGantt,
+      resizable: !!this.resizableGantt,
+      contextMenu: !!this.contextMenu
+    });
+
     // Enable drag, resize, and context menu
     if (this.draggableGantt) {
       this.draggableGantt.enableDragging();
