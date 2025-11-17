@@ -498,16 +498,20 @@ CRITICAL REQUIREMENTS:
 
 SLIDE STRUCTURE:
 
+NOTE: For slides with narrative content (like Slide 2), always use the "content" field as an array of strings,
+where each string is a paragraph or bullet point. This ensures consistent formatting.
+
 Slide 1 - TITLE SLIDE
 - Professional title that captures the initiative (max 200 chars)
 - Compelling subtitle that frames the strategic context (max 300 chars)
 - Title should be clear and specific, not repetitive
 
 Slide 2 - ELEVATOR PITCH
-- 2-3 paragraph narrative that tells the story
+- 2-3 paragraph narrative that tells the story (as array of strings)
 - Focus on the "why now" and strategic imperative
 - Should be presentable in 60-90 seconds
 - Each paragraph max 1000 characters
+- Use content field as array: ["paragraph 1...", "paragraph 2...", "paragraph 3..."]
 
 Slide 3 - KEY STRATEGIC DRIVERS
 - Identify 3-4 primary forces driving this initiative
@@ -574,10 +578,8 @@ export const PRESENTATION_SLIDES_SCHEMA = {
               title: { type: "string", maxLength: 200 },
               subtitle: { type: "string", maxLength: 300 },
               content: {
-                oneOf: [
-                  { type: "string", maxLength: 2000 },
-                  { type: "array", items: { type: "string", maxLength: 1000 } }
-                ]
+                type: "array",
+                items: { type: "string", maxLength: 1000 }
               },
               drivers: {
                 type: "array",
