@@ -1762,7 +1762,7 @@ body.dragging {
 }
 
 .elevator-pitch {
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.7;
   color: #FFFFFF;
   margin: 0 0 14px 0;
@@ -1770,7 +1770,7 @@ body.dragging {
 }
 
 .value-proposition {
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.6;
   color: #E8E8E8;
   margin: 0 0 16px 0;
@@ -1788,7 +1788,7 @@ body.dragging {
   padding: 10px 16px;
   background-color: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 26px;
   color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: 500;
@@ -1872,14 +1872,14 @@ body.dragging {
   display: block;
   margin-bottom: 10px;
   color: #FFFFFF;
-  font-size: 13px;
+  font-size: 26px;
   font-weight: 600;
 }
 
 .driver-item p {
   margin: 0;
   color: #E0E0E0;
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.6;
 }
 
@@ -1895,7 +1895,7 @@ body.dragging {
   background-color: rgba(80, 175, 123, 0.2);
   border: 1px solid rgba(80, 175, 123, 0.4);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 26px;
   color: #6BD69A;
   font-weight: 500;
 }
@@ -1945,7 +1945,7 @@ body.dragging {
 .dependency-node h4 {
   margin: 0 0 10px 0;
   color: #FFFFFF;
-  font-size: 13px;
+  font-size: 26px;
   font-weight: 600;
 }
 
@@ -1953,7 +1953,7 @@ body.dragging {
 .mitigation-strategy {
   margin: 10px 0 0 0;
   color: #E0E0E0;
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.6;
 }
 
@@ -2037,7 +2037,7 @@ body.dragging {
 .risk-description {
   margin: 0;
   color: #E0E0E0;
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.6;
 }
 
@@ -2050,7 +2050,7 @@ body.dragging {
 .early-warnings summary {
   cursor: pointer;
   color: #6BD69A;
-  font-size: 13px;
+  font-size: 26px;
   font-weight: 600;
   user-select: none;
   padding: 4px 0;
@@ -2065,7 +2065,7 @@ body.dragging {
   padding-left: 20px;
   margin: 10px 0 0 0;
   color: #D0D0D0;
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.5;
 }
 
@@ -2123,7 +2123,7 @@ body.dragging {
   color: #6BD69A;
   padding: 6px 12px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 26px;
   font-weight: 700;
   margin-bottom: 12px;
   text-transform: uppercase;
@@ -2136,7 +2136,7 @@ body.dragging {
   border-left: 3px solid #6BD69A;
   padding-left: 14px;
   color: #FFFFFF;
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.7;
   font-style: italic;
 }
@@ -2146,7 +2146,7 @@ body.dragging {
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   color: #E0E0E0;
-  font-size: 13px;
+  font-size: 26px;
   line-height: 1.6;
 }
 
@@ -2161,7 +2161,7 @@ body.dragging {
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
   color: #D0D0D0;
-  font-size: 13px;
+  font-size: 26px;
   font-family: 'Courier New', monospace;
   line-height: 1.5;
 }
@@ -2187,11 +2187,11 @@ body.dragging {
   }
 
   .elevator-pitch {
-    font-size: 13px;
+    font-size: 26px;
   }
 
   .value-proposition {
-    font-size: 13px;
+    font-size: 26px;
   }
 
   .intel-card h3 {
