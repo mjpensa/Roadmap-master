@@ -14,11 +14,13 @@
 export class HamburgerMenu {
   /**
    * Creates a new HamburgerMenu instance
+   * @param {Router} router - The router instance for navigation
    */
-  constructor() {
+  constructor(router) {
     this.isOpen = false;
     this.menuElement = null;
-    this.currentSection = 'all'; // Track current section: 'all', 'roadmap', 'executive-summary', 'presentation'
+    this.router = router;
+    this.currentSection = 'roadmap'; // Track current section: 'roadmap', 'executive-summary', 'presentation'
   }
 
   /**
@@ -48,25 +50,19 @@ export class HamburgerMenu {
     navMenu.innerHTML = `
       <ul class="hamburger-nav-list">
         <li>
-          <a href="#" class="hamburger-nav-item" data-section="all">
-            <span class="nav-icon">📑</span>
-            <span class="nav-text">Show All</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="hamburger-nav-item" data-section="roadmap">
+          <a href="#roadmap" class="hamburger-nav-item active" data-section="roadmap">
             <span class="nav-icon">📊</span>
             <span class="nav-text">Roadmap</span>
           </a>
         </li>
         <li>
-          <a href="#" class="hamburger-nav-item" data-section="executive-summary">
+          <a href="#executive-summary" class="hamburger-nav-item" data-section="executive-summary">
             <span class="nav-icon">📋</span>
             <span class="nav-text">Executive Summary</span>
           </a>
         </li>
         <li>
-          <a href="#" class="hamburger-nav-item" data-section="presentation">
+          <a href="#presentation" class="hamburger-nav-item" data-section="presentation">
             <span class="nav-icon">🎯</span>
             <span class="nav-text">Presentation</span>
           </a>
@@ -102,9 +98,7 @@ export class HamburgerMenu {
     const navItems = navMenu.querySelectorAll('.hamburger-nav-item');
     navItems.forEach(item => {
       item.addEventListener('click', (e) => {
-        e.preventDefault();
-        const section = item.getAttribute('data-section');
-        this._navigateToSection(section);
+        // Don't prevent default - let the hash link work
         this._closeMenu(hamburgerBtn, navMenu);
 
         // Update active state in menu
@@ -161,127 +155,23 @@ export class HamburgerMenu {
   }
 
   /**
-   * Navigates to the specified section by hiding all others
-   * @private
-   * @param {string} section - The section to navigate to ('all', 'roadmap', 'executive-summary', or 'presentation')
+   * Updates the active menu item based on the current route
+   * @param {string} section - The section to mark as active ('roadmap', 'executive-summary', or 'presentation')
    */
-  _navigateToSection(section) {
+  updateActiveItem(section) {
     this.currentSection = section;
 
-    // Get all section elements
-    const ganttChartContainer = document.querySelector('#gantt-chart-container');
-    const executiveSummary = document.querySelector('.executive-summary-container');
-    const presentationSlides = document.querySelector('.presentation-slides-container');
-    const exportContainer = document.querySelector('.export-container');
-
-    // Get individual components within gantt chart container
-    let ganttChart = null;
-    let ganttLegend = null;
-    let ganttExportButtons = null;
-
-    if (ganttChartContainer) {
-      // Find the actual chart elements (everything except summary and slides)
-      ganttChart = ganttChartContainer.querySelector('.gantt-grid');
-      ganttLegend = ganttChartContainer.querySelector('.gantt-legend');
-      // We'll handle export buttons separately
-    }
-
-    if (section === 'all') {
-      // Show all sections
-      if (ganttChartContainer) {
-        ganttChartContainer.classList.remove('section-isolated');
-        ganttChartContainer.style.display = '';
-      }
-      if (executiveSummary) {
-        executiveSummary.classList.remove('section-isolated');
-        executiveSummary.style.display = '';
-        // Auto-expand if collapsed
-        const content = executiveSummary.querySelector('.summary-content');
-        if (content && content.style.display === 'none') {
-          const header = executiveSummary.querySelector('.summary-header');
-          header?.click();
+    // Update active state in menu
+    const navItems = this.menuElement?.querySelectorAll('.hamburger-nav-item');
+    if (navItems) {
+      navItems.forEach(item => {
+        const itemSection = item.getAttribute('data-section');
+        if (itemSection === section) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
         }
-      }
-      if (presentationSlides) {
-        presentationSlides.classList.remove('section-isolated');
-        presentationSlides.style.display = '';
-        // Auto-expand if collapsed
-        const content = presentationSlides.querySelector('.slides-content');
-        if (content && content.style.display === 'none') {
-          const header = presentationSlides.querySelector('.slides-header');
-          header?.click();
-        }
-      }
-      if (exportContainer) {
-        exportContainer.style.display = '';
-      }
-
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    } else {
-      // Hide all sections first
-      if (ganttChartContainer) ganttChartContainer.style.display = 'none';
-      if (executiveSummary) executiveSummary.style.display = 'none';
-      if (presentationSlides) presentationSlides.style.display = 'none';
-      if (exportContainer) exportContainer.style.display = 'none';
-
-      // Show only the selected section
-      let targetElement = null;
-
-      switch (section) {
-        case 'roadmap':
-          if (ganttChartContainer) {
-            ganttChartContainer.style.display = '';
-            ganttChartContainer.classList.add('section-isolated');
-            targetElement = ganttChartContainer;
-          }
-          if (exportContainer) {
-            exportContainer.style.display = '';
-          }
-          break;
-
-        case 'executive-summary':
-          if (executiveSummary) {
-            executiveSummary.style.display = '';
-            executiveSummary.classList.add('section-isolated');
-            targetElement = executiveSummary;
-
-            // Auto-expand if collapsed
-            const content = executiveSummary.querySelector('.summary-content');
-            if (content && content.style.display === 'none') {
-              const header = executiveSummary.querySelector('.summary-header');
-              header?.click();
-            }
-          }
-          break;
-
-        case 'presentation':
-          if (presentationSlides) {
-            presentationSlides.style.display = '';
-            presentationSlides.classList.add('section-isolated');
-            targetElement = presentationSlides;
-
-            // Auto-expand if collapsed
-            const content = presentationSlides.querySelector('.slides-content');
-            if (content && content.style.display === 'none') {
-              const header = presentationSlides.querySelector('.slides-header');
-              header?.click();
-            }
-          }
-          break;
-      }
-
-      // Scroll to top of page to show the isolated section
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Add a subtle flash effect
-      if (targetElement) {
-        targetElement.classList.add('section-activated');
-        setTimeout(() => {
-          targetElement.classList.remove('section-activated');
-        }, 800);
-      }
+      });
     }
   }
 
