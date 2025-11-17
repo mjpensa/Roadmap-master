@@ -199,7 +199,7 @@ export class GanttChart {
    * @private
    */
   _addExecutiveSummary() {
-    this.executiveSummary = new ExecutiveSummary(this.ganttData.executiveSummary);
+    this.executiveSummary = new ExecutiveSummary(this.ganttData.executiveSummary, this.footerSVG);
     const summaryElement = this.executiveSummary.render();
     this.chartWrapper.appendChild(summaryElement);
   }
@@ -209,7 +209,7 @@ export class GanttChart {
    * @private
    */
   _addPresentationSlides() {
-    this.presentationSlides = new PresentationSlides(this.ganttData.presentationSlides);
+    this.presentationSlides = new PresentationSlides(this.ganttData.presentationSlides, this.footerSVG);
     const slidesElement = this.presentationSlides.render();
     this.chartWrapper.appendChild(slidesElement);
   }
