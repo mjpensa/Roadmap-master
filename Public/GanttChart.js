@@ -235,15 +235,24 @@ export class GanttChart {
       // Create bar area
       const barAreaEl = this._createBarArea(row, numCols, isSwimlane, dataIndex);
 
-      // Add click listeners for tasks
+      // Add click listeners for tasks (only active when edit mode is OFF)
       if (!isSwimlane && row.bar && row.bar.startCol != null && this.onTaskClick) {
         const taskIdentifier = {
           taskName: row.title,
           entity: row.entity,
           sessionId: this.ganttData.sessionId
         };
-        labelEl.addEventListener('click', () => this.onTaskClick(taskIdentifier));
-        barAreaEl.addEventListener('click', () => this.onTaskClick(taskIdentifier));
+        // Wrap click handlers to check edit mode - analysis screen only accessible when edit mode is OFF
+        labelEl.addEventListener('click', () => {
+          if (!this.isEditMode) {
+            this.onTaskClick(taskIdentifier);
+          }
+        });
+        barAreaEl.addEventListener('click', () => {
+          if (!this.isEditMode) {
+            this.onTaskClick(taskIdentifier);
+          }
+        });
         labelEl.style.cursor = 'pointer';
         barAreaEl.style.cursor = 'pointer';
       }
