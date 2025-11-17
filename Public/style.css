@@ -40,7 +40,7 @@
 .gantt-title.edit-mode-enabled:hover {
   outline: 2px dashed rgba(80, 175, 123, 0.6);
   outline-offset: 2px;
-  background-color: rgba(12, 35, 64, 0.95);
+  background-color: rgba(80, 175, 123, 0.1);
   cursor: text;
 }
 
