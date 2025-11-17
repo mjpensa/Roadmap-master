@@ -58,6 +58,10 @@ export class GanttChart {
 
     // Build chart components
     this._addLogo();
+
+    // Add stripe above Gantt chart
+    this._addHeaderSVG();
+
     this._addTitle();
     this._createGrid();
     this._addLegend();
@@ -469,6 +473,27 @@ export class GanttChart {
         this.legendElement.classList.add('edit-mode-enabled');
       }
     }
+  }
+
+  /**
+   * Adds the header SVG decoration above the Gantt chart
+   * @private
+   */
+  _addHeaderSVG() {
+    if (!this.footerSVG) return;
+
+    const encodedFooterSVG = encodeURIComponent(this.footerSVG.replace(/(\r\n|\n|\r)/gm, ''));
+
+    const headerSvgEl = document.createElement('div');
+    headerSvgEl.className = 'gantt-header-svg';
+
+    // Apply all styles inline
+    headerSvgEl.style.height = '30px';
+    headerSvgEl.style.backgroundImage = `url("data:image/svg+xml,${encodedFooterSVG}")`;
+    headerSvgEl.style.backgroundRepeat = 'repeat-x';
+    headerSvgEl.style.backgroundSize = 'auto 30px';
+
+    this.chartWrapper.appendChild(headerSvgEl);
   }
 
   /**
