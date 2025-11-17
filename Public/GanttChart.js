@@ -120,7 +120,7 @@ export class GanttChart {
 
     // Apply inline styles for positioning
     logoImg.style.position = 'absolute';
-    logoImg.style.top = '24px';
+    logoImg.style.top = '31px'; // Adjusted to keep logo centered in thicker title cell (29px padding)
     logoImg.style.right = '32px';
     logoImg.style.height = `${CONFIG.SIZES.LOGO_HEIGHT}px`;
     logoImg.style.width = 'auto';
