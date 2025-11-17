@@ -104,6 +104,8 @@ export const CONFIG = {
     CHART_ID: /^[a-f0-9]{32}$/i,
 
     // Prompt injection patterns (for security)
+    // IMPORTANT: These patterns must be kept in sync with server/config.js
+    // Any changes in server config should be reflected here
     INJECTION_PATTERNS: [
       { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/gi, replacement: '[REDACTED]' },
       { pattern: /disregard\s+(all\s+)?(previous|prior|above)\s+instructions?/gi, replacement: '[REDACTED]' },

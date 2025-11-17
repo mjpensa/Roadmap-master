@@ -19,6 +19,8 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import compression from 'compression';
+import cors from 'cors';
 
 // Import configuration (validates environment on load)
 import { CONFIG } from './server/config.js';
@@ -49,6 +51,18 @@ const __dirname = dirname(__filename);
 app.set('trust proxy', CONFIG.SERVER.TRUST_PROXY_HOPS);
 
 // --- Apply Middleware ---
+// Compression middleware (gzip/deflate)
+app.use(compression());
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+}));
+
 // Security headers
 app.use(configureHelmet());
 
@@ -58,8 +72,8 @@ app.disable('x-powered-by');
 // Cache control
 app.use(configureCacheControl);
 
-// JSON parsing
-app.use(express.json());
+// JSON parsing with size limit
+app.use(express.json({ limit: '50mb' }));
 
 // Static file serving
 app.use(express.static(join(__dirname, 'Public')));

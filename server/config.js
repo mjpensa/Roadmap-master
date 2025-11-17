@@ -98,6 +98,8 @@ export const CONFIG = {
   // Security patterns
   SECURITY: {
     // Prompt injection patterns
+    // IMPORTANT: These patterns must be kept in sync with Public/config.js
+    // Any changes here should be reflected in the client-side config
     INJECTION_PATTERNS: [
       { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/gi, replacement: '[REDACTED]' },
       { pattern: /disregard\s+(all\s+)?(previous|prior|above)\s+instructions?/gi, replacement: '[REDACTED]' },

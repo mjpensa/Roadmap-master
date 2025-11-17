@@ -9,17 +9,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- 2. Load html2canvas for exporting -->
-    <script 
-      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" 
-      xintegrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+cHio/BJLMBKSnQYjDRMvMMlPzgw6D/LIIXbaK3ddhiNRVbcC+WfcD+WjGg==" 
-      crossorigin="anonymous" 
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+      xintegrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+cHio/BJLMBKSnQYjDRMvMMlPzgw6D/LIIXbaK3ddhiNRVbcC+WfcD+WjGg=="
+      crossorigin="anonymous"
       referrerpolicy="no-referrer"
     ></script>
-    
-    <!-- 3. Load the original chart styles (must be loaded AFTER Tailwind for overrides) -->
+
+    <!-- 3. Load DOMPurify for XSS protection -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"
+      integrity="sha512-HZaXz2uGy1kG2SL5dPvL/OqGwxQRt6MJViJIE9BcQH7zmx0WZVFYO4gkZXjMqgJh0MfgXwBiSTdNFTJ9aSKiUA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <!-- 4. Load the original chart styles (must be loaded AFTER Tailwind for overrides) -->
     <link rel="stylesheet" href="/style.css" />
 
-    <!-- 4. Configure Tailwind with custom theme -->
+    <!-- 5. Configure Tailwind with custom theme -->
     <script>
         tailwind.config = {
             theme: {
@@ -41,7 +49,7 @@
         }
     </script>
     
-    <!-- 5. Add custom styles -->
+    <!-- 6. Add custom styles -->
     <style>
         /* Ensure proper viewport scaling and prevent layout issues */
         html {
