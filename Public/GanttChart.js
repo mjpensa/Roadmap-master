@@ -75,24 +75,18 @@ export class GanttChart {
     this._createGrid();
     this._addLegend();
 
-    // Add Executive Summary (if available) - positioned below the chart
-    if (this.ganttData.executiveSummary) {
-      this._addExecutiveSummary();
-    }
+    // Add Executive Summary - Always create component, it will handle missing data gracefully
+    this._addExecutiveSummary();
 
-    // Add Presentation Slides (if available) - positioned below the executive summary
+    // Add Presentation Slides - Always create component, it will handle missing data gracefully
     console.log('🎭 Presentation Slides Data Check:', {
       exists: !!this.ganttData.presentationSlides,
       hasSlides: this.ganttData.presentationSlides?.slides?.length || 0,
       data: this.ganttData.presentationSlides ? 'Present' : 'Missing'
     });
 
-    if (this.ganttData.presentationSlides) {
-      console.log('✓ Rendering presentation slides...');
-      this._addPresentationSlides();
-    } else {
-      console.warn('⚠️ Presentation slides not available in chart data');
-    }
+    console.log('✓ Rendering presentation slides component...');
+    this._addPresentationSlides();
 
     // Add footer stripe after Executive Summary and Presentation Slides
     this._addFooterSVG();
