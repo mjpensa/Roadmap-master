@@ -169,28 +169,16 @@ export class HamburgerMenu {
     this.currentSection = section;
 
     // Get all section elements
-    const ganttChartContainer = document.querySelector('#gantt-chart-container');
+    const roadmapSection = document.querySelector('.roadmap-section');
     const executiveSummary = document.querySelector('.executive-summary-container');
     const presentationSlides = document.querySelector('.presentation-slides-container');
     const exportContainer = document.querySelector('.export-container');
 
-    // Get individual components within gantt chart container
-    let ganttChart = null;
-    let ganttLegend = null;
-    let ganttExportButtons = null;
-
-    if (ganttChartContainer) {
-      // Find the actual chart elements (everything except summary and slides)
-      ganttChart = ganttChartContainer.querySelector('.gantt-grid');
-      ganttLegend = ganttChartContainer.querySelector('.gantt-legend');
-      // We'll handle export buttons separately
-    }
-
     if (section === 'all') {
       // Show all sections
-      if (ganttChartContainer) {
-        ganttChartContainer.classList.remove('section-isolated');
-        ganttChartContainer.style.display = '';
+      if (roadmapSection) {
+        roadmapSection.classList.remove('section-isolated');
+        roadmapSection.style.display = '';
       }
       if (executiveSummary) {
         executiveSummary.classList.remove('section-isolated');
@@ -221,7 +209,7 @@ export class HamburgerMenu {
 
     } else {
       // Hide all sections first
-      if (ganttChartContainer) ganttChartContainer.style.display = 'none';
+      if (roadmapSection) roadmapSection.style.display = 'none';
       if (executiveSummary) executiveSummary.style.display = 'none';
       if (presentationSlides) presentationSlides.style.display = 'none';
       if (exportContainer) exportContainer.style.display = 'none';
@@ -231,10 +219,10 @@ export class HamburgerMenu {
 
       switch (section) {
         case 'roadmap':
-          if (ganttChartContainer) {
-            ganttChartContainer.style.display = '';
-            ganttChartContainer.classList.add('section-isolated');
-            targetElement = ganttChartContainer;
+          if (roadmapSection) {
+            roadmapSection.style.display = '';
+            roadmapSection.classList.add('section-isolated');
+            targetElement = roadmapSection;
           }
           if (exportContainer) {
             exportContainer.style.display = '';

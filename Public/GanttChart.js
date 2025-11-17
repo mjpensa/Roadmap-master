@@ -59,7 +59,18 @@ export class GanttChart {
     this.chartWrapper = document.createElement('div');
     this.chartWrapper.id = 'gantt-chart-container';
 
-    // Build chart components
+    // Create a wrapper for roadmap-specific elements (gantt chart, logo, legend, etc.)
+    const roadmapWrapper = document.createElement('div');
+    roadmapWrapper.className = 'roadmap-section';
+    roadmapWrapper.id = 'roadmap-section';
+
+    // Store reference to append roadmap elements
+    const originalChartWrapper = this.chartWrapper;
+
+    // Temporarily set chartWrapper to roadmapWrapper so all _add methods append to it
+    this.chartWrapper = roadmapWrapper;
+
+    // Build chart components (these will be added to roadmapWrapper)
     this._addLogo();
 
     // Add stripe above Gantt chart
@@ -68,6 +79,15 @@ export class GanttChart {
     this._addTitle();
     this._createGrid();
     this._addLegend();
+
+    // Add footer stripe after legend
+    this._addFooterSVG();
+
+    // Restore original chartWrapper
+    this.chartWrapper = originalChartWrapper;
+
+    // Append roadmap section to main wrapper
+    this.chartWrapper.appendChild(roadmapWrapper);
 
     // Add Executive Summary (if available) - positioned below the chart
     if (this.ganttData.executiveSummary) {
@@ -87,9 +107,6 @@ export class GanttChart {
     } else {
       console.warn('⚠️ Presentation slides not available in chart data');
     }
-
-    // Add footer stripe after Executive Summary and Presentation Slides
-    this._addFooterSVG();
 
     // Add export and edit mode toggle buttons
     const exportContainer = document.createElement('div');
