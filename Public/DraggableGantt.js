@@ -43,12 +43,10 @@ export class DraggableGantt {
       bar.addEventListener('dragend', this._handleDragEnd.bind(this));
     });
 
-    // Add drop zones on bar areas (each row's timeline container)
-    const barAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
-    barAreas.forEach(barArea => {
-      barArea.addEventListener('dragover', this._handleDragOver.bind(this));
-      barArea.addEventListener('drop', this._handleDrop.bind(this));
-    });
+    // Phase 1 Fix: Add drop zones to the grid element for better event capturing
+    // This ensures events bubble up properly even when pointer-events are disabled on children
+    this.gridElement.addEventListener('dragover', this._handleDragOver.bind(this));
+    this.gridElement.addEventListener('drop', this._handleDrop.bind(this));
   }
 
   /**
@@ -415,5 +413,9 @@ export class DraggableGantt {
       const newBar = bar.cloneNode(true);
       bar.parentNode.replaceChild(newBar, bar);
     });
+
+    // Remove grid-level listeners
+    this.gridElement.removeEventListener('dragover', this._handleDragOver.bind(this));
+    this.gridElement.removeEventListener('drop', this._handleDrop.bind(this));
   }
 }
