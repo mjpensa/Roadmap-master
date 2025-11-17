@@ -22,6 +22,14 @@ class Router {
      * Initialize the router with component references
      */
     init(ganttChart, executiveSummary, presentationSlides) {
+        console.log('🚀 Router.init called with:', {
+            ganttChart: !!ganttChart,
+            executiveSummary: !!executiveSummary,
+            presentationSlides: !!presentationSlides,
+            executiveSummaryContainer: !!executiveSummary?.container,
+            presentationSlidesContainer: !!presentationSlides?.container
+        });
+
         this.ganttChart = ganttChart;
         this.executiveSummary = executiveSummary;
         this.presentationSlides = presentationSlides;
@@ -29,6 +37,8 @@ class Router {
 
         // Listen for hash changes
         window.addEventListener('hashchange', this.handleHashChange);
+
+        console.log('✅ Router initialized, calling initial handleHashChange...');
 
         // Handle initial route
         this.handleHashChange();
@@ -41,11 +51,18 @@ class Router {
         const hash = window.location.hash.slice(1); // Remove the '#'
         const route = hash || 'roadmap'; // Default to roadmap
 
+        console.log('🔗 Hash changed:', {
+            hash: hash,
+            route: route,
+            fullHash: window.location.hash
+        });
+
         if (this.routes[route]) {
             this.routes[route]();
             this.currentRoute = route;
         } else {
             // Unknown route, redirect to roadmap
+            console.warn('⚠️ Unknown route:', route, '- redirecting to roadmap');
             this.navigate('roadmap');
         }
     }
@@ -61,29 +78,57 @@ class Router {
      * Show a specific section and hide others
      */
     showSection(section) {
+        console.log('🔄 Router.showSection called with section:', section);
+
         // Update hamburger menu active item
         if (this.hamburgerMenu) {
             this.hamburgerMenu.updateActiveItem(section);
         }
 
-        // Get container elements
-        const chartContainer = this.ganttChart?.chartWrapper;
-        const summaryContainer = this.executiveSummary?.container;
-        const slidesContainer = this.presentationSlides?.container;
+        // Get container elements - use multiple strategies to ensure we find them
+        // Note: Don't hide chartWrapper itself, as it contains all sections
+        const ganttGrid = document.querySelector('.gantt-grid');
+        const ganttTitle = document.querySelector('.gantt-title');
+        const summaryContainer = this.executiveSummary?.container || document.getElementById('executiveSummary');
+        const slidesContainer = this.presentationSlides?.container || document.getElementById('presentationSlides');
 
-        // Also get the legend if it exists
+        console.log('📦 Container references:', {
+            ganttGrid: !!ganttGrid,
+            ganttTitle: !!ganttTitle,
+            summaryContainer: !!summaryContainer,
+            slidesContainer: !!slidesContainer,
+            ganttChart: !!this.ganttChart,
+            executiveSummary: !!this.executiveSummary,
+            presentationSlides: !!this.presentationSlides
+        });
+
+        // Warn if containers are missing
+        if (!summaryContainer) {
+            console.warn('⚠️ Executive Summary container not found');
+        }
+        if (!slidesContainer) {
+            console.warn('⚠️ Presentation Slides container not found');
+        }
+
+        // Also get the legend and other Gantt-specific elements
         const legend = document.querySelector('.legend');
         const exportContainer = document.querySelector('.export-container');
+        const todayLine = document.querySelector('.today-line');
 
         switch (section) {
             case 'roadmap':
-                // Show only the Gantt chart
-                if (chartContainer) {
-                    chartContainer.style.display = '';
-                    chartContainer.classList.add('section-isolated');
+                // Show only the Gantt chart elements
+                if (ganttGrid) {
+                    ganttGrid.style.display = '';
+                }
+                if (ganttTitle) {
+                    ganttTitle.style.display = '';
                 }
                 if (legend) {
                     legend.style.display = '';
+                }
+                if (todayLine) {
+                    todayLine.style.display = '';
                 }
                 if (exportContainer) {
                     exportContainer.style.display = '';
@@ -100,12 +145,17 @@ class Router {
 
             case 'executive-summary':
                 // Show only the Executive Summary
-                if (chartContainer) {
-                    chartContainer.style.display = 'none';
-                    chartContainer.classList.remove('section-isolated');
+                if (ganttGrid) {
+                    ganttGrid.style.display = 'none';
+                }
+                if (ganttTitle) {
+                    ganttTitle.style.display = 'none';
                 }
                 if (legend) {
                     legend.style.display = 'none';
+                }
+                if (todayLine) {
+                    todayLine.style.display = 'none';
                 }
                 if (exportContainer) {
                     exportContainer.style.display = 'none';
@@ -122,12 +172,17 @@ class Router {
 
             case 'presentation':
                 // Show only the Presentation Slides
-                if (chartContainer) {
-                    chartContainer.style.display = 'none';
-                    chartContainer.classList.remove('section-isolated');
+                if (ganttGrid) {
+                    ganttGrid.style.display = 'none';
+                }
+                if (ganttTitle) {
+                    ganttTitle.style.display = 'none';
                 }
                 if (legend) {
                     legend.style.display = 'none';
+                }
+                if (todayLine) {
+                    todayLine.style.display = 'none';
                 }
                 if (exportContainer) {
                     exportContainer.style.display = 'none';
