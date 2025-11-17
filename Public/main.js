@@ -142,6 +142,76 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
+ * Phase 3 Enhancement: Polls the /job/:id endpoint until job is complete
+ * @param {string} jobId - The job ID returned from /generate-chart
+ * @param {HTMLElement} generateBtn - The generate button element to update with progress
+ * @returns {Promise<Object>} The chart data when job is complete
+ * @throws {Error} If job fails or times out
+ */
+async function pollForJobCompletion(jobId, generateBtn) {
+  const POLL_INTERVAL = 1000; // Poll every 1 second
+  const MAX_ATTEMPTS = 300; // 5 minutes maximum (300 seconds)
+  let attempts = 0;
+
+  while (attempts < MAX_ATTEMPTS) {
+    attempts++;
+
+    try {
+      const response = await fetch(`/job/${jobId}`);
+
+      if (!response.ok) {
+        // Handle non-JSON error responses gracefully
+        let errorText = `Server error: ${response.status}`;
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const err = await response.json();
+            errorText = err.error || errorText;
+          } else {
+            const text = await response.text();
+            errorText = text.substring(0, 200) || errorText;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+        }
+        throw new Error(errorText);
+      }
+
+      const job = await response.json();
+
+      // Update button text with progress
+      if (job.progress && generateBtn) {
+        generateBtn.textContent = job.progress;
+      }
+
+      // Check job status
+      if (job.status === 'complete') {
+        console.log('Job completed successfully');
+        return job.data; // Return the chart data
+      } else if (job.status === 'error') {
+        throw new Error(job.error || 'Job failed with unknown error');
+      }
+
+      // Job still processing, wait before next poll
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+
+    } catch (error) {
+      // If it's a network error, retry after a short delay
+      if (error.message.includes('fetch')) {
+        console.warn(`Poll attempt ${attempts} failed, retrying...`, error);
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue;
+      }
+      // For other errors (job errors), throw immediately
+      throw error;
+    }
+  }
+
+  // If we get here, we've exceeded max attempts
+  throw new Error('Job timed out after 5 minutes. Please try again.');
+}
+
+/**
  * Handles the "Generate Chart" button click
  */
 async function handleChartGenerate(event) {
@@ -185,7 +255,8 @@ async function handleChartGenerate(event) {
     loadingIndicator.style.display = 'flex';
     errorMessage.style.display = 'none';
     chartOutput.innerHTML = ''; // Clear old chart
-    // 3. Call the backend API (for the *initial* chart)
+
+    // 3. Phase 3 Enhancement: Call /generate-chart to start async job
     const response = await fetch('/generate-chart', {
       method: 'POST',
       body: formData,
@@ -193,26 +264,36 @@ async function handleChartGenerate(event) {
 
     if (!response.ok) {
       // Handle non-JSON error responses gracefully
-      let errorMessage = `Server error: ${response.status}`;
+      let errorText = `Server error: ${response.status}`;
       try {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const err = await response.json();
-          errorMessage = err.error || errorMessage;
+          errorText = err.error || errorText;
         } else {
           const text = await response.text();
-          errorMessage = text.substring(0, 200) || errorMessage; // Limit error length
+          errorText = text.substring(0, 200) || errorText; // Limit error length
         }
       } catch (parseError) {
         console.error('Failed to parse error response:', parseError);
       }
-      throw new Error(errorMessage);
+      throw new Error(errorText);
     }
 
-    // 4. Get the JSON data from the server
-    const ganttData = await response.json();
+    // 4. Get job ID from response
+    const jobResponse = await response.json();
+    const jobId = jobResponse.jobId;
 
-    // 5. Validate the data structure
+    if (!jobId) {
+      throw new Error('Server did not return a job ID');
+    }
+
+    console.log('Job started:', jobId);
+
+    // 5. Poll for job completion
+    const ganttData = await pollForJobCompletion(jobId, generateBtn);
+
+    // 6. Validate the data structure
     if (!ganttData || !ganttData.timeColumns || !ganttData.data) {
       throw new Error('Invalid chart data structure received from server');
     }
@@ -223,8 +304,8 @@ async function handleChartGenerate(event) {
       throw new Error('The AI was unable to find any tasks or time columns in the provided documents. Please check your files or try a different prompt.');
     }
 
-    // 6. Open in new tab
-    // Phase 2 Enhancement: Use URL-based sharing if chartId is available
+    // 7. Open in new tab
+    // Use URL-based sharing with chartId
     if (ganttData.chartId) {
       // Primary method: Open chart using URL parameter
       window.open(`/chart.html?id=${ganttData.chartId}`, '_blank');

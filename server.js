@@ -159,7 +159,11 @@ const sessionStore = new Map();
 // --- Chart storage for URL-based sharing (Phase 2 Enhancement) ---
 const chartStore = new Map();
 
-// Cleanup old sessions and charts every 5 minutes
+// --- Job queue storage (Phase 3 Enhancement) ---
+// Stores background jobs for async chart generation
+const jobStore = new Map();
+
+// Cleanup old sessions, charts, and jobs every 5 minutes
 setInterval(() => {
   const now = Date.now();
   const ONE_HOUR = 60 * 60 * 1000;
@@ -177,6 +181,14 @@ setInterval(() => {
     if (now - chart.created > ONE_HOUR) {
       chartStore.delete(chartId);
       console.log(`Cleaned up expired chart: ${chartId}`);
+    }
+  }
+
+  // Clean up old jobs (1 hour expiration)
+  for (const [jobId, job] of jobStore.entries()) {
+    if (now - job.createdAt > ONE_HOUR) {
+      jobStore.delete(jobId);
+      console.log(`Cleaned up expired job: ${jobId}`);
     }
   }
 }, 5 * 60 * 1000);
@@ -343,47 +355,70 @@ async function callGeminiForText(payload, retryCount = 3) {
 }
 
 
-// --- Main Endpoint: /generate-chart ---
-app.post('/generate-chart', strictLimiter, upload.array('researchFiles'), async (req, res) => {
-  const userPrompt = req.body.prompt;
-
-  // Sanitize user prompt to prevent prompt injection attacks
-  const sanitizedPrompt = sanitizePrompt(userPrompt);
-
-  // Create request-scoped storage (fixes global cache memory leak)
-  let researchTextCache = "";
-  let researchFilesCache = [];
-
-  // 1. Extract text from uploaded files (Sort for determinism)
+// -------------------------------------------------------------------
+// --- ASYNC JOB PROCESSING FUNCTION (Phase 3 Enhancement) ---
+// -------------------------------------------------------------------
+/**
+ * Processes chart generation asynchronously in the background
+ * @param {string} jobId - The job ID
+ * @param {Object} reqBody - Request body containing the prompt
+ * @param {Array} files - Uploaded files
+ * @returns {Promise<void>}
+ */
+async function processChartGeneration(jobId, reqBody, files) {
   try {
-    if (req.files) {
-      const sortedFiles = req.files.sort((a, b) => a.originalname.localeCompare(b.originalname));
+    // Update job status to processing
+    jobStore.set(jobId, {
+      status: 'processing',
+      progress: 'Analyzing your request...',
+      createdAt: Date.now()
+    });
+
+    const userPrompt = reqBody.prompt;
+
+    // Sanitize user prompt to prevent prompt injection attacks
+    const sanitizedPrompt = sanitizePrompt(userPrompt);
+
+    // Create request-scoped storage (fixes global cache memory leak)
+    let researchTextCache = "";
+    let researchFilesCache = [];
+
+    // Update progress
+    jobStore.set(jobId, {
+      status: 'processing',
+      progress: 'Processing uploaded files...',
+      createdAt: jobStore.get(jobId).createdAt
+    });
+
+    // 1. Extract text from uploaded files (Sort for determinism)
+    if (files) {
+      const sortedFiles = files.sort((a, b) => a.originalname.localeCompare(b.originalname));
       for (const file of sortedFiles) {
         researchTextCache += `\n\n--- Start of file: ${file.originalname} ---\n`;
         researchFilesCache.push(file.originalname);
 
-        // --- MODIFICATION: Use convertToHtml for .docx to preserve links ---
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-          // We convert to HTML to keep <a href="..."> tags
           const result = await mammoth.convertToHtml({ buffer: file.buffer });
           researchTextCache += result.value;
         } else {
-          // .md and .txt files are kept as raw text
           researchTextCache += file.buffer.toString('utf8');
         }
         researchTextCache += `\n--- End of file: ${file.originalname} ---\n`;
       }
     }
-  } catch (e) {
-    console.error("File extraction error:", e);
-    return res.status(500).json({ error: "Error processing uploaded files." });
-  }
 
-  // 2. Define the *single, powerful* system prompt
-  const geminiSystemPrompt = `You are an expert project management analyst. Your job is to analyze a user's prompt and research files to build a complete Gantt chart data object.
-  
+    // Update progress
+    jobStore.set(jobId, {
+      status: 'processing',
+      progress: 'Generating chart data with AI...',
+      createdAt: jobStore.get(jobId).createdAt
+    });
+
+    // 2. Define the system prompt (same as before)
+    const geminiSystemPrompt = `You are an expert project management analyst. Your job is to analyze a user's prompt and research files to build a complete Gantt chart data object.
+
   You MUST respond with *only* a valid JSON object matching the schema.
-  
+
   **CRITICAL LOGIC:**
   1.  **TIME HORIZON:** First, check the user's prompt for an *explicitly requested* time range (e.g., "2020-2030").
       - If found, use that range.
@@ -413,96 +448,183 @@ app.post('/generate-chart', strictLimiter, upload.array('researchFiles'), async 
           * **IF you use the FALLBACK:** The 'legend' array MUST be an empty array \`[]\`.
   6.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
 
-  const geminiUserQuery = `${sanitizedPrompt}
+    const geminiUserQuery = `${sanitizedPrompt}
 
 **CRITICAL REMINDER:** You MUST escape all newlines (\\n) and double-quotes (\") found in the research content before placing them into the final JSON string values.
 
 Research Content:
 ${researchTextCache}`;
 
-  // 3. Define the schema for the *visual data only*
-  const ganttSchema = {
-    type: "OBJECT",
-    properties: {
-      title: { type: "STRING" },
-      timeColumns: {
-        type: "ARRAY",
-        items: { type: "STRING" }
-      },
-      data: {
-        type: "ARRAY",
-        items: {
-          type: "OBJECT",
-          properties: {
-            title: { type: "STRING" },
-            isSwimlane: { type: "BOOLEAN" },
-            entity: { type: "STRING" }, 
-            bar: {
-              type: "OBJECT",
-              properties: {
-                startCol: { type: "NUMBER" },
-                endCol: { type: "NUMBER" },
-                color: { type: "STRING" }
-              },
-            }
-          },
-          required: ["title", "isSwimlane", "entity"]
+    // 3. Define the schema
+    const ganttSchema = {
+      type: "OBJECT",
+      properties: {
+        title: { type: "STRING" },
+        timeColumns: {
+          type: "ARRAY",
+          items: { type: "STRING" }
+        },
+        data: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              title: { type: "STRING" },
+              isSwimlane: { type: "BOOLEAN" },
+              entity: { type: "STRING" },
+              bar: {
+                type: "OBJECT",
+                properties: {
+                  startCol: { type: "NUMBER" },
+                  endCol: { type: "NUMBER" },
+                  color: { type: "STRING" }
+                },
+              }
+            },
+            required: ["title", "isSwimlane", "entity"]
+          }
+        },
+        legend: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              color: { type: "STRING" },
+              label: { type: "STRING" }
+            },
+            required: ["color", "label"]
+          }
         }
       },
-      legend: {
-        type: "ARRAY",
-        items: {
-          type: "OBJECT",
-          properties: {
-            color: { type: "STRING" },
-            label: { type: "STRING" }
-          },
-          required: ["color", "label"]
-        }
+      required: ["title", "timeColumns", "data", "legend"]
+    };
+
+    // 4. Define the payload
+    const payload = {
+      contents: [{ parts: [{ text: geminiUserQuery }] }],
+      systemInstruction: { parts: [{ text: geminiSystemPrompt }] },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: ganttSchema,
+        maxOutputTokens: 8192,
+        temperature: 0,
+        topP: 1,
+        topK: 1
       }
-    },
-    required: ["title", "timeColumns", "data", "legend"]
-  };
+    };
 
-  // 4. Define the payload
-  const payload = {
-    contents: [{ parts: [{ text: geminiUserQuery }] }],
-    systemInstruction: { parts: [{ text: geminiSystemPrompt }] },
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: ganttSchema,
-      maxOutputTokens: 8192,
-      temperature: 0,
-      topP: 1,
-      topK: 1
-    }
-  };
-
-  // 5. Call the API
-  try {
+    // 5. Call the API
     const ganttData = await callGeminiForJson(payload);
+
+    // Update progress
+    jobStore.set(jobId, {
+      status: 'processing',
+      progress: 'Finalizing chart...',
+      createdAt: jobStore.get(jobId).createdAt
+    });
 
     // 6. Create session to store research data for future requests
     const sessionId = createSession(researchTextCache, researchFilesCache);
 
-    // 7. Store chart data with unique ID for URL-based sharing (Phase 2)
+    // 7. Store chart data with unique ID for URL-based sharing
     const chartId = crypto.randomBytes(16).toString('hex');
     chartStore.set(chartId, {
       data: ganttData,
-      sessionId: sessionId, // Link chart to session for analysis/questions
+      sessionId: sessionId,
       created: Date.now()
     });
 
-    // 8. Send the chart ID and Gantt data to the frontend
-    res.json({
-      ...ganttData,
-      sessionId, // Include session ID for subsequent requests
-      chartId // Include chart ID for URL-based sharing
+    // 8. Update job status to complete
+    jobStore.set(jobId, {
+      status: 'complete',
+      progress: 'Chart generated successfully!',
+      data: {
+        ...ganttData,
+        sessionId,
+        chartId
+      },
+      createdAt: jobStore.get(jobId).createdAt
     });
 
-  } catch (e) {
-    console.error("API call error:", e);
-    res.status(500).json({ error: `Error generating chart data: ${e.message}` });
+  } catch (error) {
+    console.error(`Job ${jobId} failed:`, error);
+    // Update job status to error
+    jobStore.set(jobId, {
+      status: 'error',
+      error: error.message || 'Unknown error occurred',
+      createdAt: jobStore.get(jobId)?.createdAt || Date.now()
+    });
+  }
+}
+
+// -------------------------------------------------------------------
+// --- Main Endpoint: /generate-chart (Phase 3: Async Job Pattern) ---
+// -------------------------------------------------------------------
+app.post('/generate-chart', strictLimiter, upload.array('researchFiles'), async (req, res) => {
+  // Phase 3 Enhancement: Return job ID immediately and process asynchronously
+
+  // Generate unique job ID
+  const jobId = crypto.randomBytes(16).toString('hex');
+
+  // Initialize job in the store
+  jobStore.set(jobId, {
+    status: 'queued',
+    progress: 'Request received, starting processing...',
+    createdAt: Date.now()
+  });
+
+  // Return job ID immediately (< 100ms response time)
+  res.json({
+    jobId,
+    status: 'processing',
+    message: 'Chart generation started. Poll /job/:id for status updates.'
+  });
+
+  // Process the chart generation asynchronously in the background
+  // This prevents timeout issues and improves perceived performance
+  processChartGeneration(jobId, req.body, req.files)
+    .catch(error => {
+      console.error(`Background job ${jobId} encountered error:`, error);
+    });
+});
+
+
+// -------------------------------------------------------------------
+// --- GET JOB STATUS (Phase 3 Enhancement - Async Job Polling) ---
+// -------------------------------------------------------------------
+app.get('/job/:id', apiLimiter, (req, res) => {
+  const jobId = req.params.id;
+
+  // Validate job ID format (32 hex characters)
+  if (!/^[a-f0-9]{32}$/i.test(jobId)) {
+    return res.status(400).json({ error: 'Invalid job ID format' });
+  }
+
+  const job = jobStore.get(jobId);
+  if (!job) {
+    return res.status(404).json({
+      error: 'Job not found or expired. Jobs are available for 1 hour.'
+    });
+  }
+
+  // Return job status
+  if (job.status === 'complete') {
+    res.json({
+      status: job.status,
+      progress: job.progress,
+      data: job.data
+    });
+  } else if (job.status === 'error') {
+    res.json({
+      status: job.status,
+      error: job.error
+    });
+  } else {
+    // Processing or queued
+    res.json({
+      status: job.status,
+      progress: job.progress
+    });
   }
 });
 
