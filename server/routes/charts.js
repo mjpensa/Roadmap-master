@@ -255,8 +255,17 @@ ${researchTextCache}`;
       );
 
       // Extract the presentationSlides object from the response
-      console.log(`Job ${jobId}: Raw slidesResponse:`, JSON.stringify(slidesResponse).substring(0, 200));
-      presentationSlides = slidesResponse.presentationSlides;
+      console.log(`Job ${jobId}: Raw slidesResponse keys:`, Object.keys(slidesResponse || {}));
+      console.log(`Job ${jobId}: Raw slidesResponse preview:`, JSON.stringify(slidesResponse).substring(0, 500));
+      presentationSlides = slidesResponse.presentationSlides || slidesResponse;
+
+      // Debug: Log the structure
+      console.log(`Job ${jobId}: presentationSlides after extraction:`, {
+        exists: !!presentationSlides,
+        isObject: typeof presentationSlides === 'object',
+        hasSlides: !!presentationSlides?.slides,
+        slidesCount: presentationSlides?.slides?.length || 0
+      });
 
       // Debug: Log the first slide structure
       if (presentationSlides?.slides?.[0]) {
@@ -264,9 +273,13 @@ ${researchTextCache}`;
       }
 
       if (!presentationSlides) {
-        console.error(`Job ${jobId}: WARNING - presentationSlides is null/undefined in response. Full response:`, JSON.stringify(slidesResponse));
-      } else if (!presentationSlides.slides || presentationSlides.slides.length === 0) {
-        console.error(`Job ${jobId}: WARNING - presentationSlides has no slides. Slides count: ${presentationSlides.slides?.length || 0}`);
+        console.error(`Job ${jobId}: WARNING - presentationSlides is null/undefined in response. Full response keys:`, Object.keys(slidesResponse || {}));
+        console.error(`Job ${jobId}: Full response preview:`, JSON.stringify(slidesResponse).substring(0, 1000));
+      } else if (!presentationSlides.slides || !Array.isArray(presentationSlides.slides)) {
+        console.error(`Job ${jobId}: WARNING - presentationSlides.slides is not an array. Type:`, typeof presentationSlides.slides);
+        console.error(`Job ${jobId}: presentationSlides structure:`, JSON.stringify(presentationSlides).substring(0, 500));
+      } else if (presentationSlides.slides.length === 0) {
+        console.error(`Job ${jobId}: WARNING - presentationSlides has no slides (empty array)`);
       } else {
         console.log(`Job ${jobId}: Presentation slides generated successfully with ${presentationSlides.slides.length} slides`);
 
@@ -293,54 +306,62 @@ ${researchTextCache}`;
           }
 
           // Validate that slides have required content based on their type
+          // Made less strict - only fail if completely missing critical fields
           let hasRequiredContent = true;
           switch (slide.type) {
             case 'title':
-              // Title slides need at least a title
-              if (!slide.title || slide.title.trim().length === 0) {
-                console.warn(`Job ${jobId}: Title slide missing title field`);
+              // Title slides need at least a title OR subtitle
+              if ((!slide.title || slide.title.trim().length === 0) &&
+                  (!slide.subtitle || slide.subtitle.trim().length === 0)) {
+                console.warn(`Job ${jobId}: Title slide missing both title and subtitle`);
                 hasRequiredContent = false;
               }
               break;
             case 'narrative':
-              // Narrative slides need content array
-              if (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0) {
-                console.warn(`Job ${jobId}: Narrative slide "${slideTitle}" missing content array`);
+              // Narrative slides need content array OR title
+              if ((!slide.content || !Array.isArray(slide.content) || slide.content.length === 0) &&
+                  (!slide.title || slide.title.trim().length === 0)) {
+                console.warn(`Job ${jobId}: Narrative slide "${slideTitle}" missing both content and title`);
                 hasRequiredContent = false;
               }
               break;
             case 'drivers':
-              // Drivers slides need drivers array
-              if (!slide.drivers || !Array.isArray(slide.drivers) || slide.drivers.length === 0) {
-                console.warn(`Job ${jobId}: Drivers slide "${slideTitle}" missing drivers array`);
+              // Drivers slides need drivers array OR fallback to content
+              if ((!slide.drivers || !Array.isArray(slide.drivers) || slide.drivers.length === 0) &&
+                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
+                console.warn(`Job ${jobId}: Drivers slide "${slideTitle}" missing both drivers and content arrays`);
                 hasRequiredContent = false;
               }
               break;
             case 'dependencies':
-              // Dependencies slides need dependencies array
-              if (!slide.dependencies || !Array.isArray(slide.dependencies) || slide.dependencies.length === 0) {
-                console.warn(`Job ${jobId}: Dependencies slide "${slideTitle}" missing dependencies array`);
+              // Dependencies slides need dependencies array OR fallback to content
+              if ((!slide.dependencies || !Array.isArray(slide.dependencies) || slide.dependencies.length === 0) &&
+                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
+                console.warn(`Job ${jobId}: Dependencies slide "${slideTitle}" missing both dependencies and content arrays`);
                 hasRequiredContent = false;
               }
               break;
             case 'risks':
-              // Risks slides need risks array
-              if (!slide.risks || !Array.isArray(slide.risks) || slide.risks.length === 0) {
-                console.warn(`Job ${jobId}: Risks slide "${slideTitle}" missing risks array`);
+              // Risks slides need risks array OR fallback to content
+              if ((!slide.risks || !Array.isArray(slide.risks) || slide.risks.length === 0) &&
+                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
+                console.warn(`Job ${jobId}: Risks slide "${slideTitle}" missing both risks and content arrays`);
                 hasRequiredContent = false;
               }
               break;
             case 'insights':
-              // Insights slides need insights array
-              if (!slide.insights || !Array.isArray(slide.insights) || slide.insights.length === 0) {
-                console.warn(`Job ${jobId}: Insights slide "${slideTitle}" missing insights array`);
+              // Insights slides need insights array OR fallback to content
+              if ((!slide.insights || !Array.isArray(slide.insights) || slide.insights.length === 0) &&
+                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
+                console.warn(`Job ${jobId}: Insights slide "${slideTitle}" missing both insights and content arrays`);
                 hasRequiredContent = false;
               }
               break;
             case 'simple':
-              // Simple slides need content
-              if (!slide.content || (Array.isArray(slide.content) && slide.content.length === 0)) {
-                console.warn(`Job ${jobId}: Simple slide "${slideTitle}" missing content`);
+              // Simple slides need content OR title
+              if ((!slide.content || (Array.isArray(slide.content) && slide.content.length === 0)) &&
+                  (!slide.title || slide.title.trim().length === 0)) {
+                console.warn(`Job ${jobId}: Simple slide "${slideTitle}" missing both content and title`);
                 hasRequiredContent = false;
               }
               break;
@@ -369,14 +390,21 @@ ${researchTextCache}`;
           presentationSlides.slides = uniqueSlides;
         }
 
-        // If we removed too many slides and have less than 3, discard the presentation
-        if (uniqueSlides.length < 3) {
-          console.error(`Job ${jobId}: Too many invalid slides removed (${duplicatesRemoved} duplicates, ${emptyContentRemoved} missing content), only ${uniqueSlides.length} valid slides remain. Discarding presentation.`);
+        // If we removed ALL slides, discard the presentation
+        // Changed threshold from 3 to 1 - having 1-2 slides is better than none
+        if (uniqueSlides.length < 1) {
+          console.error(`Job ${jobId}: ❌ All slides removed during validation - discarding presentation`);
+          console.error(`Job ${jobId}: Details - Duplicates: ${duplicatesRemoved}, Missing content: ${emptyContentRemoved}, Valid: ${uniqueSlides.length}`);
           presentationSlides = null;
+        } else if (uniqueSlides.length < 3) {
+          console.warn(`Job ${jobId}: ⚠️ Only ${uniqueSlides.length} valid slide(s) remain after validation (removed ${duplicatesRemoved} duplicates, ${emptyContentRemoved} with missing content)`);
         }
       }
     } catch (slidesError) {
-      console.error(`Job ${jobId}: Failed to generate presentation slides:`, slidesError);
+      console.error(`Job ${jobId}: ❌ FAILED to generate presentation slides`);
+      console.error(`Job ${jobId}: Error type:`, slidesError.constructor.name);
+      console.error(`Job ${jobId}: Error message:`, slidesError.message);
+      console.error(`Job ${jobId}: Error stack:`, slidesError.stack?.substring(0, 500));
       // Don't fail the entire job if presentation slides fail - just log it
       presentationSlides = null;
     }
@@ -407,6 +435,11 @@ ${researchTextCache}`;
       chartId
     };
     console.log(`Job ${jobId}: Setting complete status with data keys:`, Object.keys(completeData));
+    console.log(`Job ${jobId}: Final data structure:`, {
+      hasExecutiveSummary: !!executiveSummary,
+      hasPresentationSlides: !!presentationSlides,
+      presentationSlidesCount: presentationSlides?.slides?.length || 0
+    });
 
     // Verify completeData before storing
     if (!completeData.timeColumns || !completeData.data) {
