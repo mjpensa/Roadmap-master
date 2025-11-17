@@ -14,9 +14,11 @@ export class ExecutiveSummary {
   /**
    * Creates a new ExecutiveSummary instance
    * @param {Object} summaryData - The executive summary data from the API
+   * @param {string} footerSVG - The SVG content for the header/footer decoration
    */
-  constructor(summaryData) {
+  constructor(summaryData, footerSVG) {
     this.summaryData = summaryData;
+    this.footerSVG = footerSVG;
     this.isExpanded = true; // Default to expanded on load
     this.container = null;
   }
@@ -37,6 +39,9 @@ export class ExecutiveSummary {
       return this.container;
     }
 
+    // Add header SVG stripe
+    this._addHeaderSVG();
+
     // Build header
     const header = this._buildHeader();
     this.container.appendChild(header);
@@ -44,6 +49,9 @@ export class ExecutiveSummary {
     // Build content
     const content = this._buildContent();
     this.container.appendChild(content);
+
+    // Add footer SVG stripe
+    this._addFooterSVG();
 
     return this.container;
   }
@@ -427,5 +435,47 @@ export class ExecutiveSummary {
     if (chevron) {
       chevron.textContent = this.isExpanded ? '▼' : '▶';
     }
+  }
+
+  /**
+   * Adds the header SVG decoration above the Executive Summary
+   * @private
+   */
+  _addHeaderSVG() {
+    if (!this.footerSVG) return;
+
+    const encodedFooterSVG = encodeURIComponent(this.footerSVG.replace(/(\r\n|\n|\r)/gm, ''));
+
+    const headerSvgEl = document.createElement('div');
+    headerSvgEl.className = 'gantt-header-svg';
+
+    // Apply all styles inline
+    headerSvgEl.style.height = '30px';
+    headerSvgEl.style.backgroundImage = `url("data:image/svg+xml,${encodedFooterSVG}")`;
+    headerSvgEl.style.backgroundRepeat = 'repeat-x';
+    headerSvgEl.style.backgroundSize = 'auto 30px';
+
+    this.container.appendChild(headerSvgEl);
+  }
+
+  /**
+   * Adds the footer SVG decoration after the Executive Summary
+   * @private
+   */
+  _addFooterSVG() {
+    if (!this.footerSVG) return;
+
+    const encodedFooterSVG = encodeURIComponent(this.footerSVG.replace(/(\r\n|\n|\r)/gm, ''));
+
+    const footerSvgEl = document.createElement('div');
+    footerSvgEl.className = 'gantt-footer-svg';
+
+    // Apply all styles inline
+    footerSvgEl.style.height = '30px';
+    footerSvgEl.style.backgroundImage = `url("data:image/svg+xml,${encodedFooterSVG}")`;
+    footerSvgEl.style.backgroundRepeat = 'repeat-x';
+    footerSvgEl.style.backgroundSize = 'auto 30px';
+
+    this.container.appendChild(footerSvgEl);
   }
 }

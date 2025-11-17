@@ -14,9 +14,11 @@ export class PresentationSlides {
   /**
    * Creates a new PresentationSlides instance
    * @param {Object} slidesData - The presentation slides data from the API
+   * @param {string} footerSVG - The SVG content for the header/footer decoration
    */
-  constructor(slidesData) {
+  constructor(slidesData, footerSVG) {
     this.slidesData = slidesData;
+    this.footerSVG = footerSVG;
     this.isExpanded = true; // Default to expanded on load
     this.currentSlideIndex = 0;
     this.container = null;
@@ -38,6 +40,9 @@ export class PresentationSlides {
       return this.container;
     }
 
+    // Add header SVG stripe
+    this._addHeaderSVG();
+
     // Build header
     const header = this._buildHeader();
     this.container.appendChild(header);
@@ -45,6 +50,9 @@ export class PresentationSlides {
     // Build content
     const content = this._buildContent();
     this.container.appendChild(content);
+
+    // Add footer SVG stripe
+    this._addFooterSVG();
 
     return this.container;
   }
@@ -541,5 +549,47 @@ export class PresentationSlides {
     if (chevron) {
       chevron.textContent = this.isExpanded ? '▼' : '▶';
     }
+  }
+
+  /**
+   * Adds the header SVG decoration above the Presentation Slides
+   * @private
+   */
+  _addHeaderSVG() {
+    if (!this.footerSVG) return;
+
+    const encodedFooterSVG = encodeURIComponent(this.footerSVG.replace(/(\r\n|\n|\r)/gm, ''));
+
+    const headerSvgEl = document.createElement('div');
+    headerSvgEl.className = 'gantt-header-svg';
+
+    // Apply all styles inline
+    headerSvgEl.style.height = '30px';
+    headerSvgEl.style.backgroundImage = `url("data:image/svg+xml,${encodedFooterSVG}")`;
+    headerSvgEl.style.backgroundRepeat = 'repeat-x';
+    headerSvgEl.style.backgroundSize = 'auto 30px';
+
+    this.container.appendChild(headerSvgEl);
+  }
+
+  /**
+   * Adds the footer SVG decoration after the Presentation Slides
+   * @private
+   */
+  _addFooterSVG() {
+    if (!this.footerSVG) return;
+
+    const encodedFooterSVG = encodeURIComponent(this.footerSVG.replace(/(\r\n|\n|\r)/gm, ''));
+
+    const footerSvgEl = document.createElement('div');
+    footerSvgEl.className = 'gantt-footer-svg';
+
+    // Apply all styles inline
+    footerSvgEl.style.height = '30px';
+    footerSvgEl.style.backgroundImage = `url("data:image/svg+xml,${encodedFooterSVG}")`;
+    footerSvgEl.style.backgroundRepeat = 'repeat-x';
+    footerSvgEl.style.backgroundSize = 'auto 30px';
+
+    this.container.appendChild(footerSvgEl);
   }
 }
