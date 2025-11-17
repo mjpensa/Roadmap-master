@@ -53,24 +53,27 @@ body {
 .swiper-slide {
   background: var(--slide-bg);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   position: relative;
-  overflow: visible;
-  padding: 40px 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 /* Slide Container Base */
 .slide-container {
   width: 90%;
   max-width: 1200px;
-  height: calc(100vh - 120px);
-  padding: 60px;
+  max-height: 100vh;
+  height: 100vh;
+  padding: 40px 60px;
   display: flex;
   flex-direction: column;
   position: relative;
   animation: fadeIn 0.6s ease-out;
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
+  justify-content: center;
 }
 
 /* Slide Number */
@@ -154,12 +157,12 @@ p {
    2. STRATEGIC NARRATIVE SLIDE
    ======================================== */
 .slide-narrative .slide-container {
-  justify-content: flex-start;
-  padding-top: 80px;
+  justify-content: center;
 }
 
 .narrative-header {
-  margin-bottom: 50px;
+  margin-bottom: 30px;
+  flex-shrink: 0;
 }
 
 .narrative-title {
@@ -172,12 +175,17 @@ p {
 
 .narrative-content {
   max-width: 900px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .narrative-content p {
-  margin-bottom: 25px;
-  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
-  line-height: 1.9;
+  margin-bottom: 20px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.7;
   color: var(--text-secondary);
   text-align: justify;
 }
@@ -191,12 +199,9 @@ p {
 /* ========================================
    3. KEY DRIVERS SLIDE
    ======================================== */
-.slide-drivers .slide-container {
-  padding-top: 60px;
-}
-
 .drivers-header {
-  margin-bottom: 50px;
+  margin-bottom: 30px;
+  flex-shrink: 0;
 }
 
 .drivers-title {
@@ -222,9 +227,11 @@ p {
 .drivers-list {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 20px;
   max-width: 900px;
   margin: 0 auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .driver-item {
@@ -276,13 +283,10 @@ p {
 /* ========================================
    4. CRITICAL DEPENDENCIES SLIDE
    ======================================== */
-.slide-dependencies .slide-container {
-  padding-top: 60px;
-}
-
 .dependencies-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 30px;
+  flex-shrink: 0;
 }
 
 .dependencies-title {
@@ -296,15 +300,16 @@ p {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 30px;
-  margin-top: 40px;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
 }
 
 .dependency-item {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 12px;
-  padding: 30px;
-  min-width: 250px;
+  padding: 20px;
+  min-width: 220px;
   position: relative;
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
@@ -381,13 +386,10 @@ p {
 /* ========================================
    5. STRATEGIC RISKS SLIDE (MATRIX)
    ======================================== */
-.slide-risks .slide-container {
-  padding-top: 50px;
-}
-
 .risks-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .risks-title {
@@ -397,15 +399,17 @@ p {
 
 .risk-matrix {
   display: grid;
-  grid-template-columns: 80px repeat(3, 1fr);
-  grid-template-rows: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: 70px repeat(3, 1fr);
+  grid-template-rows: repeat(4, minmax(80px, 1fr));
   gap: 2px;
-  max-width: 800px;
+  max-width: 700px;
+  max-height: 400px;
   margin: 0 auto;
   background: var(--border-color);
   border: 2px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .matrix-label {
@@ -502,13 +506,10 @@ p {
 /* ========================================
    6. KEY INSIGHTS SLIDE (CARDS)
    ======================================== */
-.slide-insights .slide-container {
-  padding-top: 60px;
-}
-
 .insights-header {
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .insights-title {
@@ -519,17 +520,20 @@ p {
 
 .insights-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
   max-width: 1000px;
   margin: 0 auto;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
 }
 
 .insight-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 25px;
+  padding: 15px;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -575,9 +579,9 @@ p {
 }
 
 .insight-text {
-  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  font-size: clamp(0.9rem, 1.5vw, 1rem);
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* ========================================
@@ -664,13 +668,13 @@ p {
 
 @media (max-width: 768px) {
   .slide-container {
-    padding: 30px;
+    padding: 20px 30px;
     width: 95%;
-    height: calc(100vh - 100px);
+    height: 100vh;
   }
 
   .swiper-slide {
-    padding: 30px 0;
+    padding: 0;
   }
 
   .dependencies-flow {
@@ -704,12 +708,12 @@ p {
 
 @media (max-width: 480px) {
   .slide-container {
-    padding: 20px;
-    height: calc(100vh - 80px);
+    padding: 15px 20px;
+    height: 100vh;
   }
 
   .swiper-slide {
-    padding: 20px 0;
+    padding: 0;
   }
 
   .slide-number {
