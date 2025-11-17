@@ -11,6 +11,7 @@ import { DraggableGantt } from './DraggableGantt.js';
 import { ResizableGantt } from './ResizableGantt.js';
 import { ContextMenu } from './ContextMenu.js';
 import { ExecutiveSummary } from './ExecutiveSummary.js';
+import { PresentationSlides } from './PresentationSlides.js';
 
 /**
  * GanttChart Class
@@ -71,7 +72,12 @@ export class GanttChart {
       this._addExecutiveSummary();
     }
 
-    // Add footer stripe after Executive Summary
+    // Add Presentation Slides (if available) - positioned below the executive summary
+    if (this.ganttData.presentationSlides) {
+      this._addPresentationSlides();
+    }
+
+    // Add footer stripe after Executive Summary and Presentation Slides
     this._addFooterSVG();
 
     // Add export and edit mode toggle buttons
@@ -165,6 +171,16 @@ export class GanttChart {
     const executiveSummary = new ExecutiveSummary(this.ganttData.executiveSummary);
     const summaryElement = executiveSummary.render();
     this.chartWrapper.appendChild(summaryElement);
+  }
+
+  /**
+   * Adds the presentation slides component to the chart
+   * @private
+   */
+  _addPresentationSlides() {
+    const presentationSlides = new PresentationSlides(this.ganttData.presentationSlides);
+    const slidesElement = presentationSlides.render();
+    this.chartWrapper.appendChild(slidesElement);
   }
 
   /**
