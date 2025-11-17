@@ -501,49 +501,62 @@ CRITICAL REQUIREMENTS:
 
 SLIDE STRUCTURE:
 
-NOTE: For slides with narrative content (like Slide 2), always use the "content" field as an array of strings,
-where each string is a paragraph or bullet point. This ensures consistent formatting.
+IMPORTANT: Each slide type has REQUIRED fields that MUST be populated. Slides without these fields will be rejected.
 
-Slide 1 - TITLE SLIDE
-- Professional title that captures the initiative (max 200 chars)
-- Compelling subtitle that frames the strategic context (max 300 chars)
-- Title should be clear and specific, not repetitive
+Slide 1 - TITLE SLIDE (type: "title")
+REQUIRED FIELDS:
+- title: Professional title that captures the initiative (max 200 chars)
+OPTIONAL FIELDS:
+- subtitle: Compelling subtitle that frames the strategic context (max 300 chars)
+Example: { "type": "title", "title": "Digital Transformation Roadmap 2025-2030", "subtitle": "Strategic Initiative for Market Leadership" }
 
-Slide 2 - ELEVATOR PITCH
-- 2-3 paragraph narrative that tells the story (as array of strings)
-- Focus on the "why now" and strategic imperative
-- Should be presentable in 60-90 seconds
-- Each paragraph max 1000 characters
-- Use content field as array: ["paragraph 1...", "paragraph 2...", "paragraph 3..."]
+Slide 2 - ELEVATOR PITCH (type: "narrative")
+REQUIRED FIELDS:
+- title: Section title (e.g., "Strategic Narrative", "Elevator Pitch")
+- content: Array of 2-3 paragraph strings that tell the story
+Example: { "type": "narrative", "title": "Strategic Narrative", "content": ["First paragraph...", "Second paragraph...", "Third paragraph..."] }
+Focus on the "why now" and strategic imperative. Should be presentable in 60-90 seconds. Each paragraph max 1000 characters.
 
-Slide 3 - KEY STRATEGIC DRIVERS
-- Identify 3-4 primary forces driving this initiative
-- Each driver should have:
-  * Clear title (max 150 chars)
-  * Concise description (1-2 sentences, max 500 chars)
-  * Business impact context
+Slide 3 - KEY STRATEGIC DRIVERS (type: "drivers")
+REQUIRED FIELDS:
+- title: Section title (e.g., "Key Strategic Drivers")
+- drivers: Array of 3-4 driver objects, each with:
+  * title: Clear driver name (max 150 chars)
+  * description: Concise explanation (1-2 sentences, max 500 chars)
+Example: { "type": "drivers", "title": "Key Strategic Drivers", "drivers": [{"title": "Market Demand", "description": "Growing customer demand for..."}, ...] }
 
-Slide 4 - CRITICAL DEPENDENCIES
-- Map 2-4 critical cross-functional dependencies
-- For each dependency:
-  * Name the dependency (max 200 chars)
-  * Criticality level (HIGH/MEDIUM, max 100 chars)
-  * Impact if dependency fails (max 500 chars)
-  * Arrow flow to show sequence
+Slide 4 - CRITICAL DEPENDENCIES (type: "dependencies")
+REQUIRED FIELDS:
+- title: Section title (e.g., "Critical Dependencies")
+- dependencies: Array of 2-4 dependency objects, each with:
+  * name: Dependency name (max 200 chars)
+  * criticality: Criticality description (max 100 chars, e.g., "Critical", "High", "Medium")
+  * criticalityLevel: Enum value ("high", "medium", or "low")
+  * impact: Impact description if dependency fails (max 500 chars)
+Example: { "type": "dependencies", "title": "Critical Dependencies", "dependencies": [{"name": "Cloud Infrastructure", "criticality": "Critical", "criticalityLevel": "high", "impact": "System downtime..."}, ...] }
 
-Slide 5 - STRATEGIC RISK MATRIX
-- Identify 3-5 enterprise-level risks
-- For each risk:
-  * Description of the risk (max 500 chars)
-  * Probability badge (high/medium/low)
-  * Impact badge (severe/major/moderate)
+Slide 5 - STRATEGIC RISK MATRIX (type: "risks")
+REQUIRED FIELDS:
+- title: Section title (e.g., "Strategic Risk Matrix", "Risk Assessment")
+- risks: Array of 3-5 risk objects, each with:
+  * description: Risk description (max 500 chars)
+  * probability: Enum value ("high", "medium", or "low")
+  * impact: Enum value ("severe", "major", "moderate", or "minor")
+Example: { "type": "risks", "title": "Strategic Risk Matrix", "risks": [{"description": "Regulatory changes may impact...", "probability": "high", "impact": "severe"}, ...] }
 
-Slide 6 - EXPERT CONVERSATION POINTS
-- 4-6 key insights that demonstrate deep understanding
-- Each insight should include:
-  * Category tag (e.g., "Regulatory", "Market", "Technology" - max 100 chars)
-  * The insight statement (max 500 chars)
-  * Optional: supporting data or context
+Slide 6 - EXPERT CONVERSATION POINTS (type: "insights")
+REQUIRED FIELDS:
+- title: Section title (e.g., "Expert Conversation Points", "Key Insights")
+- insights: Array of 4-6 insight objects, each with:
+  * category: Category tag (e.g., "Regulatory", "Market", "Technology" - max 100 chars)
+  * text: The insight statement (max 500 chars)
+Example: { "type": "insights", "title": "Expert Conversation Points", "insights": [{"category": "Market", "text": "Current market trends indicate..."}, ...] }
+
+OPTIONAL: Additional Simple Slides (type: "simple")
+REQUIRED FIELDS:
+- title: Slide title
+- content: Array of text strings or single text paragraph
+Example: { "type": "simple", "title": "Summary", "content": ["Key takeaway 1", "Key takeaway 2"] }
 
 IMPORTANT DESIGN PRINCIPLES:
 - Keep text concise and scannable

@@ -258,6 +258,11 @@ ${researchTextCache}`;
       console.log(`Job ${jobId}: Raw slidesResponse:`, JSON.stringify(slidesResponse).substring(0, 200));
       presentationSlides = slidesResponse.presentationSlides;
 
+      // Debug: Log the first slide structure
+      if (presentationSlides?.slides?.[0]) {
+        console.log(`Job ${jobId}: First slide structure:`, JSON.stringify(presentationSlides.slides[0], null, 2));
+      }
+
       if (!presentationSlides) {
         console.error(`Job ${jobId}: WARNING - presentationSlides is null/undefined in response. Full response:`, JSON.stringify(slidesResponse));
       } else if (!presentationSlides.slides || presentationSlides.slides.length === 0) {
@@ -265,10 +270,11 @@ ${researchTextCache}`;
       } else {
         console.log(`Job ${jobId}: Presentation slides generated successfully with ${presentationSlides.slides.length} slides`);
 
-        // VALIDATION: Check for and remove duplicate slide titles
+        // VALIDATION: Check for and remove duplicate slide titles and slides without content
         const seenTitles = new Set();
         const uniqueSlides = [];
         let duplicatesRemoved = 0;
+        let emptyContentRemoved = 0;
 
         for (const slide of presentationSlides.slides) {
           const slideTitle = slide.title || '';
@@ -286,6 +292,67 @@ ${researchTextCache}`;
             slide.subtitle = slideSubtitle.substring(0, 300);
           }
 
+          // Validate that slides have required content based on their type
+          let hasRequiredContent = true;
+          switch (slide.type) {
+            case 'title':
+              // Title slides need at least a title
+              if (!slide.title || slide.title.trim().length === 0) {
+                console.warn(`Job ${jobId}: Title slide missing title field`);
+                hasRequiredContent = false;
+              }
+              break;
+            case 'narrative':
+              // Narrative slides need content array
+              if (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0) {
+                console.warn(`Job ${jobId}: Narrative slide "${slideTitle}" missing content array`);
+                hasRequiredContent = false;
+              }
+              break;
+            case 'drivers':
+              // Drivers slides need drivers array
+              if (!slide.drivers || !Array.isArray(slide.drivers) || slide.drivers.length === 0) {
+                console.warn(`Job ${jobId}: Drivers slide "${slideTitle}" missing drivers array`);
+                hasRequiredContent = false;
+              }
+              break;
+            case 'dependencies':
+              // Dependencies slides need dependencies array
+              if (!slide.dependencies || !Array.isArray(slide.dependencies) || slide.dependencies.length === 0) {
+                console.warn(`Job ${jobId}: Dependencies slide "${slideTitle}" missing dependencies array`);
+                hasRequiredContent = false;
+              }
+              break;
+            case 'risks':
+              // Risks slides need risks array
+              if (!slide.risks || !Array.isArray(slide.risks) || slide.risks.length === 0) {
+                console.warn(`Job ${jobId}: Risks slide "${slideTitle}" missing risks array`);
+                hasRequiredContent = false;
+              }
+              break;
+            case 'insights':
+              // Insights slides need insights array
+              if (!slide.insights || !Array.isArray(slide.insights) || slide.insights.length === 0) {
+                console.warn(`Job ${jobId}: Insights slide "${slideTitle}" missing insights array`);
+                hasRequiredContent = false;
+              }
+              break;
+            case 'simple':
+              // Simple slides need content
+              if (!slide.content || (Array.isArray(slide.content) && slide.content.length === 0)) {
+                console.warn(`Job ${jobId}: Simple slide "${slideTitle}" missing content`);
+                hasRequiredContent = false;
+              }
+              break;
+          }
+
+          // Skip slides without required content
+          if (!hasRequiredContent) {
+            emptyContentRemoved++;
+            console.warn(`Job ${jobId}: Removing slide with type "${slide.type}" and title "${slideTitle.substring(0, 50)}..." due to missing content`);
+            continue;
+          }
+
           // Check for duplicate titles
           if (seenTitles.has(slideTitle)) {
             duplicatesRemoved++;
@@ -297,14 +364,14 @@ ${researchTextCache}`;
           uniqueSlides.push(slide);
         }
 
-        if (duplicatesRemoved > 0) {
-          console.log(`Job ${jobId}: Removed ${duplicatesRemoved} duplicate slides. Unique slides: ${uniqueSlides.length}`);
+        if (duplicatesRemoved > 0 || emptyContentRemoved > 0) {
+          console.log(`Job ${jobId}: Validation complete - Removed ${duplicatesRemoved} duplicates and ${emptyContentRemoved} slides with missing content. Valid slides: ${uniqueSlides.length}`);
           presentationSlides.slides = uniqueSlides;
         }
 
         // If we removed too many slides and have less than 3, discard the presentation
         if (uniqueSlides.length < 3) {
-          console.error(`Job ${jobId}: Too many duplicates removed, only ${uniqueSlides.length} unique slides remain. Discarding presentation.`);
+          console.error(`Job ${jobId}: Too many invalid slides removed (${duplicatesRemoved} duplicates, ${emptyContentRemoved} missing content), only ${uniqueSlides.length} valid slides remain. Discarding presentation.`);
           presentationSlides = null;
         }
       }
