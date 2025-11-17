@@ -30,14 +30,22 @@ You MUST respond with *only* a valid JSON object matching the schema.
     - A task in "2022" has \`startCol: 3, endCol: 4\` (if 2020 is col 1).
     - If a date is "Q1 2024" and the interval is "Years", map it to the "2024" column index.
     - If a date is unknown ("null"), the 'bar' object must be \`{ "startCol": null, "endCol": null, "color": "..." }\`.
-5.  **COLORS & LEGEND:** This is a two-step process.
-    a.  **Step 1: Find Cross-Swimlane Themes:** First, analyze ALL tasks from ALL swimlanes. Try to find logical, thematic groupings (e.g., "Regulatory Activity", "Product Launch", "Internal Review").
-    b.  **Step 2: Assign Colors:** The available color names are: "priority-red", "medium-red", "mid-grey", "light-grey", "white", "dark-blue".
-        * **PRIORITY:** You MUST prioritize using the colors in this order: "priority-red" first, then "medium-red", then "mid-grey". Only use "light-grey", "white", and "dark-blue" if you identify more than 3 logical groupings and need more colors.
-        * **IF you find 2-6 strong thematic groupings:** Assign a unique color from the available list (respecting the priority) to each theme. Color ALL tasks belonging to that theme with its assigned color.
-        * **IF you do this:** You MUST populate the 'legend' array, e.g., \`"legend": [{ "color": "priority-red", "label": "Regulatory Activity" }, { "color": "medium-red", "label": "Product Launch" }]\`.
-        * **FALLBACK:** If you *cannot* find any logical themes, then do this instead: assign a *single, different* color (respecting the priority) to each swimlane (e.g., all tasks under "Swimlane A" are "priority-red", all tasks under "Swimlane B" are "medium-red").
-        * **IF you use the FALLBACK:** The 'legend' array MUST be an empty array \`[]\`.
+5.  **COLORS & LEGEND:** This is a two-step process to assign meaningful colors and create a clear legend.
+    a.  **Step 1: Analyze for Cross-Swimlane Themes:** Examine ALL tasks from ALL swimlanes to identify logical thematic groupings that span across multiple swimlanes (e.g., "Regulatory Activity", "Product Launch", "Technical Implementation"). A valid theme must:
+        - Appear in at least 2 different swimlanes
+        - Have a clear, consistent conceptual relationship (not just similar words)
+        - Include at least 2 tasks per theme
+        - Result in 2-6 total distinct themes
+    b.  **Step 2: Choose Coloring Strategy:**
+        * **STRATEGY A (Theme-Based - PREFERRED):** If you identified 2-6 valid cross-swimlane themes in Step 1:
+          - Assign one unique color to each theme from this priority-ordered list: "priority-red", "medium-red", "mid-grey", "light-grey", "white", "dark-blue"
+          - Color ALL tasks belonging to a theme with that theme's color (even across different swimlanes)
+          - Populate the 'legend' array with theme labels: \`"legend": [{ "color": "priority-red", "label": "Regulatory Activity" }, { "color": "medium-red", "label": "Product Launch" }]\`
+        * **STRATEGY B (Swimlane-Based - FALLBACK):** If you did NOT find 2-6 valid cross-swimlane themes:
+          - Assign one unique color to each swimlane from this priority-ordered list: "priority-red", "medium-red", "mid-grey", "light-grey", "white", "dark-blue"
+          - All tasks within the same swimlane get that swimlane's color
+          - Populate the 'legend' array with swimlane names: \`"legend": [{ "color": "priority-red", "label": "Swimlane A Name" }, { "color": "medium-red", "label": "Swimlane B Name" }]\`
+        * **CRITICAL:** The 'legend' array must NEVER be empty. It must always explain what the colors represent (either themes or swimlanes).
 6.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
 
 /**
