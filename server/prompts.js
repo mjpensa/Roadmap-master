@@ -511,15 +511,25 @@ export const PRESENTATION_SLIDES_OUTLINE_SCHEMA = {
   properties: {
     outline: {
       type: "array",
+      minItems: 5,
+      maxItems: 8,
       items: {
         type: "object",
+        required: ["type", "title"],
         properties: {
-          type: { type: "string" },
-          title: { type: "string" }
+          type: {
+            type: "string",
+            enum: ["title", "narrative", "drivers", "dependencies", "risks", "insights", "simple"]
+          },
+          title: {
+            type: "string",
+            maxLength: 150
+          }
         }
       }
     }
-  }
+  },
+  required: ["outline"]
 };
 
 /**
@@ -540,21 +550,41 @@ export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
   properties: {
     slide: {
       type: "object",
+      required: ["type", "title"],
       properties: {
-        type: { type: "string" },
-        title: { type: "string" },
-        subtitle: { type: "string" },
+        type: {
+          type: "string",
+          enum: ["title", "narrative", "drivers", "dependencies", "risks", "insights", "simple"]
+        },
+        title: {
+          type: "string",
+          maxLength: 200
+        },
+        subtitle: {
+          type: "string",
+          maxLength: 300
+        },
         content: {
           type: "array",
-          items: { type: "string" }
+          items: {
+            type: "string",
+            maxLength: 1000
+          }
         },
         drivers: {
           type: "array",
           items: {
             type: "object",
+            required: ["title", "description"],
             properties: {
-              title: { type: "string" },
-              description: { type: "string" }
+              title: {
+                type: "string",
+                maxLength: 150
+              },
+              description: {
+                type: "string",
+                maxLength: 500
+              }
             }
           }
         },
@@ -562,11 +592,24 @@ export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
           type: "array",
           items: {
             type: "object",
+            required: ["name", "criticality", "impact"],
             properties: {
-              name: { type: "string" },
-              criticality: { type: "string" },
-              criticalityLevel: { type: "string" },
-              impact: { type: "string" }
+              name: {
+                type: "string",
+                maxLength: 200
+              },
+              criticality: {
+                type: "string",
+                maxLength: 100
+              },
+              criticalityLevel: {
+                type: "string",
+                enum: ["high", "medium", "low"]
+              },
+              impact: {
+                type: "string",
+                maxLength: 500
+              }
             }
           }
         },
@@ -574,10 +617,20 @@ export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
           type: "array",
           items: {
             type: "object",
+            required: ["description", "probability", "impact"],
             properties: {
-              description: { type: "string" },
-              probability: { type: "string" },
-              impact: { type: "string" }
+              description: {
+                type: "string",
+                maxLength: 500
+              },
+              probability: {
+                type: "string",
+                enum: ["high", "medium", "low"]
+              },
+              impact: {
+                type: "string",
+                enum: ["severe", "major", "moderate", "minor"]
+              }
             }
           }
         },
@@ -585,15 +638,23 @@ export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
           type: "array",
           items: {
             type: "object",
+            required: ["category", "text"],
             properties: {
-              category: { type: "string" },
-              text: { type: "string" }
+              category: {
+                type: "string",
+                maxLength: 100
+              },
+              text: {
+                type: "string",
+                maxLength: 500
+              }
             }
           }
         }
       }
     }
-  }
+  },
+  required: ["slide"]
 };
 
 /**
