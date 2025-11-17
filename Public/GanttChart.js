@@ -10,6 +10,7 @@ import { safeGetElement, findTodayColumnPosition, buildLegend } from './Utils.js
 import { DraggableGantt } from './DraggableGantt.js';
 import { ResizableGantt } from './ResizableGantt.js';
 import { ContextMenu } from './ContextMenu.js';
+import { ExecutiveSummary } from './ExecutiveSummary.js';
 
 /**
  * GanttChart Class
@@ -58,6 +59,12 @@ export class GanttChart {
     // Build chart components
     this._addLogo();
     this._addTitle();
+
+    // Add Executive Summary (if available)
+    if (this.ganttData.executiveSummary) {
+      this._addExecutiveSummary();
+    }
+
     this._createGrid();
     this._addLegend();
     this._addFooterSVG();
@@ -135,6 +142,16 @@ export class GanttChart {
     });
 
     this.chartWrapper.appendChild(this.titleElement);
+  }
+
+  /**
+   * Adds the executive summary component to the chart
+   * @private
+   */
+  _addExecutiveSummary() {
+    const executiveSummary = new ExecutiveSummary(this.ganttData.executiveSummary);
+    const summaryElement = executiveSummary.render();
+    this.chartWrapper.appendChild(summaryElement);
   }
 
   /**

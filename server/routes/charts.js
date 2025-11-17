@@ -11,7 +11,7 @@ import { CONFIG } from '../config.js';
 import { sanitizePrompt, isValidChartId, isValidJobId } from '../utils.js';
 import { createSession, storeChart, getChart, updateChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
 import { callGeminiForJson } from '../gemini.js';
-import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA } from '../prompts.js';
+import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter } from '../middleware.js';
 
 const router = express.Router();
@@ -155,18 +155,82 @@ ${researchTextCache}`;
     // Update progress
     updateJob(jobId, {
       status: 'processing',
+      progress: 'Generating executive summary...'
+    });
+
+    // NEW: Executive Summary Generation
+    let executiveSummary = null;
+    try {
+      console.log(`Job ${jobId}: Generating executive summary from research data...`);
+
+      const executiveSummaryQuery = `${sanitizedPrompt}
+
+Analyze the following research content and generate a comprehensive executive summary that synthesizes strategic insights across all documents.
+
+Research Content:
+${researchTextCache}`;
+
+      const executiveSummaryPayload = {
+        contents: [{ parts: [{ text: executiveSummaryQuery }] }],
+        systemInstruction: { parts: [{ text: EXECUTIVE_SUMMARY_GENERATION_PROMPT }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: EXECUTIVE_SUMMARY_SCHEMA,
+          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
+          temperature: 0.7,
+          topP: CONFIG.API.TOP_P,
+          topK: CONFIG.API.TOP_K
+        }
+      };
+
+      const summaryResponse = await callGeminiForJson(
+        executiveSummaryPayload,
+        CONFIG.API.RETRY_COUNT,
+        (attemptNum, error) => {
+          updateJob(jobId, {
+            status: 'processing',
+            progress: `Retrying executive summary generation (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
+          });
+          console.log(`Job ${jobId}: Retrying executive summary due to error: ${error.message}`);
+        }
+      );
+
+      // Extract the executiveSummary object from the response
+      executiveSummary = summaryResponse.executiveSummary;
+
+      // Add metadata
+      if (executiveSummary && executiveSummary.metadata) {
+        executiveSummary.metadata.lastUpdated = new Date().toISOString();
+        executiveSummary.metadata.documentsCited = researchFilesCache.length;
+      }
+
+      console.log(`Job ${jobId}: Executive summary generated successfully`);
+    } catch (summaryError) {
+      console.error(`Job ${jobId}: Failed to generate executive summary:`, summaryError);
+      // Don't fail the entire job if executive summary fails - just log it
+      executiveSummary = null;
+    }
+
+    // Update progress
+    updateJob(jobId, {
+      status: 'processing',
       progress: 'Finalizing chart...'
     });
 
     // Create session to store research data for future requests
     const sessionId = createSession(researchTextCache, researchFilesCache);
 
-    // Store chart data with unique ID for URL-based sharing
-    const chartId = storeChart(ganttData, sessionId);
+    // Store chart data with unique ID for URL-based sharing (including executive summary)
+    const chartDataWithSummary = {
+      ...ganttData,
+      executiveSummary: executiveSummary
+    };
+    const chartId = storeChart(chartDataWithSummary, sessionId);
 
     // Update job status to complete
     const completeData = {
       ...ganttData,
+      executiveSummary: executiveSummary,
       sessionId,
       chartId
     };
