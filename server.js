@@ -156,15 +156,27 @@ const strictLimiter = rateLimit({
 // --- Session-based storage for research data (fixes memory leak) ---
 const sessionStore = new Map();
 
-// Cleanup old sessions every 5 minutes
+// --- Chart storage for URL-based sharing (Phase 2 Enhancement) ---
+const chartStore = new Map();
+
+// Cleanup old sessions and charts every 5 minutes
 setInterval(() => {
   const now = Date.now();
   const ONE_HOUR = 60 * 60 * 1000;
 
+  // Clean up expired sessions
   for (const [sessionId, session] of sessionStore.entries()) {
     if (now - session.createdAt > ONE_HOUR) {
       sessionStore.delete(sessionId);
       console.log(`Cleaned up expired session: ${sessionId}`);
+    }
+  }
+
+  // Clean up expired charts (1 hour expiration)
+  for (const [chartId, chart] of chartStore.entries()) {
+    if (now - chart.created > ONE_HOUR) {
+      chartStore.delete(chartId);
+      console.log(`Cleaned up expired chart: ${chartId}`);
     }
   }
 }, 5 * 60 * 1000);
@@ -473,16 +485,52 @@ ${researchTextCache}`;
     // 6. Create session to store research data for future requests
     const sessionId = createSession(researchTextCache, researchFilesCache);
 
-    // 7. Send the Gantt data and session ID to the frontend
+    // 7. Store chart data with unique ID for URL-based sharing (Phase 2)
+    const chartId = crypto.randomBytes(16).toString('hex');
+    chartStore.set(chartId, {
+      data: ganttData,
+      sessionId: sessionId, // Link chart to session for analysis/questions
+      created: Date.now()
+    });
+
+    // 8. Send the chart ID and Gantt data to the frontend
     res.json({
       ...ganttData,
-      sessionId // Include session ID for subsequent requests
+      sessionId, // Include session ID for subsequent requests
+      chartId // Include chart ID for URL-based sharing
     });
 
   } catch (e) {
     console.error("API call error:", e);
     res.status(500).json({ error: `Error generating chart data: ${e.message}` });
   }
+});
+
+
+// -------------------------------------------------------------------
+// --- GET CHART BY ID (Phase 2 Enhancement - URL-based sharing) ---
+// -------------------------------------------------------------------
+app.get('/chart/:id', (req, res) => {
+  const chartId = req.params.id;
+
+  // Validate chart ID format (32 hex characters)
+  if (!/^[a-f0-9]{32}$/i.test(chartId)) {
+    return res.status(400).json({ error: 'Invalid chart ID format' });
+  }
+
+  const chart = chartStore.get(chartId);
+  if (!chart) {
+    return res.status(404).json({
+      error: 'Chart not found or expired. Charts are available for 1 hour after generation.'
+    });
+  }
+
+  // Return chart data along with sessionId for subsequent requests
+  res.json({
+    ...chart.data,
+    sessionId: chart.sessionId,
+    chartId: chartId
+  });
 });
 
 

@@ -4,6 +4,9 @@
  * All chart-related functions from main.js have been moved here.
  */
 
+// Phase 2 Enhancement: Import centralized configuration
+import { CONFIG } from './config.js';
+
 // --- SVG Graphics Loading ---
 // Load SVG graphics from external files
 let footerSVG = '';
@@ -80,26 +83,56 @@ function safeQuerySelector(selector, context = '') {
 let ganttData = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Safely parse ganttData from sessionStorage with error handling
-  try {
-    const stored = sessionStorage.getItem('ganttData');
-    if (stored) {
-      ganttData = JSON.parse(stored);
+  // Phase 2 Enhancement: Try loading from URL parameter first
+  const urlParams = new URLSearchParams(window.location.search);
+  const chartId = urlParams.get('id');
 
-      // Validate structure
-      if (!ganttData || typeof ganttData !== 'object') {
-        throw new Error('Invalid gantt data structure');
+  if (chartId) {
+    // Load chart data from server using chart ID
+    try {
+      const response = await fetch(`/chart/${chartId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load chart: ${response.status} ${response.statusText}`);
       }
-
-      if (!Array.isArray(ganttData.data) || !ganttData.timeColumns) {
-        throw new Error('Gantt data missing required fields');
+      ganttData = await response.json();
+      console.log('Chart loaded from URL:', chartId);
+    } catch (error) {
+      console.error('Failed to load chart from URL:', error);
+      const container = safeGetElement('chart-root', 'DOMContentLoaded');
+      if (container) {
+        container.innerHTML = `
+          <div style="font-family: sans-serif; text-align: center; margin-top: 40px;">
+            <h1>${CONFIG.UI.ERROR_MESSAGES.CHART_NOT_FOUND}</h1>
+            <p style="color: #666;">${CONFIG.UI.ERROR_MESSAGES.CHART_EXPIRED}</p>
+            <p style="color: #666;">${CONFIG.UI.ERROR_MESSAGES.CHART_AVAILABILITY}</p>
+          </div>
+        `;
       }
+      return;
     }
-  } catch (error) {
-    console.error('Failed to parse ganttData from sessionStorage:', error);
-    // Clear corrupted data
-    sessionStorage.removeItem('ganttData');
-    ganttData = null;
+  } else {
+    // Fallback: Try loading from sessionStorage (backward compatibility)
+    try {
+      const stored = sessionStorage.getItem('ganttData');
+      if (stored) {
+        ganttData = JSON.parse(stored);
+
+        // Validate structure
+        if (!ganttData || typeof ganttData !== 'object') {
+          throw new Error('Invalid gantt data structure');
+        }
+
+        if (!Array.isArray(ganttData.data) || !ganttData.timeColumns) {
+          throw new Error('Gantt data missing required fields');
+        }
+        console.log('Chart loaded from sessionStorage');
+      }
+    } catch (error) {
+      console.error('Failed to parse ganttData from sessionStorage:', error);
+      // Clear corrupted data
+      sessionStorage.removeItem('ganttData');
+      ganttData = null;
+    }
   }
 
   if (ganttData) {
@@ -107,8 +140,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadSVGs();
     setupChart(ganttData);
   } else {
-    document.getElementById('chart-root').innerHTML =
-      '<h1 style="font-family: sans-serif; text-align: center; margin-top: 40px;">No chart data found. Please close this tab and try generating the chart again.</h1>';
+    const container = safeGetElement('chart-root', 'DOMContentLoaded');
+    if (container) {
+      container.innerHTML = `
+        <h1 style="font-family: sans-serif; text-align: center; margin-top: 40px;">${CONFIG.UI.ERROR_MESSAGES.NO_CHART_DATA}</h1>
+      `;
+    }
   }
 });
 
@@ -175,27 +212,36 @@ function setupChart(ganttData) {
   gridEl.style.gridTemplateColumns = `max-content repeat(${numCols}, 1fr)`;
 
   // --- Create Header Row ---
+  // Phase 2 Enhancement: Use DocumentFragment for better performance
+  const headerFragment = document.createDocumentFragment();
+
   const headerLabel = document.createElement('div');
   headerLabel.className = 'gantt-header gantt-header-label';
-  gridEl.appendChild(headerLabel);
-  
+  headerFragment.appendChild(headerLabel);
+
   for (const colName of ganttData.timeColumns) {
     const headerCell = document.createElement('div');
     headerCell.className = 'gantt-header';
     headerCell.textContent = colName;
-    gridEl.appendChild(headerCell);
+    headerFragment.appendChild(headerCell);
   }
 
+  // Append all header cells at once (single reflow)
+  gridEl.appendChild(headerFragment);
+
   // --- Create Data Rows ---
+  // Phase 2 Enhancement: Use DocumentFragment to batch DOM operations
+  // This prevents multiple reflows and significantly improves performance with 100+ tasks
+  const rowsFragment = document.createDocumentFragment();
+
   for (const row of ganttData.data) {
     const isSwimlane = row.isSwimlane;
-    
+
     // 1. Create Label Cell
     const labelEl = document.createElement('div');
     labelEl.className = `gantt-row-label ${isSwimlane ? 'swimlane' : 'task'}`;
     labelEl.textContent = row.title;
-    gridEl.appendChild(labelEl);
-    
+
     // 2. Create Bar Area
     const barAreaEl = document.createElement('div');
     barAreaEl.className = `gantt-bar-area ${isSwimlane ? 'swimlane' : 'task'}`;
@@ -205,6 +251,8 @@ function setupChart(ganttData) {
     barAreaEl.style.display = 'grid';
 
     // Create individual cell divs within the bar area for proper grid lines
+    // Use fragment here too for inner cells
+    const cellsFragment = document.createDocumentFragment();
     for (let colIndex = 1; colIndex <= numCols; colIndex++) {
       const cellEl = document.createElement('div');
       cellEl.className = 'gantt-time-cell';
@@ -212,8 +260,9 @@ function setupChart(ganttData) {
       cellEl.style.borderLeft = colIndex > 1 ? '1px solid #0D0D0D' : 'none';
       cellEl.style.borderBottom = '1px solid #0D0D0D';
       cellEl.style.height = '100%';
-      barAreaEl.appendChild(cellEl);
+      cellsFragment.appendChild(cellEl);
     }
+    barAreaEl.appendChild(cellsFragment);
 
     // 3. Add the bar (if it's a task and has bar data)
     if (!isSwimlane && row.bar && row.bar.startCol != null) {
@@ -258,8 +307,13 @@ function setupChart(ganttData) {
       });
     }
 
-    gridEl.appendChild(barAreaEl);
+    // Add both label and bar area to the fragment instead of directly to gridEl
+    rowsFragment.appendChild(labelEl);
+    rowsFragment.appendChild(barAreaEl);
   }
+
+  // Append all rows at once (single reflow) - major performance improvement
+  gridEl.appendChild(rowsFragment);
 
   chartWrapper.appendChild(gridEl);
   

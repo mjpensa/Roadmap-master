@@ -3,13 +3,12 @@
  * It handles form submission, API calls, and chart rendering.
  */
 
-// Define supported file types for frontend validation
-const SUPPORTED_FILE_MIMES = [
-    'text/markdown',
-    'text/plain',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-];
-const SUPPORTED_FILE_EXTENSIONS = ['.md', '.txt', '.docx'];
+// Phase 2 Enhancement: Import centralized configuration
+import { CONFIG } from './config.js';
+
+// Define supported file types for frontend validation using centralized config
+const SUPPORTED_FILE_MIMES = CONFIG.FILES.SUPPORTED_MIMES;
+const SUPPORTED_FILE_EXTENSIONS = CONFIG.FILES.SUPPORTED_EXTENSIONS;
 const SUPPORTED_FILES_STRING = SUPPORTED_FILE_EXTENSIONS.join(', ');
 
 // --- Helper function to display errors ---
@@ -225,11 +224,20 @@ async function handleChartGenerate(event) {
     }
 
     // 6. Open in new tab
-    // Store the data in sessionStorage so the new tab can access it
-    sessionStorage.setItem('ganttData', JSON.stringify(ganttData));
-    
-    // Open chart.html in a new tab
-    window.open('/chart.html', '_blank');
+    // Phase 2 Enhancement: Use URL-based sharing if chartId is available
+    if (ganttData.chartId) {
+      // Primary method: Open chart using URL parameter
+      window.open(`/chart.html?id=${ganttData.chartId}`, '_blank');
+      console.log('Chart opened with ID:', ganttData.chartId);
+
+      // Also store in sessionStorage as fallback for backward compatibility
+      sessionStorage.setItem('ganttData', JSON.stringify(ganttData));
+    } else {
+      // Fallback: Use sessionStorage method (for older API responses)
+      sessionStorage.setItem('ganttData', JSON.stringify(ganttData));
+      window.open('/chart.html', '_blank');
+      console.log('Chart opened using sessionStorage (fallback)');
+    }
     
 
   } catch (error) {
