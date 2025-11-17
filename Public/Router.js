@@ -113,10 +113,6 @@ class Router {
                 if (summaryContainer) {
                     summaryContainer.style.display = '';
                     summaryContainer.classList.add('section-isolated');
-                    // Make sure it's expanded
-                    if (this.executiveSummary && this.executiveSummary.collapsed) {
-                        this.executiveSummary.toggle();
-                    }
                 }
                 if (slidesContainer) {
                     slidesContainer.style.display = 'none';
@@ -143,10 +139,6 @@ class Router {
                 if (slidesContainer) {
                     slidesContainer.style.display = '';
                     slidesContainer.classList.add('section-isolated');
-                    // Make sure it's expanded
-                    if (this.presentationSlides && this.presentationSlides.collapsed) {
-                        this.presentationSlides.toggle();
-                    }
                 }
                 break;
 
