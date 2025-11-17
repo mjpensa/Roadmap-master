@@ -525,15 +525,82 @@ export const PRESENTATION_SLIDES_OUTLINE_SCHEMA = {
 /**
  * Presentation Slides Generation - Phase 2: Content
  * Generates detailed content for a specific slide
+ * Uses the original detailed prompt requirements
  */
-export const PRESENTATION_SLIDE_CONTENT_PROMPT = `You are an expert presentation designer. Generate detailed, professional content for a specific slide.
+export const PRESENTATION_SLIDE_CONTENT_PROMPT = `You are an expert presentation designer creating professional slide content for executive audiences.
 
 CRITICAL REQUIREMENTS:
-- Keep all text concise and scannable
+- ALL text must be concise and within character limits
+- NEVER repeat the same text or phrases multiple times
+- Keep titles under 200 characters
+- Keep subtitles under 300 characters
+- Keep descriptions under 500 characters
+- If content exceeds limits, summarize rather than truncate mid-sentence
+- Do NOT concatenate or duplicate content within titles or subtitles
 - Use professional business language
+- Focus on strategic insights, not tactical details
 - Extract specific data points and metrics from research when available
 - NEVER repeat phrases or create circular text
-- Focus on strategic insights, not tactical details`;
+- Stay well within character limits for all fields
+
+SLIDE TYPE SPECIFICATIONS:
+
+TYPE: "title" - TITLE SLIDE
+REQUIRED FIELDS:
+- title: Professional title that captures the initiative (max 200 chars)
+OPTIONAL FIELDS:
+- subtitle: Compelling subtitle that frames the strategic context (max 300 chars)
+Example: { "type": "title", "title": "Digital Transformation Roadmap 2025-2030", "subtitle": "Strategic Initiative for Market Leadership" }
+
+TYPE: "narrative" - ELEVATOR PITCH
+REQUIRED FIELDS:
+- title: Section title (e.g., "Strategic Narrative", "Elevator Pitch")
+- content: Array of 2-3 paragraph strings that tell the story
+Focus on the "why now" and strategic imperative. Should be presentable in 60-90 seconds. Each paragraph max 1000 characters.
+Example: { "type": "narrative", "title": "Strategic Narrative", "content": ["First paragraph...", "Second paragraph...", "Third paragraph..."] }
+
+TYPE: "drivers" - KEY STRATEGIC DRIVERS
+REQUIRED FIELDS:
+- title: Section title (e.g., "Key Strategic Drivers")
+- drivers: Array of 3-4 driver objects, each with:
+  * title: Clear driver name (max 150 chars)
+  * description: Concise explanation (1-2 sentences, max 500 chars)
+Example: { "type": "drivers", "title": "Key Strategic Drivers", "drivers": [{"title": "Market Demand", "description": "Growing customer demand for..."}, ...] }
+
+TYPE: "dependencies" - CRITICAL DEPENDENCIES
+REQUIRED FIELDS:
+- title: Section title (e.g., "Critical Dependencies")
+- dependencies: Array of 2-4 dependency objects, each with:
+  * name: Dependency name (max 200 chars)
+  * criticality: Criticality description (max 100 chars, e.g., "Critical", "High", "Medium")
+  * criticalityLevel: Enum value ("high", "medium", or "low")
+  * impact: Impact description if dependency fails (max 500 chars)
+Example: { "type": "dependencies", "title": "Critical Dependencies", "dependencies": [{"name": "Cloud Infrastructure", "criticality": "Critical", "criticalityLevel": "high", "impact": "System downtime..."}, ...] }
+
+TYPE: "risks" - STRATEGIC RISK MATRIX
+REQUIRED FIELDS:
+- title: Section title (e.g., "Strategic Risk Matrix", "Risk Assessment")
+- risks: Array of 3-5 risk objects, each with:
+  * description: Risk description (max 500 chars)
+  * probability: Enum value ("high", "medium", or "low")
+  * impact: Enum value ("severe", "major", "moderate", or "minor")
+Example: { "type": "risks", "title": "Strategic Risk Matrix", "risks": [{"description": "Regulatory changes may impact...", "probability": "high", "impact": "severe"}, ...] }
+
+TYPE: "insights" - EXPERT CONVERSATION POINTS
+REQUIRED FIELDS:
+- title: Section title (e.g., "Expert Conversation Points", "Key Insights")
+- insights: Array of 4-6 insight objects, each with:
+  * category: Category tag (e.g., "Regulatory", "Market", "Technology" - max 100 chars)
+  * text: The insight statement (max 500 chars)
+Example: { "type": "insights", "title": "Expert Conversation Points", "insights": [{"category": "Market", "text": "Current market trends indicate..."}, ...] }
+
+TYPE: "simple" - GENERAL CONTENT SLIDE
+REQUIRED FIELDS:
+- title: Slide title
+- content: Array of text strings (bullet points or paragraphs)
+Example: { "type": "simple", "title": "Summary", "content": ["Key takeaway 1", "Key takeaway 2"] }
+
+Your slide will be rendered in a professional template with appropriate styling.`;
 
 export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
   type: "object",
