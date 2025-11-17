@@ -35,6 +35,7 @@ export class GanttChart {
     this.contextMenu = null; // Phase 5: Context menu for color changing
     this.isEditMode = false; // Edit mode toggle - default is read-only
     this.titleElement = null; // Reference to the title element for edit mode
+    this.legendElement = null; // Reference to the legend element for edit mode
   }
 
   /**
@@ -359,9 +360,86 @@ export class GanttChart {
    * @private
    */
   _addLegend() {
-    if (this.ganttData.legend && this.ganttData.legend.length > 0) {
-      const legendEl = buildLegend(this.ganttData.legend);
-      this.chartWrapper.appendChild(legendEl);
+    if (!this.ganttData.legend) {
+      this.ganttData.legend = [];
+    }
+
+    // Ensure legend includes all colors used in the chart
+    this._updateLegendWithUsedColors();
+
+    if (this.ganttData.legend.length === 0) return;
+
+    // Build legend with editable labels
+    this.legendElement = document.createElement('div');
+    this.legendElement.className = 'gantt-legend';
+
+    const title = document.createElement('h3');
+    title.className = 'legend-title';
+    title.textContent = 'Legend';
+    this.legendElement.appendChild(title);
+
+    const list = document.createElement('div');
+    list.className = 'legend-list';
+
+    this.ganttData.legend.forEach((item, index) => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'legend-item';
+      itemEl.setAttribute('data-legend-index', index);
+
+      const colorBox = document.createElement('div');
+      colorBox.className = 'legend-color-box';
+      colorBox.setAttribute('data-color', item.color);
+
+      const labelWrapper = document.createElement('span');
+      labelWrapper.className = 'legend-label-wrapper';
+
+      const label = document.createElement('span');
+      label.className = 'legend-label';
+      label.textContent = item.label;
+
+      // Add double-click to edit legend label (only in edit mode)
+      label.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        if (this.isEditMode) {
+          this._makeLegendLabelEditable(label, index);
+        }
+      });
+
+      labelWrapper.appendChild(label);
+      itemEl.appendChild(colorBox);
+      itemEl.appendChild(labelWrapper);
+      list.appendChild(itemEl);
+    });
+
+    this.legendElement.appendChild(list);
+    this.chartWrapper.appendChild(this.legendElement);
+  }
+
+  /**
+   * Refreshes the legend to include any new colors
+   * @private
+   */
+  _refreshLegend() {
+    if (!this.legendElement) return;
+
+    // Check if any new colors need to be added
+    const originalLength = this.ganttData.legend.length;
+    this._updateLegendWithUsedColors();
+
+    // If new colors were added, rebuild the legend
+    if (this.ganttData.legend.length > originalLength) {
+      const wasEditMode = this.isEditMode;
+
+      // Remove old legend
+      this.legendElement.remove();
+
+      // Rebuild legend
+      this._addLegend();
+
+      // Restore edit mode class if needed
+      if (wasEditMode && this.legendElement) {
+        this.legendElement.classList.add('edit-mode-enabled');
+      }
     }
   }
 
@@ -581,6 +659,9 @@ export class GanttChart {
 
           const result = await response.json();
           console.log('✓ Color change persisted to server:', result);
+
+          // Refresh legend to include new color if needed
+          this._refreshLegend();
         } catch (error) {
           console.error('Failed to persist color change:', error);
           throw error; // Re-throw to trigger rollback in ContextMenu
@@ -668,10 +749,13 @@ export class GanttChart {
       this.contextMenu.enable();
     }
 
-    // Add edit-mode class to grid and title to enable CSS-based features
+    // Add edit-mode class to grid, title, and legend to enable CSS-based features
     this.gridElement.classList.add('edit-mode-enabled');
     if (this.titleElement) {
       this.titleElement.classList.add('edit-mode-enabled');
+    }
+    if (this.legendElement) {
+      this.legendElement.classList.add('edit-mode-enabled');
     }
   }
 
@@ -691,10 +775,13 @@ export class GanttChart {
       this.contextMenu.disable();
     }
 
-    // Remove edit-mode class from grid and title to disable CSS-based features
+    // Remove edit-mode class from grid, title, and legend to disable CSS-based features
     this.gridElement.classList.remove('edit-mode-enabled');
     if (this.titleElement) {
       this.titleElement.classList.remove('edit-mode-enabled');
+    }
+    if (this.legendElement) {
+      this.legendElement.classList.remove('edit-mode-enabled');
     }
 
     // Reset all bar cursors to pointer
@@ -952,5 +1039,120 @@ export class GanttChart {
       }
     };
     this.titleElement.addEventListener('keydown', keyHandler);
+  }
+
+  /**
+   * Updates the legend to include all colors used in the gantt chart
+   * @private
+   */
+  _updateLegendWithUsedColors() {
+    // Get all unique colors used in the gantt chart
+    const usedColors = new Set();
+    this.ganttData.data.forEach(row => {
+      if (row.bar && row.bar.color) {
+        usedColors.add(row.bar.color);
+      }
+    });
+
+    // Check which colors are missing from the legend
+    const legendColors = new Set(this.ganttData.legend.map(item => item.color));
+
+    // Add missing colors to the legend with placeholder labels
+    usedColors.forEach(color => {
+      if (!legendColors.has(color)) {
+        this.ganttData.legend.push({
+          color: color,
+          label: `[Define ${this._formatColorName(color)}]`
+        });
+        console.log(`✓ Added new color "${color}" to legend`);
+      }
+    });
+  }
+
+  /**
+   * Formats a color name for display
+   * @param {string} colorKey - The color key (e.g., "priority-red")
+   * @returns {string} Formatted color name (e.g., "Priority Red")
+   * @private
+   */
+  _formatColorName(colorKey) {
+    return colorKey
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  /**
+   * Makes a legend label editable with contenteditable
+   * @param {HTMLElement} labelElement - The legend label element to make editable
+   * @param {number} legendIndex - The index of the legend item in the data array
+   * @private
+   */
+  _makeLegendLabelEditable(labelElement, legendIndex) {
+    const originalText = labelElement.textContent;
+
+    // Make editable
+    labelElement.setAttribute('contenteditable', 'true');
+    labelElement.classList.add('editing');
+    labelElement.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(labelElement);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const saveChanges = async () => {
+      labelElement.setAttribute('contenteditable', 'false');
+      labelElement.classList.remove('editing');
+
+      // Sanitize input - use textContent to prevent XSS
+      const newText = labelElement.textContent.trim();
+
+      // Set as text, not HTML (prevents XSS)
+      labelElement.textContent = newText;
+
+      // Only update if text actually changed
+      if (newText && newText !== originalText) {
+        // Update data model
+        this.ganttData.legend[legendIndex].label = newText;
+
+        console.log(`✓ Legend label updated: "${originalText}" -> "${newText}"`);
+
+        // TODO: Persist to server if needed
+      } else {
+        // Revert if empty or unchanged
+        labelElement.textContent = originalText;
+      }
+    };
+
+    const cancelEdit = () => {
+      labelElement.setAttribute('contenteditable', 'false');
+      labelElement.classList.remove('editing');
+      labelElement.textContent = originalText;
+    };
+
+    // Save on blur
+    const blurHandler = () => {
+      saveChanges();
+      labelElement.removeEventListener('blur', blurHandler);
+    };
+    labelElement.addEventListener('blur', blurHandler);
+
+    // Handle keyboard events
+    const keyHandler = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        labelElement.blur(); // Trigger save
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        labelElement.removeEventListener('blur', blurHandler);
+        cancelEdit();
+        labelElement.removeEventListener('keydown', keyHandler);
+      }
+    };
+    labelElement.addEventListener('keydown', keyHandler);
   }
 }

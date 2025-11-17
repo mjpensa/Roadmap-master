@@ -698,11 +698,43 @@
 .legend-color-box[data-color="dark-blue"] { background-color: #3B82F6; } /* Bright Blue */
 
 
+.legend-label-wrapper {
+  transition: all 0.2s;
+}
+
 .legend-label {
   font-size: 32px; /* Increased from 28px for better readability */
   font-weight: 600; /* Added weight for better visibility */
   color: #FFFFFF; /* Changed from #CCCCCC for maximum contrast */
   line-height: 1.2; /* Better line spacing */
+  transition: all 0.2s;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: -4px -8px; /* Offset padding to maintain alignment */
+  display: inline-block;
+}
+
+/* Show outline on legend label hover when in edit mode */
+.gantt-legend.edit-mode-enabled .legend-label:hover {
+  outline: 2px dashed rgba(80, 175, 123, 0.6);
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.1);
+  cursor: text;
+}
+
+/* Style for legend label when actively being edited */
+.legend-label[contenteditable="true"],
+.legend-label.editing {
+  outline: 2px solid #50AF7B;
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.1);
+  cursor: text;
+}
+
+.legend-label[contenteditable="true"]:focus,
+.legend-label.editing:focus {
+  outline: 2px solid #3C8D62;
+  background-color: rgba(80, 175, 123, 0.15);
 }
 
 /* ------------------------------------------------------------------- */
