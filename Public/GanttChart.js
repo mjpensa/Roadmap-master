@@ -84,6 +84,7 @@ export class GanttChart {
     editModeBtn.className = 'edit-mode-toggle-button';
     editModeBtn.textContent = this.isEditMode ? '🔓 Edit Mode: ON' : '🔒 Edit Mode: OFF';
     editModeBtn.title = 'Toggle edit mode to enable/disable chart customization';
+    editModeBtn.style.backgroundColor = this.isEditMode ? '#50AF7B' : '#BA3930';
     exportContainer.appendChild(editModeBtn);
 
     // Export button
@@ -107,6 +108,13 @@ export class GanttChart {
 
     // Phase 5: Initialize drag-to-edit functionality
     this._initializeDragToEdit();
+
+    // Restore edit mode state if it was enabled before rendering
+    console.log('🔧 Checking edit mode state after render:', this.isEditMode);
+    if (this.isEditMode) {
+      console.log('🔧 Restoring edit mode features after re-render');
+      this._enableAllEditFeatures();
+    }
   }
 
   /**
@@ -809,6 +817,12 @@ export class GanttChart {
    * @private
    */
   _enableAllEditFeatures() {
+    console.log('🔧 _enableAllEditFeatures called, instances:', {
+      draggable: !!this.draggableGantt,
+      resizable: !!this.resizableGantt,
+      contextMenu: !!this.contextMenu
+    });
+
     // Enable drag, resize, and context menu
     if (this.draggableGantt) {
       this.draggableGantt.enableDragging();
