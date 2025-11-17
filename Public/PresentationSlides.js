@@ -353,12 +353,24 @@ export class PresentationSlides {
     header.className = 'simple-title';
     header.textContent = slide.title || 'Summary';
 
-    const text = document.createElement('p');
-    text.className = 'simple-text';
-    text.textContent = slide.content || slide.text || '';
+    const textContainer = document.createElement('div');
+    textContainer.className = 'simple-text';
+
+    // Handle content as array or string for backwards compatibility
+    if (Array.isArray(slide.content)) {
+      slide.content.forEach(item => {
+        const p = document.createElement('p');
+        p.textContent = item;
+        textContainer.appendChild(p);
+      });
+    } else {
+      const p = document.createElement('p');
+      p.textContent = slide.content || slide.text || '';
+      textContainer.appendChild(p);
+    }
 
     content.appendChild(header);
-    content.appendChild(text);
+    content.appendChild(textContainer);
     container.appendChild(content);
   }
 
