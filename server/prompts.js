@@ -577,35 +577,27 @@ export const PRESENTATION_SLIDES_SCHEMA = {
   properties: {
     presentationSlides: {
       type: "object",
-      required: ["slides"],
       properties: {
         slides: {
           type: "array",
-          minItems: 3,
-          maxItems: 10,
           items: {
             type: "object",
-            required: ["type"],
             properties: {
-              type: {
-                type: "string",
-                enum: ["title", "narrative", "drivers", "dependencies", "risks", "insights", "simple"]
-              },
-              title: { type: "string", maxLength: 200 },
-              subtitle: { type: "string", maxLength: 300 },
+              type: { type: "string" },
+              title: { type: "string" },
+              subtitle: { type: "string" },
               content: {
                 type: "array",
-                items: { type: "string", maxLength: 1000 }
+                items: { type: "string" }
               },
               drivers: {
                 type: "array",
                 items: {
                   type: "object",
                   properties: {
-                    title: { type: "string", maxLength: 150 },
-                    description: { type: "string", maxLength: 500 }
-                  },
-                  required: ["title", "description"]
+                    title: { type: "string" },
+                    description: { type: "string" }
+                  }
                 }
               },
               dependencies: {
@@ -613,12 +605,11 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    name: { type: "string", maxLength: 200 },
-                    criticality: { type: "string", maxLength: 100 },
-                    criticalityLevel: { type: "string", enum: ["high", "medium", "low"] },
-                    impact: { type: "string", maxLength: 500 }
-                  },
-                  required: ["name", "criticality", "impact"]
+                    name: { type: "string" },
+                    criticality: { type: "string" },
+                    criticalityLevel: { type: "string" },
+                    impact: { type: "string" }
+                  }
                 }
               },
               risks: {
@@ -626,11 +617,10 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    description: { type: "string", maxLength: 500 },
-                    probability: { type: "string", enum: ["high", "medium", "low"] },
-                    impact: { type: "string", enum: ["severe", "major", "moderate", "minor"] }
-                  },
-                  required: ["description", "probability", "impact"]
+                    description: { type: "string" },
+                    probability: { type: "string" },
+                    impact: { type: "string" }
+                  }
                 }
               },
               insights: {
@@ -638,10 +628,9 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    category: { type: "string", maxLength: 100 },
-                    text: { type: "string", maxLength: 500 }
-                  },
-                  required: ["category", "text"]
+                    category: { type: "string" },
+                    text: { type: "string" }
+                  }
                 }
               }
             }
@@ -649,6 +638,5 @@ export const PRESENTATION_SLIDES_SCHEMA = {
         }
       }
     }
-  },
-  required: ["presentationSlides"]
+  }
 };
