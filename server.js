@@ -516,6 +516,10 @@ ${researchTextCache}`;
     // 5. Call the API
     const ganttData = await callGeminiForJson(payload);
 
+    // Debug: Log what we received from AI
+    console.log(`Job ${jobId}: Received ganttData from AI with keys:`, Object.keys(ganttData || {}));
+    console.log(`Job ${jobId}: Has timeColumns:`, !!ganttData?.timeColumns, 'Has data:', !!ganttData?.data);
+
     // Update progress
     jobStore.set(jobId, {
       status: 'processing',
@@ -535,16 +539,21 @@ ${researchTextCache}`;
     });
 
     // 8. Update job status to complete
+    const completeData = {
+      ...ganttData,
+      sessionId,
+      chartId
+    };
+    console.log(`Job ${jobId}: Setting complete status with data keys:`, Object.keys(completeData));
+
     jobStore.set(jobId, {
       status: 'complete',
       progress: 'Chart generated successfully!',
-      data: {
-        ...ganttData,
-        sessionId,
-        chartId
-      },
+      data: completeData,
       createdAt: jobStore.get(jobId).createdAt
     });
+
+    console.log(`Job ${jobId}: Successfully completed`);
 
   } catch (error) {
     console.error(`Job ${jobId} failed:`, error);
@@ -566,6 +575,8 @@ app.post('/generate-chart', strictLimiter, upload.array('researchFiles'), async 
   // Generate unique job ID
   const jobId = crypto.randomBytes(16).toString('hex');
 
+  console.log(`Creating new job ${jobId} with ${req.files?.length || 0} files`);
+
   // Initialize job in the store
   jobStore.set(jobId, {
     status: 'queued',
@@ -579,6 +590,8 @@ app.post('/generate-chart', strictLimiter, upload.array('researchFiles'), async 
     status: 'processing',
     message: 'Chart generation started. Poll /job/:id for status updates.'
   });
+
+  console.log(`Job ${jobId} queued, starting background processing...`);
 
   // Process the chart generation asynchronously in the background
   // This prevents timeout issues and improves perceived performance
@@ -597,30 +610,37 @@ app.get('/job/:id', apiLimiter, (req, res) => {
 
   // Validate job ID format (32 hex characters)
   if (!/^[a-f0-9]{32}$/i.test(jobId)) {
+    console.log(`Invalid job ID format: ${jobId}`);
     return res.status(400).json({ error: 'Invalid job ID format' });
   }
 
   const job = jobStore.get(jobId);
   if (!job) {
+    console.log(`Job not found: ${jobId}`);
     return res.status(404).json({
       error: 'Job not found or expired. Jobs are available for 1 hour.'
     });
   }
 
+  console.log(`Job ${jobId} status check: ${job.status}`);
+
   // Return job status
   if (job.status === 'complete') {
+    console.log(`Job ${jobId} complete, returning data with keys:`, Object.keys(job.data || {}));
     res.json({
       status: job.status,
       progress: job.progress,
       data: job.data
     });
   } else if (job.status === 'error') {
+    console.log(`Job ${jobId} error: ${job.error}`);
     res.json({
       status: job.status,
       error: job.error
     });
   } else {
     // Processing or queued
+    console.log(`Job ${jobId} still ${job.status}: ${job.progress}`);
     res.json({
       status: job.status,
       progress: job.progress
