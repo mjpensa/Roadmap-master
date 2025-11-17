@@ -18,9 +18,6 @@ function displayError(message) {
     errorMessage.style.display = 'block';
 }
 
-// Track current upload mode
-let uploadMode = 'files'; // 'files' or 'folder'
-
 // Store files from drag-and-drop (since we can't set input.files programmatically)
 let storedFiles = null;
 
@@ -59,12 +56,8 @@ function updateFolderStats(files, validFiles) {
     totalSize.textContent = formatFileSize(size);
     fileTypes.textContent = Array.from(types).join(', ') || 'None';
 
-    // Show stats only in folder mode
-    if (uploadMode === 'folder') {
-        folderStats.classList.remove('hidden');
-    } else {
-        folderStats.classList.add('hidden');
-    }
+    // Always hide folder stats (only file mode is supported)
+    folderStats.classList.add('hidden');
 }
 
 // --- Helper to trigger file processing logic using a FileList object ---
@@ -188,65 +181,19 @@ async function processFiles(files) {
     fileListContainer.classList.remove('hidden');
 }
 
-
-// --- Function to set upload mode ---
-function setUploadMode(mode) {
-  uploadMode = mode;
-  const uploadInput = document.getElementById('upload-input');
-  const fileModeBtn = document.getElementById('file-mode-btn');
-  const folderModeBtn = document.getElementById('folder-mode-btn');
-  const dropzoneTitle = document.getElementById('dropzone-title');
-
-  // Reset selection
-  uploadInput.value = '';
-  storedFiles = null; // Clear stored files when switching modes
-  document.getElementById('dropzone-prompt').classList.remove('hidden');
-  document.getElementById('file-list-container').classList.add('hidden');
-
-  if (mode === 'folder') {
-    // Enable folder upload
-    uploadInput.setAttribute('webkitdirectory', '');
-    uploadInput.setAttribute('directory', '');
-    uploadInput.removeAttribute('multiple');
-
-    // Update UI
-    dropzoneTitle.textContent = 'Drop folder here or click to browse';
-    folderModeBtn.classList.remove('bg-gray-700', 'text-gray-300');
-    folderModeBtn.classList.add('bg-custom-button', 'text-white');
-    fileModeBtn.classList.remove('bg-custom-button', 'text-white');
-    fileModeBtn.classList.add('bg-gray-700', 'text-gray-300');
-  } else {
-    // Enable file upload
-    uploadInput.removeAttribute('webkitdirectory');
-    uploadInput.removeAttribute('directory');
-    uploadInput.setAttribute('multiple', '');
-
-    // Update UI
-    dropzoneTitle.textContent = 'Drop files here or click to browse';
-    fileModeBtn.classList.remove('bg-gray-700', 'text-gray-300');
-    fileModeBtn.classList.add('bg-custom-button', 'text-white');
-    folderModeBtn.classList.remove('bg-custom-button', 'text-white');
-    folderModeBtn.classList.add('bg-gray-700', 'text-gray-300');
-  }
-}
-
 // --- Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
   const ganttForm = document.getElementById('gantt-form');
   const uploadInput = document.getElementById('upload-input');
   const dropzoneLabel = document.querySelector('.dropzone-container');
-  const fileModeBtn = document.getElementById('file-mode-btn');
-  const folderModeBtn = document.getElementById('folder-mode-btn');
 
   // Check if all required elements exist
-  if (!ganttForm || !uploadInput || !dropzoneLabel || !fileModeBtn || !folderModeBtn) {
+  if (!ganttForm || !uploadInput || !dropzoneLabel) {
     console.error('Required DOM elements not found. Please clear your browser cache and reload.');
     console.error('Missing elements:', {
       ganttForm: !!ganttForm,
       uploadInput: !!uploadInput,
-      dropzoneLabel: !!dropzoneLabel,
-      fileModeBtn: !!fileModeBtn,
-      folderModeBtn: !!folderModeBtn
+      dropzoneLabel: !!dropzoneLabel
     });
     alert('Error: Page elements not loaded correctly. Please clear your browser cache (Ctrl+Shift+Delete or Cmd+Shift+Delete) and reload the page.');
     return;
@@ -254,11 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ganttForm.addEventListener('submit', handleChartGenerate);
 
-  // Mode toggle handlers
-  fileModeBtn.addEventListener('click', () => setUploadMode('files'));
-  folderModeBtn.addEventListener('click', () => setUploadMode('folder'));
-
-  // File/folder selection handler
+  // File selection handler
   uploadInput.addEventListener('change', (e) => {
     processFiles(e.target.files);
   });
