@@ -225,12 +225,26 @@ function setUploadMode(mode) {
 // --- Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
   const ganttForm = document.getElementById('gantt-form');
-  ganttForm.addEventListener('submit', handleChartGenerate);
-
   const uploadInput = document.getElementById('upload-input');
   const dropzoneLabel = document.querySelector('.dropzone-container');
   const fileModeBtn = document.getElementById('file-mode-btn');
   const folderModeBtn = document.getElementById('folder-mode-btn');
+
+  // Check if all required elements exist
+  if (!ganttForm || !uploadInput || !dropzoneLabel || !fileModeBtn || !folderModeBtn) {
+    console.error('Required DOM elements not found. Please clear your browser cache and reload.');
+    console.error('Missing elements:', {
+      ganttForm: !!ganttForm,
+      uploadInput: !!uploadInput,
+      dropzoneLabel: !!dropzoneLabel,
+      fileModeBtn: !!fileModeBtn,
+      folderModeBtn: !!folderModeBtn
+    });
+    alert('Error: Page elements not loaded correctly. Please clear your browser cache (Ctrl+Shift+Delete or Cmd+Shift+Delete) and reload the page.');
+    return;
+  }
+
+  ganttForm.addEventListener('submit', handleChartGenerate);
 
   // Mode toggle handlers
   fileModeBtn.addEventListener('click', () => setUploadMode('files'));
@@ -408,6 +422,13 @@ async function handleChartGenerate(event) {
     // 1. Get form data
     const promptInput = document.getElementById('prompt-input');
     const uploadInput = document.getElementById('upload-input');
+
+    // Check if elements exist
+    if (!uploadInput || !promptInput) {
+      displayError('Error: Page not loaded correctly. Please clear your browser cache and reload.');
+      console.error('Missing elements in handleChartGenerate:', { uploadInput: !!uploadInput, promptInput: !!promptInput });
+      return;
+    }
 
     // 2. Validate inputs
     if (uploadInput.files.length === 0) {
