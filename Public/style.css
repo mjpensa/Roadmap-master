@@ -15,7 +15,7 @@
   width: 100%;
   border: 1px solid #0D0D0D; /* Darker border (using grid line color) */
   border-radius: 8px;
-  background-color: #282828; /* Chart Background */
+  background-color: #0c2340; /* Chart Background */
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   overflow: hidden;
   margin-top: 24px;
@@ -603,7 +603,7 @@
   border: 1px solid #383838;
   border-radius: 6px;
   padding: 12px;
-  background-color: #282828; /* Match chart background */
+  background-color: #0c2340; /* Match chart background */
   margin-bottom: 12px;
 }
 
@@ -656,7 +656,7 @@
   border-radius: 6px;
   padding: 8px 12px;
   color: #FFFFFF;
-  background-color: #282828;
+  background-color: #0c2340;
 }
 
 .chat-send-btn {
@@ -1665,7 +1665,7 @@ body.dragging {
 
 /* Main Container */
 .executive-summary-container {
-  background: linear-gradient(135deg, #1a1a1a 0%, #282828 100%);
+  background: linear-gradient(135deg, #0c2340 0%, #0d2748 100%);
   border: 1px solid #0D0D0D;
   border-radius: 12px;
   margin: 20px 0;
@@ -2247,7 +2247,7 @@ body.dragging {
 
 /* Main Container */
 .presentation-slides-container {
-  background: linear-gradient(135deg, #1a1a1a 0%, #282828 100%);
+  background: linear-gradient(135deg, #0c2340 0%, #0d2748 100%);
   border: 1px solid #0D0D0D;
   border-radius: 12px;
   margin: 20px 0;
