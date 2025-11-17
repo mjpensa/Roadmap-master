@@ -469,8 +469,10 @@ router.post('/generate-chart', strictLimiter, async (req, res) => {
 /**
  * GET /job/:id
  * Retrieves the status of a chart generation job
+ * Note: No rate limiting applied since this is a lightweight status check
+ * and clients poll frequently (every 1 second) during job processing
  */
-router.get('/job/:id', apiLimiter, (req, res) => {
+router.get('/job/:id', (req, res) => {
   const jobId = req.params.id;
 
   // Validate job ID format
