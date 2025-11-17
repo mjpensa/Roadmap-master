@@ -90,8 +90,19 @@ ${researchTextCache}`;
       }
     };
 
-    // Call the API
-    const ganttData = await callGeminiForJson(payload);
+    // Call the API with retry callback to update job status
+    const ganttData = await callGeminiForJson(
+      payload,
+      CONFIG.API.RETRY_COUNT,
+      (attemptNum, error) => {
+        // Update job status to show retry attempt
+        updateJob(jobId, {
+          status: 'processing',
+          progress: `Retrying AI request (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
+        });
+        console.log(`Job ${jobId}: Retrying due to error: ${error.message}`);
+      }
+    );
 
     // Debug: Log what we received from AI
     console.log(`Job ${jobId}: Received ganttData from AI with keys:`, Object.keys(ganttData || {}));
