@@ -681,11 +681,23 @@ app.get('/job/:id', apiLimiter, (req, res) => {
 
     console.log(`Job ${jobId}: Data validation passed before sending - timeColumns: ${job.data.timeColumns.length}, data: ${job.data.data.length}`);
 
-    res.json({
+    // Log the exact response structure being sent
+    const response = {
       status: job.status,
       progress: job.progress,
       data: job.data
+    };
+    console.log(`Job ${jobId}: Sending response with structure:`, {
+      status: response.status,
+      progress: response.progress,
+      dataKeys: Object.keys(response.data),
+      dataHasTimeColumns: Array.isArray(response.data.timeColumns),
+      dataHasData: Array.isArray(response.data.data),
+      timeColumnsLength: response.data.timeColumns?.length,
+      dataLength: response.data.data?.length
     });
+
+    res.json(response);
   } else if (job.status === 'error') {
     console.log(`Job ${jobId} error: ${job.error}`);
     res.json({

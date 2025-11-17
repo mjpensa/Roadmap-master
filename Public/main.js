@@ -191,6 +191,22 @@ async function pollForJobCompletion(jobId, generateBtn) {
       if (job.status === 'complete') {
         console.log('Job completed successfully');
         console.log('Job data structure:', Object.keys(job.data || {}));
+
+        // *** ENHANCED DEBUG: Log exact structure received from server ***
+        console.log('=== DETAILED DATA STRUCTURE RECEIVED ===');
+        console.log('job.data exists:', !!job.data);
+        console.log('job.data type:', typeof job.data);
+        console.log('job.data keys:', job.data ? Object.keys(job.data) : 'N/A');
+        console.log('job.data.timeColumns exists:', job.data ? !!job.data.timeColumns : false);
+        console.log('job.data.timeColumns type:', job.data?.timeColumns ? typeof job.data.timeColumns : 'N/A');
+        console.log('job.data.timeColumns is array:', job.data?.timeColumns ? Array.isArray(job.data.timeColumns) : false);
+        console.log('job.data.timeColumns value:', job.data?.timeColumns);
+        console.log('job.data.data exists:', job.data ? !!job.data.data : false);
+        console.log('job.data.data type:', job.data?.data ? typeof job.data.data : 'N/A');
+        console.log('job.data.data is array:', job.data?.data ? Array.isArray(job.data.data) : false);
+        console.log('job.data.data value:', job.data?.data);
+        console.log('========================================');
+
         return job.data; // Return the chart data
       } else if (job.status === 'error') {
         throw new Error(job.error || 'Job failed with unknown error');
