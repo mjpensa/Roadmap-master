@@ -58,7 +58,8 @@ export class DraggableGantt {
    */
   _handleDragStart(event) {
     const bar = event.target;
-    const barArea = bar.parentElement;
+    // Phase 1 Fix: Use closest() for more reliable parent element finding
+    const barArea = bar.closest('.gantt-bar-area');
     const gridColumnStyle = bar.style.gridColumn;
 
     console.log('🚀 Drag started! Bar gridColumn:', gridColumnStyle);
@@ -67,9 +68,11 @@ export class DraggableGantt {
     const [startCol, endCol] = gridColumnStyle.split('/').map(v => parseInt(v.trim()));
     const duration = endCol - startCol;
 
-    // Find the task data
-    const taskIndex = this._findTaskIndexByBar(bar);
-    if (taskIndex === -1) {
+    // Phase 1 Fix: Use data attributes for row identification
+    const rowId = barArea.getAttribute('data-row-id');
+    const taskIndex = parseInt(barArea.getAttribute('data-task-index'));
+
+    if (taskIndex === -1 || isNaN(taskIndex)) {
       console.error('Could not find task for dragged bar');
       return;
     }
@@ -77,6 +80,7 @@ export class DraggableGantt {
     this.draggedTask = {
       element: bar,
       barArea: barArea,
+      rowId: rowId, // Phase 1: Store row ID instead of just element reference
       originalStartCol: startCol,
       originalEndCol: endCol,
       duration: duration,
@@ -92,6 +96,7 @@ export class DraggableGantt {
 
     console.log('📦 Dragged task info:', {
       taskName: this.draggedTask.taskData.title,
+      rowId: rowId,
       originalStartCol: startCol,
       originalEndCol: endCol,
       duration: duration,
@@ -123,15 +128,30 @@ export class DraggableGantt {
    */
   _handleDragOver(event) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
 
     // Only allow drop on the same row where the drag started
     if (!this.draggedTask) return;
 
-    const barArea = event.currentTarget;
-    if (barArea !== this.draggedTask.barArea) {
+    // Phase 1 Fix: Find the target bar area using closest() for reliability
+    const targetBarArea = event.target.closest('.gantt-bar-area');
+    if (!targetBarArea) {
       event.dataTransfer.dropEffect = 'none';
       return;
+    }
+
+    const targetRowId = targetBarArea.getAttribute('data-row-id');
+
+    // Phase 1 Fix: Compare row IDs instead of element references
+    if (targetRowId !== this.draggedTask.rowId) {
+      event.dataTransfer.dropEffect = 'none';
+      // Add visual feedback for invalid drop
+      targetBarArea.classList.add('invalid-drop-zone');
+    } else {
+      event.dataTransfer.dropEffect = 'move';
+      // Add visual feedback for valid drop
+      targetBarArea.classList.add('valid-drop-zone');
+      // Remove invalid class if previously added
+      targetBarArea.classList.remove('invalid-drop-zone');
     }
   }
 
@@ -144,17 +164,26 @@ export class DraggableGantt {
     event.preventDefault();
     event.stopPropagation();
 
-    console.log('🎯 Drop event fired!', event.currentTarget);
+    console.log('🎯 Drop event fired!');
 
-    const barArea = event.currentTarget;
+    // Phase 1 Fix: Use closest() to find bar area
+    const barArea = event.target.closest('.gantt-bar-area');
 
     if (!this.draggedTask) {
       console.warn('No dragged task found');
       return;
     }
 
-    // Only allow drop on the same row
-    if (barArea !== this.draggedTask.barArea) {
+    if (!barArea) {
+      console.warn('Could not find bar area for drop');
+      this._rollbackDrag();
+      return;
+    }
+
+    const targetRowId = barArea.getAttribute('data-row-id');
+
+    // Phase 1 Fix: Only allow drop on the same row using row ID comparison
+    if (targetRowId !== this.draggedTask.rowId) {
       console.warn('Cannot drop on a different row');
       this._rollbackDrag();
       return;
@@ -235,6 +264,12 @@ export class DraggableGantt {
 
       console.log('✓ Bar visual properties restored. Final gridColumn:', this.draggedTask.element.style.gridColumn);
     }
+
+    // Phase 1: Clean up visual feedback classes from all bar areas
+    const allBarAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
+    allBarAreas.forEach(barArea => {
+      barArea.classList.remove('valid-drop-zone', 'invalid-drop-zone');
+    });
 
     // Remove drag indicator
     this._removeDragIndicator();

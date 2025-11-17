@@ -66,6 +66,80 @@
   border-bottom: 1px solid #0D0D0D; /* Grid line color */
   white-space: nowrap; /* Prevent text wrapping - column will auto-expand */
   overflow: visible; /* Allow text to be fully visible */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Phase 3: Label content wrapper */
+.gantt-row-label .label-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Phase 3: Row action buttons */
+.row-actions {
+  display: none; /* Hidden by default */
+  gap: 4px;
+  align-items: center;
+}
+
+.gantt-row-label:hover .row-actions {
+  display: flex; /* Show on hover */
+}
+
+.row-action-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+  padding: 0;
+}
+
+.row-action-btn.add-task {
+  background-color: #50AF7B;
+  color: white;
+}
+
+.row-action-btn.add-task:hover {
+  background-color: #3C8D62;
+  transform: scale(1.1);
+}
+
+.row-action-btn.delete-task {
+  background-color: #BA3930;
+  color: white;
+}
+
+.row-action-btn.delete-task:hover {
+  background-color: #9A2F28;
+  transform: scale(1.1);
+}
+
+/* Phase 4: Editable label styles */
+.label-content[contenteditable="true"],
+.label-content.editing {
+  outline: 2px solid #50AF7B;
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.1);
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: text;
+}
+
+.label-content[contenteditable="true"]:focus,
+.label-content.editing:focus {
+  outline: 2px solid #3C8D62;
+  background-color: rgba(80, 175, 123, 0.15);
 }
 
 .gantt-row-label.swimlane {
@@ -129,8 +203,41 @@
   border-radius: 4px;
   color: white;
   z-index: 2; /* Above time cells (which are z-index 1) */
-  overflow: hidden;
+  overflow: visible; /* Changed to visible for resize handles */
   grid-row: 1; /* Always on the first (and only) row of its container */
+}
+
+/* Phase 2: Resize handles using pseudo-elements */
+.gantt-bar::before,
+.gantt-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 80%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.gantt-bar::before {
+  left: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+.gantt-bar::after {
+  right: 0;
+  border-radius: 0 3px 3px 0;
+}
+
+.gantt-bar:hover::before,
+.gantt-bar:hover::after,
+.gantt-bar.resizing::before,
+.gantt-bar.resizing::after {
+  opacity: 1;
 }
 
 /* Bar Colors (HIGH CONTRAST PALETTE) */
@@ -574,4 +681,75 @@ body.dragging {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* Phase 1: Visual feedback for drop zones */
+.gantt-bar-area.valid-drop-zone {
+  background-color: rgba(80, 175, 123, 0.15) !important; /* Green tint for valid drop */
+  outline: 2px dashed rgba(80, 175, 123, 0.5);
+  outline-offset: -2px;
+  transition: background-color 0.15s ease, outline 0.15s ease;
+}
+
+.gantt-bar-area.invalid-drop-zone {
+  background-color: rgba(186, 57, 48, 0.15) !important; /* Red tint for invalid drop */
+  outline: 2px dashed rgba(186, 57, 48, 0.5);
+  outline-offset: -2px;
+  transition: background-color 0.15s ease, outline 0.15s ease;
+}
+
+/* ------------------------------------------------------------------- */
+/* --- PHASE 5: CONTEXT MENU STYLES --- */
+/* ------------------------------------------------------------------- */
+
+.context-menu {
+  position: absolute;
+  background-color: #1A1A1A;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  min-width: 200px;
+  z-index: 10000;
+  display: none;
+  overflow: hidden;
+}
+
+.context-menu-title {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: #0c2340;
+  border-bottom: 1px solid #383838;
+}
+
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #FFFFFF;
+}
+
+.color-option:hover {
+  background-color: #354259;
+}
+
+.color-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+.color-label {
+  font-size: 14px;
+  color: #CCCCCC;
+}
+
+.color-option:hover .color-label {
+  color: #FFFFFF;
 }
