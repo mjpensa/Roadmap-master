@@ -62,6 +62,8 @@ export class DraggableGantt {
     const barArea = bar.parentElement;
     const gridColumnStyle = bar.style.gridColumn;
 
+    console.log('🚀 Drag started! Bar gridColumn:', gridColumnStyle);
+
     // Parse grid column (e.g., "2 / 5" -> startCol: 2, endCol: 5)
     const [startCol, endCol] = gridColumnStyle.split('/').map(v => parseInt(v.trim()));
     const duration = endCol - startCol;
@@ -89,8 +91,18 @@ export class DraggableGantt {
       endCol: endCol
     };
 
+    console.log('📦 Dragged task info:', {
+      taskName: this.draggedTask.taskData.title,
+      originalStartCol: startCol,
+      originalEndCol: endCol,
+      duration: duration,
+      taskIndex: taskIndex
+    });
+
     // Add visual feedback
     bar.style.opacity = '0.5';
+    bar.style.pointerEvents = 'none'; // Allow drop events to pass through to cells below
+    bar.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/html', bar.innerHTML);
 
@@ -131,14 +143,27 @@ export class DraggableGantt {
     event.preventDefault();
     event.stopPropagation();
 
+    console.log('🎯 Drop event fired!', event.currentTarget);
+
     const cell = event.currentTarget;
     cell.style.backgroundColor = '';
 
-    if (!this.draggedTask) return;
+    if (!this.draggedTask) {
+      console.warn('No dragged task found');
+      return;
+    }
 
     // Calculate the new column position
     const newStartCol = this._getColumnFromCell(cell);
     const newEndCol = newStartCol + this.draggedTask.duration;
+
+    console.log('📍 Drop position calculated:', {
+      newStartCol,
+      newEndCol,
+      duration: this.draggedTask.duration,
+      originalStartCol: this.draggedTask.originalStartCol,
+      originalEndCol: this.draggedTask.originalEndCol
+    });
 
     // Validate the new position
     const numCols = this.ganttData.timeColumns.length;
@@ -149,6 +174,7 @@ export class DraggableGantt {
     }
 
     // Update the visual position
+    console.log(`Updating bar gridColumn to: ${newStartCol} / ${newEndCol}`);
     this.draggedTask.element.style.gridColumn = `${newStartCol} / ${newEndCol}`;
 
     // Update the data model
@@ -186,9 +212,15 @@ export class DraggableGantt {
    * @private
    */
   _handleDragEnd(event) {
+    console.log('🏁 Drag ended');
+
     if (this.draggedTask) {
-      // Restore opacity
+      // Restore opacity and pointer events
       this.draggedTask.element.style.opacity = '1';
+      this.draggedTask.element.style.pointerEvents = '';
+      this.draggedTask.element.classList.remove('dragging');
+
+      console.log('✓ Bar visual properties restored. Final gridColumn:', this.draggedTask.element.style.gridColumn);
     }
 
     // Remove drag indicator
@@ -209,7 +241,12 @@ export class DraggableGantt {
    * @private
    */
   _rollbackDrag() {
-    if (!this.draggedTask || !this.originalPosition) return;
+    console.warn('⚠️ Rolling back drag operation');
+
+    if (!this.draggedTask || !this.originalPosition) {
+      console.warn('Cannot rollback: missing draggedTask or originalPosition');
+      return;
+    }
 
     // Restore visual position
     this.draggedTask.element.style.gridColumn =
@@ -219,7 +256,7 @@ export class DraggableGantt {
     this.ganttData.data[this.draggedTask.taskIndex].bar.startCol = this.originalPosition.startCol;
     this.ganttData.data[this.draggedTask.taskIndex].bar.endCol = this.originalPosition.endCol;
 
-    console.log('Drag operation rolled back');
+    console.log('✓ Drag operation rolled back to:', this.originalPosition);
   }
 
   /**
@@ -255,9 +292,19 @@ export class DraggableGantt {
    * @private
    */
   _getColumnFromCell(cell) {
+    // First try to get from inline style
+    if (cell.style.gridColumn) {
+      const col = parseInt(cell.style.gridColumn.toString().split('/')[0].trim());
+      console.log('Column from inline style:', col);
+      return col;
+    }
+
+    // Fall back to computed style
     const cellStyle = window.getComputedStyle(cell);
-    const gridColumn = cellStyle.gridColumn || cell.style.gridColumn;
-    return parseInt(gridColumn.split('/')[0].trim());
+    const gridColumn = cellStyle.gridColumn;
+    const col = parseInt(gridColumn.toString().split('/')[0].trim());
+    console.log('Column from computed style:', col, 'raw:', gridColumn);
+    return col;
   }
 
   /**
