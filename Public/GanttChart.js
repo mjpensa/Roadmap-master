@@ -66,12 +66,11 @@ export class GanttChart {
     this.chartWrapper.id = 'gantt-chart-container';
 
     // Build chart components
-    this._addLogo();
-
     // Add stripe above Gantt chart
     this._addHeaderSVG();
 
     this._addTitle();
+    this._addLogo(); // Logo added after title so we can calculate proper alignment
     this._createGrid();
     this._addLegend();
 
@@ -145,14 +144,32 @@ export class GanttChart {
     const logoImg = document.createElement('img');
     logoImg.src = '/bip_logo.png';
     logoImg.alt = 'BIP Logo';
+    logoImg.className = 'gantt-logo';
 
     // Apply inline styles for positioning
     logoImg.style.position = 'absolute';
-    logoImg.style.top = '31px'; // Adjusted to keep logo centered in thicker title cell (29px padding)
     logoImg.style.right = '32px';
     logoImg.style.height = `${CONFIG.SIZES.LOGO_HEIGHT}px`;
     logoImg.style.width = 'auto';
     logoImg.style.zIndex = '10';
+
+    // Calculate vertical center position based on title element
+    // This ensures the logo is always perfectly aligned with the title text
+    if (this.titleElement) {
+      // Use requestAnimationFrame to ensure the title element is fully rendered
+      requestAnimationFrame(() => {
+        const titleRect = this.titleElement.getBoundingClientRect();
+        const titleHeight = this.titleElement.offsetHeight;
+        const logoHeight = CONFIG.SIZES.LOGO_HEIGHT;
+
+        // Calculate the top position to center the logo vertically with the title
+        const topPosition = (titleHeight - logoHeight) / 2;
+        logoImg.style.top = `${topPosition}px`;
+      });
+    } else {
+      // Fallback to old position if title doesn't exist (shouldn't happen)
+      logoImg.style.top = '31px';
+    }
 
     this.chartWrapper.appendChild(logoImg);
   }
