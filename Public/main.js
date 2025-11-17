@@ -21,6 +21,9 @@ function displayError(message) {
 // Track current upload mode
 let uploadMode = 'files'; // 'files' or 'folder'
 
+// Store files from drag-and-drop (since we can't set input.files programmatically)
+let storedFiles = null;
+
 // --- Helper to format file size ---
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -173,9 +176,13 @@ async function processFiles(files) {
 
     fileList.appendChild(fragment);
 
-    // Note: We can't programmatically set files on an input element due to security restrictions
-    // The files are already in the input from the user's selection
-    // We just validate and display them
+    // Store the valid files for later use (can't set input.files due to security restrictions)
+    // Create a new DataTransfer object to store files
+    const dataTransfer = new DataTransfer();
+    for (const file of validFiles) {
+        dataTransfer.items.add(file);
+    }
+    storedFiles = dataTransfer.files;
 
     dropzonePrompt.classList.add('hidden');
     fileListContainer.classList.remove('hidden');
@@ -192,6 +199,7 @@ function setUploadMode(mode) {
 
   // Reset selection
   uploadInput.value = '';
+  storedFiles = null; // Clear stored files when switching modes
   document.getElementById('dropzone-prompt').classList.remove('hidden');
   document.getElementById('file-list-container').classList.add('hidden');
 
@@ -431,7 +439,10 @@ async function handleChartGenerate(event) {
     }
 
     // 2. Validate inputs
-    if (uploadInput.files.length === 0) {
+    // Check both uploadInput.files (for click-to-browse) and storedFiles (for drag-and-drop)
+    const filesToProcess = storedFiles || uploadInput.files;
+
+    if (filesToProcess.length === 0) {
       displayError('Error: Please upload at least one research document.');
       return; // Will re-enable button in finally block
     }
@@ -443,7 +454,7 @@ async function handleChartGenerate(event) {
 
     // 3. Filter and validate files before submission
     const validFiles = [];
-    for (const file of uploadInput.files) {
+    for (const file of filesToProcess) {
       const isValidMime = SUPPORTED_FILE_MIMES.includes(file.type);
       const isValidExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(`.${ext}`));
 
