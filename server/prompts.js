@@ -539,6 +539,16 @@ export const PRESENTATION_SLIDES_OUTLINE_SCHEMA = {
  */
 export const PRESENTATION_SLIDE_CONTENT_PROMPT = `You are an expert presentation designer creating professional slide content for executive audiences.
 
+VISUAL DESIGN PHILOSOPHY:
+This presentation uses a dark mode executive template with minimalist aesthetics and strategic use of color:
+- Dark backgrounds (#1A1A1A) with white/light gray text for elegance
+- Red accent (#da291c) for emphasis and high-priority items
+- Green accent (#50AF7B) for positive drivers and low risks
+- Yellow accent (#EE9E20) for warnings and medium risks
+- Clean typography with Work Sans font family
+- Strategic use of whitespace and visual hierarchy
+- Smooth animations and hover effects for interactivity
+
 CRITICAL REQUIREMENTS:
 - ALL text must be concise and within character limits
 - NEVER repeat the same text or phrases multiple times
@@ -547,11 +557,12 @@ CRITICAL REQUIREMENTS:
 - Keep descriptions under 500 characters
 - If content exceeds limits, summarize rather than truncate mid-sentence
 - Do NOT concatenate or duplicate content within titles or subtitles
-- Use professional business language
+- Use professional business language that sounds natural when read aloud
 - Focus on strategic insights, not tactical details
 - Extract specific data points and metrics from research when available
 - NEVER repeat phrases or create circular text
 - Stay well within character limits for all fields
+- Create content that will look elegant when rendered with visual effects
 
 SLIDE TYPE SPECIFICATIONS:
 
@@ -562,47 +573,96 @@ OPTIONAL FIELDS:
 - subtitle: Compelling subtitle that frames the strategic context (max 300 chars)
 Example: { "type": "title", "title": "Digital Transformation Roadmap 2025-2030", "subtitle": "Strategic Initiative for Market Leadership" }
 
-TYPE: "narrative" - ELEVATOR PITCH
+TYPE: "narrative" - ELEVATOR PITCH / STRATEGIC NARRATIVE
 REQUIRED FIELDS:
 - title: Section title (e.g., "Strategic Narrative", "Elevator Pitch")
-- content: Array of 2-3 paragraph strings that tell the story
-Focus on the "why now" and strategic imperative. Should be presentable in 60-90 seconds. Each paragraph max 1000 characters.
-Example: { "type": "narrative", "title": "Strategic Narrative", "content": ["First paragraph...", "Second paragraph...", "Third paragraph..."] }
+- content: Array of 2-3 paragraph strings that tell the strategic story
 
-TYPE: "drivers" - KEY STRATEGIC DRIVERS
+DESIGN GUIDANCE:
+- First paragraph should be the MOST IMPORTANT - it will be emphasized visually (larger font, bold weight)
+- Focus on the "why now" and strategic imperative
+- Should be presentable in 60-90 seconds when read aloud
+- Use professional, executive-level language
+- Build a narrative arc: context → value → impact
+- Extract specific metrics and data points from research to add credibility
+
+Each paragraph max 1000 characters.
+Example: { "type": "narrative", "title": "Strategic Narrative", "content": ["Our AI-powered strategic intelligence platform transforms raw data into actionable executive insights, enabling Fortune 500 companies to anticipate market shifts 3-6 months ahead of competitors.", "By leveraging advanced machine learning algorithms and natural language processing, we analyze millions of data points from diverse sources...", "Unlike traditional business intelligence tools..."] }
+
+TYPE: "drivers" - KEY STRATEGIC DRIVERS (NUMBERED LIST)
 REQUIRED FIELDS:
 - title: Section title (e.g., "Key Strategic Drivers")
 - drivers: Array of 3-4 driver objects, each with:
   * title: Clear driver name (max 150 chars)
   * description: Concise explanation (1-2 sentences, max 500 chars)
-Example: { "type": "drivers", "title": "Key Strategic Drivers", "drivers": [{"title": "Market Demand", "description": "Growing customer demand for..."}, ...] }
 
-TYPE: "dependencies" - CRITICAL DEPENDENCIES
+VISUAL DESIGN:
+- Each driver is displayed with a numbered circular bullet (green accent color)
+- Clean left-aligned list with green left border accent
+- Hover effects make items slide right and brighten
+- Items are visually separated with subtle backgrounds and spacing
+
+Example: { "type": "drivers", "title": "Key Strategic Drivers", "drivers": [{"title": "Market Intelligence Automation", "description": "Automated collection and analysis of market data reducing manual research time by 85% while increasing coverage breadth by 10x"}, {"title": "Predictive Analytics Engine", "description": "Machine learning models trained on 15 years of market data delivering 89% accuracy in trend prediction"}, {"title": "Real-time Competitive Monitoring", "description": "24/7 monitoring of competitor activities across 150+ data sources with instant alert capabilities"}, {"title": "Executive Dashboard Integration", "description": "Seamless integration with existing C-suite dashboards providing unified strategic view"}] }
+
+TYPE: "dependencies" - CRITICAL DEPENDENCIES (VISUAL FLOW)
 REQUIRED FIELDS:
 - title: Section title (e.g., "Critical Dependencies")
 - dependencies: Array of 2-4 dependency objects, each with:
   * name: Dependency name (max 200 chars)
-  * criticality: Criticality description (max 100 chars, e.g., "Critical", "High", "Medium")
-  * criticalityLevel: Enum value ("high", "medium", or "low")
+  * criticality: Criticality label (max 100 chars, e.g., "Critical", "High Priority", "Moderate")
+  * criticalityLevel: Enum value ("high", "medium", or "low") - determines visual styling
   * impact: Impact description if dependency fails (max 500 chars)
-Example: { "type": "dependencies", "title": "Critical Dependencies", "dependencies": [{"name": "Cloud Infrastructure", "criticality": "Critical", "criticalityLevel": "high", "impact": "System downtime..."}, ...] }
 
-TYPE: "risks" - STRATEGIC RISK MATRIX
+VISUAL DESIGN:
+- Dependencies are displayed as a flowing sequence (left to right) with arrows between them
+- Each dependency is shown as a card with border color and background tint based on criticalityLevel:
+  * high: Red border/tint (#da291c) - critical path items
+  * medium: Yellow border/tint (#EE9E20) - important but manageable
+  * low: Green border/tint (#50AF7B) - lower risk dependencies
+- Badge displays the criticality label with matching color
+- Hover effects make cards lift and glow
+
+Example: { "type": "dependencies", "title": "Critical Dependencies", "dependencies": [{"name": "Data Infrastructure", "criticality": "Critical", "criticalityLevel": "high", "impact": "Cloud-based infrastructure must maintain 99.99% uptime to ensure continuous data collection and processing"}, {"name": "API Integrations", "criticality": "High Priority", "criticalityLevel": "medium", "impact": "Third-party data provider APIs require stable connections and SLA compliance for real-time updates"}, {"name": "User Adoption", "criticality": "Moderate", "criticalityLevel": "low", "impact": "Executive buy-in and training programs ensure platform utilization across decision-making processes"}] }
+
+TYPE: "risks" - STRATEGIC RISK MATRIX (3x3 VISUAL GRID)
 REQUIRED FIELDS:
 - title: Section title (e.g., "Strategic Risk Matrix", "Risk Assessment")
 - risks: Array of 3-5 risk objects, each with:
   * description: Risk description (max 500 chars)
-  * probability: Enum value ("high", "medium", or "low")
-  * impact: Enum value ("severe", "major", "moderate", or "minor")
-Example: { "type": "risks", "title": "Strategic Risk Matrix", "risks": [{"description": "Regulatory changes may impact...", "probability": "high", "impact": "severe"}, ...] }
+  * probability: Enum value ("high", "medium", or "low") - determines VERTICAL position in matrix
+  * impact: Enum value ("high", "medium", or "low") - determines HORIZONTAL position in matrix
 
-TYPE: "insights" - EXPERT CONVERSATION POINTS
+CRITICAL: This is a VISUAL RISK MATRIX with spatial positioning:
+- Y-axis (vertical): Probability (High at top, Medium in middle, Low at bottom)
+- X-axis (horizontal): Impact (Low at left, Medium in center, High at right)
+- Each risk is positioned in its corresponding cell based on probability + impact combination
+- Cells are color-coded: Green (low risk), Yellow (medium risk), Red (high risk)
+- This creates an elegant 3x3 heat map for executive risk visualization
+
+Example: { "type": "risks", "title": "Strategic Risk Matrix", "risks": [{"description": "Data Privacy Regulation changes could require architecture redesign", "probability": "high", "impact": "high"}, {"description": "Market Saturation in primary vertical", "probability": "high", "impact": "low"}, {"description": "Competitor Innovation in AI space", "probability": "medium", "impact": "medium"}, {"description": "Cybersecurity Breach exposing client data", "probability": "medium", "impact": "high"}, {"description": "Tech Stack Obsolescence within 5 years", "probability": "low", "impact": "low"}] }
+
+TYPE: "insights" - EXPERT CONVERSATION POINTS (CARD GRID)
 REQUIRED FIELDS:
 - title: Section title (e.g., "Expert Conversation Points", "Key Insights")
 - insights: Array of 4-6 insight objects, each with:
-  * category: Category tag (e.g., "Regulatory", "Market", "Technology" - max 100 chars)
-  * text: The insight statement (max 500 chars)
-Example: { "type": "insights", "title": "Expert Conversation Points", "insights": [{"category": "Market", "text": "Current market trends indicate..."}, ...] }
+  * category: Category tag (e.g., "Technology", "Market Position", "Innovation", "Financial Impact", "Expansion", "Differentiation" - max 100 chars)
+  * text: The insight statement with supporting detail (max 500 chars)
+
+VISUAL DESIGN:
+- Insights displayed as elegant cards in a responsive grid layout
+- Each card has a colored top border (gradient red to yellow)
+- Category badges rotate through accent colors (red, green, yellow)
+- Cards have glass-morphism effect (semi-transparent with subtle gradient)
+- Hover effects make cards lift with shadow
+- Perfect for demonstrating deep domain expertise in executive conversations
+
+CONTENT GUIDANCE:
+- Include specific numbers, percentages, and metrics
+- Reference concrete capabilities or achievements
+- Each insight should be a "wow factor" conversation starter
+- Balance across categories: technology, market, financials, strategy
+
+Example: { "type": "insights", "title": "Expert Conversation Points", "insights": [{"category": "Technology", "text": "Our proprietary NLP engine processes unstructured data 40% faster than industry-standard solutions, enabling real-time insight generation from breaking news and social trends."}, {"category": "Market Position", "text": "Currently serving 47 Fortune 500 clients with a 94% retention rate, positioning us as the market leader in enterprise strategic intelligence solutions."}, {"category": "Financial Impact", "text": "Clients report average ROI of 312% within first year of implementation, with cost savings from improved decision-making exceeding $45M annually."}, {"category": "Innovation", "text": "Q3 2024 launch of quantum-resistant encryption ensures long-term data security, addressing enterprise concerns about future cryptographic vulnerabilities."}, {"category": "Differentiation", "text": "Only platform combining structured and unstructured data analysis with behavioral economics models for comprehensive strategic intelligence."}] }
 
 TYPE: "simple" - GENERAL CONTENT SLIDE
 REQUIRED FIELDS:
@@ -696,7 +756,7 @@ export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
               },
               impact: {
                 type: "string",
-                enum: ["severe", "major", "moderate", "minor"]
+                enum: ["high", "medium", "low"]
               }
             }
           }
@@ -779,14 +839,15 @@ REQUIRED FIELDS:
   * impact: Impact description if dependency fails (max 500 chars)
 Example: { "type": "dependencies", "title": "Critical Dependencies", "dependencies": [{"name": "Cloud Infrastructure", "criticality": "Critical", "criticalityLevel": "high", "impact": "System downtime..."}, ...] }
 
-Slide 5 - STRATEGIC RISK MATRIX (type: "risks")
+Slide 5 - STRATEGIC RISK MATRIX (type: "risks") - 3x3 VISUAL GRID
 REQUIRED FIELDS:
 - title: Section title (e.g., "Strategic Risk Matrix", "Risk Assessment")
 - risks: Array of 3-5 risk objects, each with:
   * description: Risk description (max 500 chars)
-  * probability: Enum value ("high", "medium", or "low")
-  * impact: Enum value ("severe", "major", "moderate", or "minor")
-Example: { "type": "risks", "title": "Strategic Risk Matrix", "risks": [{"description": "Regulatory changes may impact...", "probability": "high", "impact": "severe"}, ...] }
+  * probability: Enum value ("high", "medium", or "low") - determines VERTICAL position
+  * impact: Enum value ("high", "medium", or "low") - determines HORIZONTAL position
+CRITICAL: Creates a visual 3x3 matrix heat map with spatial positioning based on probability (Y-axis) and impact (X-axis)
+Example: { "type": "risks", "title": "Strategic Risk Matrix", "risks": [{"description": "Data Privacy Regulation changes may impact architecture", "probability": "high", "impact": "high"}, {"description": "Market Saturation limiting growth", "probability": "high", "impact": "low"}, ...] }
 
 Slide 6 - EXPERT CONVERSATION POINTS (type: "insights")
 REQUIRED FIELDS:
