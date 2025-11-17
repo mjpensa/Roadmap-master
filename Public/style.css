@@ -2306,7 +2306,8 @@ body.dragging {
 }
 
 .slide-display {
-  min-height: 500px;
+  min-height: 80vh;
+  height: 80vh;
   background: var(--slide-bg, #1A1A1A);
   border-radius: 8px;
   padding: 0;
@@ -2331,9 +2332,9 @@ body.dragging {
 /* Slide Container Base */
 .slide-container {
   width: 90%;
-  max-width: 1200px;
-  height: 85%;
-  max-height: 700px;
+  max-width: 1400px;
+  height: 90%;
+  max-height: none;
   padding: 60px;
   display: flex;
   flex-direction: column;
@@ -2958,7 +2959,8 @@ body.dragging {
 
   .slide-display {
     padding: 30px;
-    min-height: 350px;
+    min-height: 70vh;
+    height: 70vh;
   }
 
   .slide-type-title .main-title {
@@ -2981,7 +2983,8 @@ body.dragging {
 
   .slide-display {
     padding: 20px;
-    min-height: 300px;
+    min-height: 60vh;
+    height: 60vh;
   }
 
   .slide-container {
