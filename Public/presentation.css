@@ -70,6 +70,9 @@ body {
   flex-direction: column;
   position: relative;
   animation: fadeIn 0.6s ease-out;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 /* Slide Number */
@@ -781,4 +784,24 @@ p {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+/* Slide Container Scrollbar - More Subtle */
+.slide-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.slide-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.slide-container::-webkit-scrollbar-thumb {
+  background: rgba(218, 41, 28, 0.4);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.slide-container::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-red);
 }
