@@ -32,6 +32,31 @@
   border-bottom: 1px solid #0D0D0D; /* Only bottom border to separate from grid */
   color: #FFFFFF; /* Text Color */
   background-color: #0c2340; /* CHANGED to new color */
+  transition: all 0.2s;
+  border-radius: 8px 8px 0 0; /* Rounded corners at top */
+}
+
+/* Show outline on title hover when in edit mode */
+.gantt-title.edit-mode-enabled:hover {
+  outline: 2px dashed rgba(80, 175, 123, 0.6);
+  outline-offset: 2px;
+  background-color: rgba(12, 35, 64, 0.95);
+  cursor: text;
+}
+
+/* Style for title when actively being edited */
+.gantt-title[contenteditable="true"],
+.gantt-title.editing {
+  outline: 2px solid #50AF7B;
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.15);
+  cursor: text;
+}
+
+.gantt-title[contenteditable="true"]:focus,
+.gantt-title.editing:focus {
+  outline: 2px solid #3C8D62;
+  background-color: rgba(80, 175, 123, 0.2);
 }
 
 /* 8. Main Grid Layout */
@@ -82,8 +107,9 @@
   margin: -2px -6px; /* Offset padding to maintain alignment */
 }
 
-/* Show outline on label hover when in edit mode */
-.gantt-grid.edit-mode-enabled .gantt-row-label.task:hover .label-content {
+/* Show outline on label hover when in edit mode (for both tasks and swimlanes) */
+.gantt-grid.edit-mode-enabled .gantt-row-label.task:hover .label-content,
+.gantt-grid.edit-mode-enabled .gantt-row-label.swimlane:hover .label-content {
   outline: 2px dashed rgba(80, 175, 123, 0.6);
   outline-offset: 2px;
   background-color: rgba(80, 175, 123, 0.1);
@@ -173,12 +199,12 @@
   font-weight: 500; /* Increased from 400 for better readability */
   color: #FFFFFF; /* Text Color */
   border-bottom: 1px solid #0D0D0D; /* Grid line color */
-  background-color: #354259; /* Set task title background - static blue */
+  background-color: #546579; /* Set task title background - static blue */
   font-size: 26px; /* Increased from 24px for better readability */
 }
 
 .gantt-row-label.task:hover {
-  background-color: #354259; /* Keep static blue on hover */
+  background-color: #546579; /* Keep static blue on hover */
   cursor: pointer;
 }
 
@@ -196,7 +222,7 @@
 
 .gantt-bar-area.task:hover,
 .gantt-bar-area.task.row-hover {
-  background-color: #354259; /* Hover effect */
+  background-color: #546579; /* Hover effect */
   cursor: pointer;
 }
 
@@ -636,17 +662,26 @@
   color: #FFFFFF;
 }
 
+.legend-line {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Space between "Legend:" and first item */
+  flex-wrap: wrap; /* Allow wrapping if needed */
+}
+
 .legend-title {
   font-size: 44px; /* Increased from 40px for better visibility */
   font-weight: 700; /* Increased from 600 for more prominence */
-  margin: 0 0 28px 0; /* Increased bottom margin */
+  margin: 0;
   color: #FFFFFF;
+  flex-shrink: 0; /* Prevent title from shrinking */
 }
 
 .legend-list {
   display: flex;
   flex-wrap: wrap;
   gap: 40px; /* Increased from 30px for better spacing */
+  align-items: center;
 }
 
 .legend-item {
@@ -672,11 +707,43 @@
 .legend-color-box[data-color="dark-blue"] { background-color: #3B82F6; } /* Bright Blue */
 
 
+.legend-label-wrapper {
+  transition: all 0.2s;
+}
+
 .legend-label {
   font-size: 32px; /* Increased from 28px for better readability */
   font-weight: 600; /* Added weight for better visibility */
   color: #FFFFFF; /* Changed from #CCCCCC for maximum contrast */
   line-height: 1.2; /* Better line spacing */
+  transition: all 0.2s;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: -4px -8px; /* Offset padding to maintain alignment */
+  display: inline-block;
+}
+
+/* Show outline on legend label hover when in edit mode */
+.gantt-legend.edit-mode-enabled .legend-label:hover {
+  outline: 2px dashed rgba(80, 175, 123, 0.6);
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.1);
+  cursor: text;
+}
+
+/* Style for legend label when actively being edited */
+.legend-label[contenteditable="true"],
+.legend-label.editing {
+  outline: 2px solid #50AF7B;
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.1);
+  cursor: text;
+}
+
+.legend-label[contenteditable="true"]:focus,
+.legend-label.editing:focus {
+  outline: 2px solid #3C8D62;
+  background-color: rgba(80, 175, 123, 0.15);
 }
 
 /* ------------------------------------------------------------------- */
@@ -797,7 +864,7 @@ body.dragging {
 }
 
 .color-option:hover {
-  background-color: #354259;
+  background-color: #546579;
 }
 
 .color-preview {
