@@ -351,3 +351,131 @@ export const TASK_ANALYSIS_SCHEMA = {
   },
   required: ["taskName", "status"]
 };
+
+/**
+ * Executive Summary Generation Prompt
+ * Synthesizes complex research into executive intelligence
+ */
+export const EXECUTIVE_SUMMARY_GENERATION_PROMPT = `You are an expert strategic analyst synthesizing complex research into executive intelligence.
+
+ANALYSIS FRAMEWORK:
+
+1. STRATEGIC DRIVERS ANALYSIS
+   - Identify 3-5 PRIMARY MARKET FORCES driving this initiative
+   - Include specific metrics, timelines, or regulatory deadlines where mentioned
+   - Frame each driver with its business impact and urgency level
+
+2. CRITICAL PATH DEPENDENCIES
+   - Extract the 2-3 MOST CRITICAL cross-functional dependencies
+   - Explain WHY each dependency could become a bottleneck
+   - Provide specific examples from the research that illustrate impact
+
+3. RISK INTELLIGENCE
+   - Identify 2-3 ENTERPRISE-LEVEL risks (not just project risks)
+   - Include both probability and impact assessment where data permits
+   - Suggest observable early warning indicators for each risk
+
+4. EXPERT CONVERSATION ENABLERS
+   - Extract 5-7 KEY FACTS that demonstrate deep understanding:
+     * Industry-specific terminology with context
+     * Quantitative benchmarks or performance metrics
+     * Regulatory requirements or compliance considerations
+     * Competitive landscape insights
+     * Emerging trends or disruptions
+
+5. STRATEGIC NARRATIVE
+   - Craft a 2-3 sentence "elevator pitch" that captures the essence
+   - Include the "so what" - why this matters to the organization NOW
+
+IMPORTANT: Your analysis must synthesize insights across ALL provided documents,
+not just individual tasks. Look for patterns, contradictions, and convergent themes.
+Use specific examples and data points from the research to support each insight.`;
+
+/**
+ * Executive Summary JSON Schema
+ */
+export const EXECUTIVE_SUMMARY_SCHEMA = {
+  type: "object",
+  properties: {
+    executiveSummary: {
+      type: "object",
+      required: ["drivers", "dependencies", "risks", "keyInsights", "strategicNarrative", "metadata"],
+      properties: {
+        drivers: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              urgencyLevel: { type: "string", enum: ["critical", "high", "medium"] },
+              metrics: { type: "array", items: { type: "string" } },
+              sourceReferences: { type: "array", items: { type: "string" } }
+            },
+            required: ["title", "description", "urgencyLevel"]
+          }
+        },
+        dependencies: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              criticality: { type: "string" },
+              impactedPhases: { type: "array", items: { type: "string" } },
+              mitigationStrategy: { type: "string" }
+            },
+            required: ["name", "criticality"]
+          }
+        },
+        risks: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              category: { type: "string", enum: ["strategic", "operational", "financial", "regulatory"] },
+              description: { type: "string" },
+              probability: { type: "string", enum: ["high", "medium", "low"] },
+              impact: { type: "string", enum: ["severe", "major", "moderate", "minor"] },
+              earlyIndicators: { type: "array", items: { type: "string" } }
+            },
+            required: ["category", "description", "probability", "impact"]
+          }
+        },
+        keyInsights: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              category: { type: "string" },
+              insight: { type: "string" },
+              talkingPoint: { type: "string" },
+              supportingData: { type: "string" }
+            },
+            required: ["category", "insight"]
+          }
+        },
+        strategicNarrative: {
+          type: "object",
+          properties: {
+            elevatorPitch: { type: "string" },
+            valueProposition: { type: "string" },
+            callToAction: { type: "string" }
+          },
+          required: ["elevatorPitch", "valueProposition"]
+        },
+        metadata: {
+          type: "object",
+          properties: {
+            confidenceLevel: { type: "number", minimum: 0, maximum: 100 },
+            documentsCited: { type: "number" },
+            lastUpdated: { type: "string" },
+            analysisDepth: { type: "string", enum: ["comprehensive", "standard", "preliminary"] }
+          },
+          required: ["confidenceLevel", "documentsCited"]
+        }
+      }
+    }
+  },
+  required: ["executiveSummary"]
+};
