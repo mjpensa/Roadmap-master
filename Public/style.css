@@ -13,14 +13,8 @@
 /* 6. Gantt Chart Container */
 #gantt-chart-container {
   width: 100%;
-  border: 1px solid #0D0D0D; /* Darker border (using grid line color) */
-  border-radius: 8px;
-  background-color: #282828; /* Chart Background */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  overflow: hidden;
-  margin-top: 24px;
-  font-family: 'Work Sans', sans-serif; /* CHANGED */
-  position: relative; /* Added for vertical SVG border */
+  font-family: 'Work Sans', sans-serif;
+  position: relative;
 }
 
 /* 7. Chart Title */
@@ -2940,13 +2934,26 @@ body.dragging {
   flex: 1;
 }
 
+/* Roadmap Section Wrapper */
+.roadmap-section {
+  width: 100%;
+  border: 1px solid #0D0D0D;
+  border-radius: 8px;
+  background-color: #282828;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  overflow: hidden;
+  margin-top: 24px;
+  font-family: 'Work Sans', sans-serif;
+  position: relative;
+}
+
 /* Section Isolation Styles */
 .section-isolated {
   min-height: 100vh;
   margin-top: 0 !important;
 }
 
-#gantt-chart-container.section-isolated {
+.roadmap-section.section-isolated {
   margin-top: 24px !important;
 }
 
