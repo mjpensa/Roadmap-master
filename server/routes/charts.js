@@ -11,7 +11,7 @@ import { CONFIG } from '../config.js';
 import { sanitizePrompt, isValidChartId, isValidJobId } from '../utils.js';
 import { createSession, storeChart, getChart, updateChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
 import { callGeminiForJson } from '../gemini.js';
-import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA } from '../prompts.js';
+import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_GENERATION_PROMPT, PRESENTATION_SLIDES_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter } from '../middleware.js';
 
 const router = express.Router();
@@ -214,23 +214,78 @@ ${researchTextCache}`;
     // Update progress
     updateJob(jobId, {
       status: 'processing',
+      progress: 'Generating presentation slides...'
+    });
+
+    // NEW: Presentation Slides Generation
+    let presentationSlides = null;
+    try {
+      console.log(`Job ${jobId}: Generating presentation slides from research data...`);
+
+      const presentationSlidesQuery = `${sanitizedPrompt}
+
+Create a professional presentation slide deck that synthesizes the research into a compelling executive narrative.
+
+Research Content:
+${researchTextCache}`;
+
+      const presentationSlidesPayload = {
+        contents: [{ parts: [{ text: presentationSlidesQuery }] }],
+        systemInstruction: { parts: [{ text: PRESENTATION_SLIDES_GENERATION_PROMPT }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: PRESENTATION_SLIDES_SCHEMA,
+          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
+          temperature: 0.7,
+          topP: CONFIG.API.TOP_P,
+          topK: CONFIG.API.TOP_K
+        }
+      };
+
+      const slidesResponse = await callGeminiForJson(
+        presentationSlidesPayload,
+        CONFIG.API.RETRY_COUNT,
+        (attemptNum, error) => {
+          updateJob(jobId, {
+            status: 'processing',
+            progress: `Retrying presentation slides generation (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
+          });
+          console.log(`Job ${jobId}: Retrying presentation slides due to error: ${error.message}`);
+        }
+      );
+
+      // Extract the presentationSlides object from the response
+      presentationSlides = slidesResponse.presentationSlides;
+
+      console.log(`Job ${jobId}: Presentation slides generated successfully`);
+    } catch (slidesError) {
+      console.error(`Job ${jobId}: Failed to generate presentation slides:`, slidesError);
+      // Don't fail the entire job if presentation slides fail - just log it
+      presentationSlides = null;
+    }
+
+    // Update progress
+    updateJob(jobId, {
+      status: 'processing',
       progress: 'Finalizing chart...'
     });
 
     // Create session to store research data for future requests
     const sessionId = createSession(researchTextCache, researchFilesCache);
 
-    // Store chart data with unique ID for URL-based sharing (including executive summary)
-    const chartDataWithSummary = {
+    // Store chart data with unique ID for URL-based sharing (including executive summary and presentation slides)
+    const chartDataWithEnhancements = {
       ...ganttData,
-      executiveSummary: executiveSummary
+      executiveSummary: executiveSummary,
+      presentationSlides: presentationSlides
     };
-    const chartId = storeChart(chartDataWithSummary, sessionId);
+    const chartId = storeChart(chartDataWithEnhancements, sessionId);
 
     // Update job status to complete
     const completeData = {
       ...ganttData,
       executiveSummary: executiveSummary,
+      presentationSlides: presentationSlides,
       sessionId,
       chartId
     };

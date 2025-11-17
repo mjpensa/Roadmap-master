@@ -479,3 +479,144 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
   },
   required: ["executiveSummary"]
 };
+
+/**
+ * Presentation Slides Generation Prompt
+ * Creates professional slide deck from research data
+ */
+export const PRESENTATION_SLIDES_GENERATION_PROMPT = `You are an expert presentation designer creating a professional slide deck for executive audiences.
+
+Your task is to transform complex research into a compelling narrative presentation with 5-8 slides.
+
+SLIDE STRUCTURE:
+
+Slide 1 - TITLE SLIDE
+- Professional title that captures the initiative
+- Compelling subtitle that frames the strategic context
+
+Slide 2 - ELEVATOR PITCH
+- 2-3 paragraph narrative that tells the story
+- Focus on the "why now" and strategic imperative
+- Should be presentable in 60-90 seconds
+
+Slide 3 - KEY STRATEGIC DRIVERS
+- Identify 3-4 primary forces driving this initiative
+- Each driver should have:
+  * Clear title
+  * Concise description (1-2 sentences)
+  * Business impact context
+
+Slide 4 - CRITICAL DEPENDENCIES
+- Map 2-4 critical cross-functional dependencies
+- For each dependency:
+  * Name the dependency
+  * Criticality level (HIGH/MEDIUM)
+  * Impact if dependency fails
+  * Arrow flow to show sequence
+
+Slide 5 - STRATEGIC RISK MATRIX
+- Identify 3-5 enterprise-level risks
+- For each risk:
+  * Description of the risk
+  * Probability badge (high/medium/low)
+  * Impact badge (severe/major/moderate)
+
+Slide 6 - EXPERT CONVERSATION POINTS
+- 4-6 key insights that demonstrate deep understanding
+- Each insight should include:
+  * Category tag (e.g., "Regulatory", "Market", "Technology")
+  * The insight statement
+  * Optional: supporting data or context
+
+IMPORTANT DESIGN PRINCIPLES:
+- Keep text concise and scannable
+- Use professional business language
+- Focus on strategic insights, not tactical details
+- Each slide should stand alone but support the overall narrative
+- Extract specific data points and metrics from research when available
+
+Your slides will be rendered in a professional template with appropriate styling.`;
+
+/**
+ * Presentation Slides JSON Schema
+ */
+export const PRESENTATION_SLIDES_SCHEMA = {
+  type: "object",
+  properties: {
+    presentationSlides: {
+      type: "object",
+      required: ["slides"],
+      properties: {
+        slides: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["type"],
+            properties: {
+              type: {
+                type: "string",
+                enum: ["title", "narrative", "drivers", "dependencies", "risks", "insights", "simple"]
+              },
+              title: { type: "string" },
+              subtitle: { type: "string" },
+              content: {
+                oneOf: [
+                  { type: "string" },
+                  { type: "array", items: { type: "string" } }
+                ]
+              },
+              drivers: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" }
+                  },
+                  required: ["title", "description"]
+                }
+              },
+              dependencies: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    criticality: { type: "string" },
+                    criticalityLevel: { type: "string", enum: ["high", "medium", "low"] },
+                    impact: { type: "string" }
+                  },
+                  required: ["name", "criticality", "impact"]
+                }
+              },
+              risks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    description: { type: "string" },
+                    probability: { type: "string", enum: ["high", "medium", "low"] },
+                    impact: { type: "string", enum: ["severe", "major", "moderate", "minor"] }
+                  },
+                  required: ["description", "probability", "impact"]
+                }
+              },
+              insights: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    category: { type: "string" },
+                    text: { type: "string" }
+                  },
+                  required: ["category", "text"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  required: ["presentationSlides"]
+};
