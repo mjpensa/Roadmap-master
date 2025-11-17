@@ -341,17 +341,24 @@ Identify critical dependencies such as infrastructure, partnerships, regulatory 
 Example: { "type": "dependencies", "title": "${slideOutline.title}", "dependencies": [{"name": "Cloud Infrastructure Migration", "criticality": "Critical", "criticalityLevel": "high", "impact": "Without cloud infrastructure in place by Q2, the entire project timeline will slip 6-9 months, jeopardizing our market window."}, ...] }`;
             break;
           case 'risks':
-            slidePrompt += `For this STRATEGIC RISK MATRIX slide, provide a JSON object with:
+            slidePrompt += `For this STRATEGIC RISK MATRIX (3x3 VISUAL GRID) slide, provide a JSON object with:
 - type: "risks"
 - title: "${slideOutline.title}"
 - risks: Array of 3-5 risk objects, each with:
   * description: Detailed risk description (max 500 chars)
-  * probability: "high", "medium", or "low"
-  * impact: "severe", "major", "moderate", or "minor"
+  * probability: "high", "medium", or "low" - determines VERTICAL position in matrix
+  * impact: "high", "medium", or "low" - determines HORIZONTAL position in matrix
+
+CRITICAL: This creates a visual 3x3 risk matrix heat map:
+- Y-axis: Probability (High at top, Medium middle, Low bottom)
+- X-axis: Impact (Low left, Medium center, High right)
+- Each risk is positioned in its corresponding matrix cell
+- Color coding: Green (low risk zones), Yellow (medium), Red (high risk zones)
 
 Identify strategic risks from the research including regulatory, technical, market, organizational, or financial risks.
+Distribute risks across the matrix for visual balance - aim for variety in probability/impact combinations.
 
-Example: { "type": "risks", "title": "${slideOutline.title}", "risks": [{"description": "Regulatory changes in data privacy laws could require significant architecture redesign, affecting 40% of planned features.", "probability": "medium", "impact": "major"}, {"description": "Key talent shortage in AI/ML space may delay development by 3-6 months.", "probability": "high", "impact": "moderate"}, ...] }`;
+Example: { "type": "risks", "title": "${slideOutline.title}", "risks": [{"description": "Data Privacy Regulation changes could require architecture redesign affecting 40% of planned features", "probability": "high", "impact": "high"}, {"description": "Market Saturation in primary vertical limiting growth opportunities", "probability": "high", "impact": "low"}, {"description": "Competitor Innovation in AI space eroding market position", "probability": "medium", "impact": "medium"}, {"description": "Cybersecurity Breach exposing sensitive client data", "probability": "medium", "impact": "high"}, {"description": "Tech Stack Obsolescence within 5-year horizon", "probability": "low", "impact": "low"}] }`;
             break;
           case 'insights':
             slidePrompt += `For this EXPERT CONVERSATION POINTS/KEY INSIGHTS slide, provide a JSON object with:
