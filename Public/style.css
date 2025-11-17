@@ -32,6 +32,31 @@
   border-bottom: 1px solid #0D0D0D; /* Only bottom border to separate from grid */
   color: #FFFFFF; /* Text Color */
   background-color: #0c2340; /* CHANGED to new color */
+  transition: all 0.2s;
+  border-radius: 8px 8px 0 0; /* Rounded corners at top */
+}
+
+/* Show outline on title hover when in edit mode */
+.gantt-title.edit-mode-enabled:hover {
+  outline: 2px dashed rgba(80, 175, 123, 0.6);
+  outline-offset: 2px;
+  background-color: rgba(12, 35, 64, 0.95);
+  cursor: text;
+}
+
+/* Style for title when actively being edited */
+.gantt-title[contenteditable="true"],
+.gantt-title.editing {
+  outline: 2px solid #50AF7B;
+  outline-offset: 2px;
+  background-color: rgba(80, 175, 123, 0.15);
+  cursor: text;
+}
+
+.gantt-title[contenteditable="true"]:focus,
+.gantt-title.editing:focus {
+  outline: 2px solid #3C8D62;
+  background-color: rgba(80, 175, 123, 0.2);
 }
 
 /* 8. Main Grid Layout */
@@ -82,8 +107,9 @@
   margin: -2px -6px; /* Offset padding to maintain alignment */
 }
 
-/* Show outline on label hover when in edit mode */
-.gantt-grid.edit-mode-enabled .gantt-row-label.task:hover .label-content {
+/* Show outline on label hover when in edit mode (for both tasks and swimlanes) */
+.gantt-grid.edit-mode-enabled .gantt-row-label.task:hover .label-content,
+.gantt-grid.edit-mode-enabled .gantt-row-label.swimlane:hover .label-content {
   outline: 2px dashed rgba(80, 175, 123, 0.6);
   outline-offset: 2px;
   background-color: rgba(80, 175, 123, 0.1);

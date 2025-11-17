@@ -34,6 +34,7 @@ export class GanttChart {
     this.resizableGantt = null; // Phase 2: Bar resizing functionality
     this.contextMenu = null; // Phase 5: Context menu for color changing
     this.isEditMode = false; // Edit mode toggle - default is read-only
+    this.titleElement = null; // Reference to the title element for edit mode
   }
 
   /**
@@ -120,10 +121,19 @@ export class GanttChart {
    * @private
    */
   _addTitle() {
-    const titleEl = document.createElement('div');
-    titleEl.className = 'gantt-title';
-    titleEl.textContent = this.ganttData.title;
-    this.chartWrapper.appendChild(titleEl);
+    this.titleElement = document.createElement('div');
+    this.titleElement.className = 'gantt-title';
+    this.titleElement.textContent = this.ganttData.title;
+
+    // Add double-click to edit title (only in edit mode)
+    this.titleElement.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      if (this.isEditMode) {
+        this._makeChartTitleEditable();
+      }
+    });
+
+    this.chartWrapper.appendChild(this.titleElement);
   }
 
   /**
@@ -224,7 +234,7 @@ export class GanttChart {
       labelEl.setAttribute('data-row-id', `row-${dataIndex}`);
       labelEl.setAttribute('data-task-index', dataIndex);
 
-      // Phase 4: Add double-click to edit title (only in edit mode)
+      // Phase 4: Add double-click to edit title (only in edit mode, for both tasks and swimlanes)
       labelContent.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         if (this.isEditMode) {
@@ -658,8 +668,11 @@ export class GanttChart {
       this.contextMenu.enable();
     }
 
-    // Add edit-mode class to grid to enable CSS-based features
+    // Add edit-mode class to grid and title to enable CSS-based features
     this.gridElement.classList.add('edit-mode-enabled');
+    if (this.titleElement) {
+      this.titleElement.classList.add('edit-mode-enabled');
+    }
   }
 
   /**
@@ -678,8 +691,11 @@ export class GanttChart {
       this.contextMenu.disable();
     }
 
-    // Remove edit-mode class from grid to disable CSS-based features
+    // Remove edit-mode class from grid and title to disable CSS-based features
     this.gridElement.classList.remove('edit-mode-enabled');
+    if (this.titleElement) {
+      this.titleElement.classList.remove('edit-mode-enabled');
+    }
 
     // Reset all bar cursors to pointer
     const bars = this.gridElement.querySelectorAll('.gantt-bar');
@@ -862,5 +878,79 @@ export class GanttChart {
       }
     };
     labelElement.addEventListener('keydown', keyHandler);
+  }
+
+  /**
+   * Makes the chart title editable with contenteditable
+   * @private
+   */
+  _makeChartTitleEditable() {
+    if (!this.titleElement) return;
+
+    const originalText = this.titleElement.textContent;
+
+    // Make editable
+    this.titleElement.setAttribute('contenteditable', 'true');
+    this.titleElement.classList.add('editing');
+    this.titleElement.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(this.titleElement);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const saveChanges = async () => {
+      this.titleElement.setAttribute('contenteditable', 'false');
+      this.titleElement.classList.remove('editing');
+
+      // Sanitize input - use textContent to prevent XSS
+      const newText = this.titleElement.textContent.trim();
+
+      // Set as text, not HTML (prevents XSS)
+      this.titleElement.textContent = newText;
+
+      // Only update if text actually changed
+      if (newText && newText !== originalText) {
+        // Update data model
+        this.ganttData.title = newText;
+
+        console.log(`✓ Chart title updated: "${originalText}" -> "${newText}"`);
+
+        // TODO: Persist to server if needed
+      } else {
+        // Revert if empty or unchanged
+        this.titleElement.textContent = originalText;
+      }
+    };
+
+    const cancelEdit = () => {
+      this.titleElement.setAttribute('contenteditable', 'false');
+      this.titleElement.classList.remove('editing');
+      this.titleElement.textContent = originalText;
+    };
+
+    // Save on blur
+    const blurHandler = () => {
+      saveChanges();
+      this.titleElement.removeEventListener('blur', blurHandler);
+    };
+    this.titleElement.addEventListener('blur', blurHandler);
+
+    // Handle keyboard events
+    const keyHandler = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.titleElement.blur(); // Trigger save
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.titleElement.removeEventListener('blur', blurHandler);
+        cancelEdit();
+        this.titleElement.removeEventListener('keydown', keyHandler);
+      }
+    };
+    this.titleElement.addEventListener('keydown', keyHandler);
   }
 }
