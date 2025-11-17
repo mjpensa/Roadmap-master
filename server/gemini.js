@@ -12,10 +12,11 @@ const API_URL = getGeminiApiUrl();
  * Calls Gemini API and expects a JSON response
  * @param {Object} payload - The API request payload
  * @param {number} retryCount - Number of retry attempts (default: 3)
+ * @param {Function} onRetry - Optional callback for retry events (attempt, error)
  * @returns {Promise<Object>} Parsed JSON response
  * @throws {Error} If API call fails after all retries
  */
-export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_COUNT) {
+export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null) {
   for (let attempt = 0; attempt < retryCount; attempt++) {
     try {
       const response = await fetch(API_URL, {
@@ -53,13 +54,20 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
       return JSON.parse(extractedJsonText); // Return the parsed JSON
 
     } catch (error) {
-      console.log(`Attempt ${attempt + 1} failed:`, error.message);
+      console.log(`Attempt ${attempt + 1}/${retryCount} failed:`, error.message);
+
       if (attempt >= retryCount - 1) {
         throw error; // Throw the last error
       }
-      await new Promise(resolve =>
-        setTimeout(resolve, CONFIG.API.RETRY_BASE_DELAY_MS * (attempt + 1))
-      );
+
+      // Notify caller about retry if callback provided
+      if (onRetry) {
+        onRetry(attempt + 1, error);
+      }
+
+      const delayMs = CONFIG.API.RETRY_BASE_DELAY_MS * (attempt + 1);
+      console.log(`Retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
   throw new Error('All API retry attempts failed.');
