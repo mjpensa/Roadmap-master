@@ -4,6 +4,7 @@
  * 1. Roadmap (Gantt Chart)
  * 2. Executive Summary
  * 3. Presentation Slides
+ * Each section is displayed in a separate full-screen view
  */
 
 /**
@@ -17,6 +18,7 @@ export class HamburgerMenu {
   constructor() {
     this.isOpen = false;
     this.menuElement = null;
+    this.currentSection = 'all'; // Track current section: 'all', 'roadmap', 'executive-summary', 'presentation'
   }
 
   /**
@@ -45,6 +47,12 @@ export class HamburgerMenu {
     navMenu.className = 'hamburger-nav';
     navMenu.innerHTML = `
       <ul class="hamburger-nav-list">
+        <li>
+          <a href="#" class="hamburger-nav-item" data-section="all">
+            <span class="nav-icon">📑</span>
+            <span class="nav-text">Show All</span>
+          </a>
+        </li>
         <li>
           <a href="#" class="hamburger-nav-item" data-section="roadmap">
             <span class="nav-icon">📊</span>
@@ -98,6 +106,10 @@ export class HamburgerMenu {
         const section = item.getAttribute('data-section');
         this._navigateToSection(section);
         this._closeMenu(hamburgerBtn, navMenu);
+
+        // Update active state in menu
+        navItems.forEach(navItem => navItem.classList.remove('active'));
+        item.classList.add('active');
       });
     });
 
@@ -149,65 +161,135 @@ export class HamburgerMenu {
   }
 
   /**
-   * Navigates to the specified section
+   * Navigates to the specified section by hiding all others
    * @private
-   * @param {string} section - The section to navigate to ('roadmap', 'executive-summary', or 'presentation')
+   * @param {string} section - The section to navigate to ('all', 'roadmap', 'executive-summary', or 'presentation')
    */
   _navigateToSection(section) {
-    let targetElement = null;
+    this.currentSection = section;
 
-    switch (section) {
-      case 'roadmap':
-        // Scroll to the top of the gantt chart
-        targetElement = document.querySelector('#gantt-chart-container .gantt-grid');
-        if (!targetElement) {
-          targetElement = document.querySelector('#gantt-chart-container');
-        }
-        break;
+    // Get all section elements
+    const ganttChartContainer = document.querySelector('#gantt-chart-container');
+    const executiveSummary = document.querySelector('.executive-summary-container');
+    const presentationSlides = document.querySelector('.presentation-slides-container');
+    const exportContainer = document.querySelector('.export-container');
 
-      case 'executive-summary':
-        // Find executive summary section
-        targetElement = document.querySelector('.executive-summary-container');
-        // If collapsed, expand it first
-        if (targetElement) {
-          const header = targetElement.querySelector('.summary-header');
-          const content = targetElement.querySelector('.summary-content');
-          if (content && content.style.display === 'none') {
-            // Expand the section by clicking the header
-            header?.click();
-          }
-        }
-        break;
+    // Get individual components within gantt chart container
+    let ganttChart = null;
+    let ganttLegend = null;
+    let ganttExportButtons = null;
 
-      case 'presentation':
-        // Find presentation slides section
-        targetElement = document.querySelector('.presentation-slides-container');
-        // If collapsed, expand it first
-        if (targetElement) {
-          const header = targetElement.querySelector('.slides-header');
-          const content = targetElement.querySelector('.slides-content');
-          if (content && content.style.display === 'none') {
-            // Expand the section by clicking the header
-            header?.click();
-          }
-        }
-        break;
+    if (ganttChartContainer) {
+      // Find the actual chart elements (everything except summary and slides)
+      ganttChart = ganttChartContainer.querySelector('.gantt-grid');
+      ganttLegend = ganttChartContainer.querySelector('.gantt-legend');
+      // We'll handle export buttons separately
     }
 
-    // Scroll to the target element with smooth animation
-    if (targetElement) {
-      targetElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
+    if (section === 'all') {
+      // Show all sections
+      if (ganttChartContainer) {
+        ganttChartContainer.classList.remove('section-isolated');
+        ganttChartContainer.style.display = '';
+      }
+      if (executiveSummary) {
+        executiveSummary.classList.remove('section-isolated');
+        executiveSummary.style.display = '';
+        // Auto-expand if collapsed
+        const content = executiveSummary.querySelector('.summary-content');
+        if (content && content.style.display === 'none') {
+          const header = executiveSummary.querySelector('.summary-header');
+          header?.click();
+        }
+      }
+      if (presentationSlides) {
+        presentationSlides.classList.remove('section-isolated');
+        presentationSlides.style.display = '';
+        // Auto-expand if collapsed
+        const content = presentationSlides.querySelector('.slides-content');
+        if (content && content.style.display === 'none') {
+          const header = presentationSlides.querySelector('.slides-header');
+          header?.click();
+        }
+      }
+      if (exportContainer) {
+        exportContainer.style.display = '';
+      }
 
-      // Add a highlight effect
-      targetElement.classList.add('section-highlight');
-      setTimeout(() => {
-        targetElement.classList.remove('section-highlight');
-      }, 1500);
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
     } else {
-      console.warn(`Section "${section}" not found in the document`);
+      // Hide all sections first
+      if (ganttChartContainer) ganttChartContainer.style.display = 'none';
+      if (executiveSummary) executiveSummary.style.display = 'none';
+      if (presentationSlides) presentationSlides.style.display = 'none';
+      if (exportContainer) exportContainer.style.display = 'none';
+
+      // Show only the selected section
+      let targetElement = null;
+
+      switch (section) {
+        case 'roadmap':
+          if (ganttChartContainer) {
+            ganttChartContainer.style.display = '';
+            ganttChartContainer.classList.add('section-isolated');
+            targetElement = ganttChartContainer;
+          }
+          if (exportContainer) {
+            exportContainer.style.display = '';
+          }
+          break;
+
+        case 'executive-summary':
+          if (executiveSummary) {
+            executiveSummary.style.display = '';
+            executiveSummary.classList.add('section-isolated');
+            targetElement = executiveSummary;
+
+            // Auto-expand if collapsed
+            const content = executiveSummary.querySelector('.summary-content');
+            if (content && content.style.display === 'none') {
+              const header = executiveSummary.querySelector('.summary-header');
+              header?.click();
+            }
+          }
+          break;
+
+        case 'presentation':
+          if (presentationSlides) {
+            presentationSlides.style.display = '';
+            presentationSlides.classList.add('section-isolated');
+            targetElement = presentationSlides;
+
+            // Auto-expand if collapsed
+            const content = presentationSlides.querySelector('.slides-content');
+            if (content && content.style.display === 'none') {
+              const header = presentationSlides.querySelector('.slides-header');
+              header?.click();
+            }
+          }
+          break;
+      }
+
+      // Scroll to top of page to show the isolated section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Add a subtle flash effect
+      if (targetElement) {
+        targetElement.classList.add('section-activated');
+        setTimeout(() => {
+          targetElement.classList.remove('section-activated');
+        }, 800);
+      }
     }
+  }
+
+  /**
+   * Gets the current active section
+   * @returns {string} The current section identifier
+   */
+  getCurrentSection() {
+    return this.currentSection;
   }
 }
