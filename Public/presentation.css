@@ -64,15 +64,13 @@ body {
 .slide-container {
   width: 90%;
   max-width: 1200px;
-  max-height: calc(100vh - 120px);
+  height: calc(100vh - 120px);
   padding: 60px;
   display: flex;
   flex-direction: column;
   position: relative;
   animation: fadeIn 0.6s ease-out;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
+  overflow: visible;
 }
 
 /* Slide Number */
@@ -668,7 +666,7 @@ p {
   .slide-container {
     padding: 30px;
     width: 95%;
-    max-height: calc(100vh - 100px);
+    height: calc(100vh - 100px);
   }
 
   .swiper-slide {
@@ -707,7 +705,7 @@ p {
 @media (max-width: 480px) {
   .slide-container {
     padding: 20px;
-    max-height: calc(100vh - 80px);
+    height: calc(100vh - 80px);
   }
 
   .swiper-slide {
@@ -797,24 +795,4 @@ p {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
-}
-
-/* Slide Container Scrollbar - More Subtle */
-.slide-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.slide-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-
-.slide-container::-webkit-scrollbar-thumb {
-  background: rgba(218, 41, 28, 0.4);
-  border-radius: 3px;
-  transition: background 0.3s ease;
-}
-
-.slide-container::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-red);
 }
