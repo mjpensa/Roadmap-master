@@ -14,6 +14,9 @@ import { ExecutiveSummary } from './ExecutiveSummary.js';
 import { PresentationSlides } from './PresentationSlides.js';
 import { HamburgerMenu } from './HamburgerMenu.js';
 
+// Import Router (loaded as global from Router.js)
+// Note: Router.js is loaded via script tag in chart.html and exposed as window.Router
+
 /**
  * GanttChart Class
  * Responsible for rendering and managing the Gantt chart visualization
@@ -40,6 +43,9 @@ export class GanttChart {
     this.titleElement = null; // Reference to the title element for edit mode
     this.legendElement = null; // Reference to the legend element for edit mode
     this.hamburgerMenu = null; // Hamburger menu for section navigation
+    this.executiveSummary = null; // Reference to ExecutiveSummary component
+    this.presentationSlides = null; // Reference to PresentationSlides component
+    this.router = null; // Router for navigation between sections
   }
 
   /**
@@ -182,8 +188,8 @@ export class GanttChart {
    * @private
    */
   _addExecutiveSummary() {
-    const executiveSummary = new ExecutiveSummary(this.ganttData.executiveSummary);
-    const summaryElement = executiveSummary.render();
+    this.executiveSummary = new ExecutiveSummary(this.ganttData.executiveSummary);
+    const summaryElement = this.executiveSummary.render();
     this.chartWrapper.appendChild(summaryElement);
   }
 
@@ -192,8 +198,8 @@ export class GanttChart {
    * @private
    */
   _addPresentationSlides() {
-    const presentationSlides = new PresentationSlides(this.ganttData.presentationSlides);
-    const slidesElement = presentationSlides.render();
+    this.presentationSlides = new PresentationSlides(this.ganttData.presentationSlides);
+    const slidesElement = this.presentationSlides.render();
     this.chartWrapper.appendChild(slidesElement);
   }
 
@@ -208,12 +214,22 @@ export class GanttChart {
       existingMenu.remove();
     }
 
-    // Create hamburger menu instance
-    this.hamburgerMenu = new HamburgerMenu();
+    // Create Router instance if not already created
+    if (!this.router && window.Router) {
+      this.router = new window.Router();
+    }
+
+    // Create hamburger menu instance with router
+    this.hamburgerMenu = new HamburgerMenu(this.router);
     const menuElement = this.hamburgerMenu.render();
 
     // Append directly to the document body so it stays fixed on screen
     document.body.appendChild(menuElement);
+
+    // Initialize the router with component references
+    if (this.router) {
+      this.router.init(this, this.executiveSummary, this.presentationSlides);
+    }
   }
 
   /**
