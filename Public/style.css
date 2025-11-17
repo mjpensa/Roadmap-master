@@ -653,6 +653,319 @@
 }
 
 /* ------------------------------------------------------------------- */
+/* --- PHASE 1 ENHANCEMENTS - TASK ANALYSIS STYLES --- */
+/* ------------------------------------------------------------------- */
+
+/* Increase modal width for richer content */
+.modal-content {
+  max-width: 900px; /* Increased from 700px */
+}
+
+/* Timeline Scenarios Section */
+.timeline-scenarios-section {
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.scenarios-container {
+  margin-top: 12px;
+}
+
+.timeline-scenario {
+  margin-bottom: 16px;
+}
+
+.timeline-scenario:last-child {
+  margin-bottom: 0;
+}
+
+.scenario-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.scenario-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #FFFFFF;
+  min-width: 90px;
+}
+
+.scenario-date {
+  font-weight: 500;
+  font-size: 14px;
+  color: #CCCCCC;
+}
+
+.confidence-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.confidence-high {
+  background-color: #1A3025;
+  color: #50AF7B;
+}
+
+.confidence-medium {
+  background-color: #382A13;
+  color: #EE9E20;
+}
+
+.confidence-low {
+  background-color: #2F120F;
+  color: #BA3930;
+}
+
+/* Timeline bars */
+.timeline-bar {
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.best-case-bar {
+  background: linear-gradient(90deg, #50AF7B 0%, #6BC794 100%);
+  width: 60%;
+}
+
+.expected-bar {
+  background: linear-gradient(90deg, #EE9E20 0%, #F5B555 100%);
+  width: 80%;
+}
+
+.worst-case-bar {
+  background: linear-gradient(90deg, #BA3930 0%, #D45A51 100%);
+  width: 100%;
+}
+
+.scenario-detail {
+  font-size: 13px;
+  color: #AAAAAA;
+  font-style: italic;
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+}
+
+.delay-factors {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #383838;
+}
+
+.delay-factors h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+}
+
+.delay-factors ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.delay-factors li {
+  font-size: 13px;
+  color: #CCCCCC;
+  padding: 4px 0 4px 20px;
+  position: relative;
+}
+
+.delay-factors li:before {
+  content: "⚠️";
+  position: absolute;
+  left: 0;
+}
+
+/* Risk Analysis Section */
+.risks-section {
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.risks-container {
+  margin-top: 12px;
+}
+
+.risk-card {
+  background-color: #1A1A1A;
+  border-left: 4px solid #383838;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.risk-card:last-child {
+  margin-bottom: 0;
+}
+
+.risk-card.risk-high {
+  border-left-color: #BA3930;
+}
+
+.risk-card.risk-medium {
+  border-left-color: #EE9E20;
+}
+
+.risk-card.risk-low {
+  border-left-color: #666666;
+}
+
+.risk-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.risk-severity-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.severity-high {
+  background-color: #2F120F;
+  color: #BA3930;
+}
+
+.severity-medium {
+  background-color: #382A13;
+  color: #EE9E20;
+}
+
+.severity-low {
+  background-color: #2A2A2A;
+  color: #888888;
+}
+
+.risk-likelihood {
+  font-size: 12px;
+  color: #AAAAAA;
+  font-style: italic;
+}
+
+.risk-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  flex-grow: 1;
+}
+
+.risk-impact,
+.risk-mitigation {
+  font-size: 13px;
+  color: #CCCCCC;
+  line-height: 1.5;
+  margin: 6px 0;
+}
+
+.risk-impact strong,
+.risk-mitigation strong {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* Impact Analysis Section */
+.impact-section {
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.impact-content {
+  margin-top: 12px;
+}
+
+.impact-item {
+  font-size: 14px;
+  color: #CCCCCC;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.impact-item strong {
+  color: #FFFFFF;
+  font-weight: 600;
+  display: inline-block;
+  min-width: 140px;
+}
+
+.impact-value {
+  color: #EE9E20;
+  font-weight: 600;
+}
+
+/* Scheduling Context Section */
+.scheduling-section {
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.scheduling-content {
+  margin-top: 12px;
+}
+
+.scheduling-item {
+  font-size: 14px;
+  color: #CCCCCC;
+  line-height: 1.6;
+  margin: 12px 0;
+}
+
+.scheduling-item strong {
+  color: #FFFFFF;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.dependency-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 0 0;
+}
+
+.dependency-list li {
+  font-size: 13px;
+  color: #CCCCCC;
+  padding: 4px 0 4px 20px;
+  position: relative;
+}
+
+.dependency-list li:before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #2E7BB1;
+  font-weight: bold;
+}
+
+/* ------------------------------------------------------------------- */
 /* --- GANTT LEGEND STYLES --- */
 /* ------------------------------------------------------------------- */
 .gantt-legend {

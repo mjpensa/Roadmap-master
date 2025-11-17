@@ -212,6 +212,259 @@ export function buildAnalysisList(title, items, itemKey, sourceKey) {
 }
 
 /**
+ * PHASE 1 ENHANCEMENT - NEW RENDERING FUNCTIONS
+ */
+
+/**
+ * Builds HTML for Timeline Scenarios section with visual bars
+ * Shows best-case, expected, and worst-case completion dates
+ */
+export function buildTimelineScenarios(timelineScenarios) {
+  if (!timelineScenarios) return '';
+
+  const { expected, bestCase, worstCase, likelyDelayFactors } = timelineScenarios;
+
+  let scenariosHTML = '';
+
+  // Best Case
+  if (bestCase && bestCase.date) {
+    scenariosHTML += `
+      <div class="timeline-scenario best-case">
+        <div class="scenario-header">
+          <span class="scenario-label">Best-Case:</span>
+          <span class="scenario-date">${DOMPurify.sanitize(bestCase.date)}</span>
+        </div>
+        <div class="timeline-bar best-case-bar"></div>
+        ${bestCase.assumptions ? `<p class="scenario-detail">${DOMPurify.sanitize(bestCase.assumptions)}</p>` : ''}
+      </div>
+    `;
+  }
+
+  // Expected
+  if (expected && expected.date) {
+    const confidenceBadge = expected.confidence ?
+      `<span class="confidence-badge confidence-${expected.confidence}">${DOMPurify.sanitize(expected.confidence)} confidence</span>` : '';
+    scenariosHTML += `
+      <div class="timeline-scenario expected">
+        <div class="scenario-header">
+          <span class="scenario-label">Expected:</span>
+          <span class="scenario-date">${DOMPurify.sanitize(expected.date)}</span>
+          ${confidenceBadge}
+        </div>
+        <div class="timeline-bar expected-bar"></div>
+      </div>
+    `;
+  }
+
+  // Worst Case
+  if (worstCase && worstCase.date) {
+    scenariosHTML += `
+      <div class="timeline-scenario worst-case">
+        <div class="scenario-header">
+          <span class="scenario-label">Worst-Case:</span>
+          <span class="scenario-date">${DOMPurify.sanitize(worstCase.date)}</span>
+        </div>
+        <div class="timeline-bar worst-case-bar"></div>
+        ${worstCase.risks ? `<p class="scenario-detail">${DOMPurify.sanitize(worstCase.risks)}</p>` : ''}
+      </div>
+    `;
+  }
+
+  // Likely Delay Factors
+  let delayFactorsHTML = '';
+  if (likelyDelayFactors && likelyDelayFactors.length > 0) {
+    const factorItems = likelyDelayFactors.map(factor =>
+      `<li>${DOMPurify.sanitize(factor)}</li>`
+    ).join('');
+    delayFactorsHTML = `
+      <div class="delay-factors">
+        <h5>Most Likely Delay Factors:</h5>
+        <ul>${factorItems}</ul>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="analysis-section timeline-scenarios-section">
+      <h4>📅 Timeline Scenarios</h4>
+      <div class="scenarios-container">
+        ${scenariosHTML}
+      </div>
+      ${delayFactorsHTML}
+    </div>
+  `;
+}
+
+/**
+ * Builds HTML for Risk Analysis section with severity badges
+ * Shows structured risks with impact and mitigation
+ */
+export function buildRiskAnalysis(risks) {
+  if (!risks || risks.length === 0) return '';
+
+  const riskCards = risks.map(risk => {
+    const severityClass = risk.severity || 'low';
+    const likelihoodClass = risk.likelihood || 'unlikely';
+
+    return `
+      <div class="risk-card risk-${severityClass}">
+        <div class="risk-header">
+          <span class="risk-severity-badge severity-${severityClass}">
+            ${severityClass === 'high' ? '🔴' : severityClass === 'medium' ? '🟡' : '⚫'}
+            ${DOMPurify.sanitize(severityClass.toUpperCase())}
+          </span>
+          <span class="risk-likelihood">[${DOMPurify.sanitize(likelihoodClass)}]</span>
+          <span class="risk-name">${DOMPurify.sanitize(risk.name || '')}</span>
+        </div>
+        ${risk.impact ? `<p class="risk-impact"><strong>Impact:</strong> ${DOMPurify.sanitize(risk.impact)}</p>` : ''}
+        ${risk.mitigation ? `<p class="risk-mitigation"><strong>Mitigation:</strong> ${DOMPurify.sanitize(risk.mitigation)}</p>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="analysis-section risks-section">
+      <h4>🚨 Risks & Roadblocks</h4>
+      <div class="risks-container">
+        ${riskCards}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Builds HTML for Impact Analysis section
+ * Shows downstream effects and stakeholder impact
+ */
+export function buildImpactAnalysis(impact) {
+  if (!impact) return '';
+
+  let contentHTML = '';
+
+  if (impact.downstreamTasks !== undefined && impact.downstreamTasks !== null) {
+    contentHTML += `
+      <p class="impact-item">
+        <strong>Downstream Tasks:</strong>
+        <span class="impact-value">${impact.downstreamTasks} task${impact.downstreamTasks !== 1 ? 's' : ''} blocked if delayed</span>
+      </p>
+    `;
+  }
+
+  if (impact.businessImpact) {
+    contentHTML += `
+      <p class="impact-item">
+        <strong>Business Impact:</strong>
+        ${DOMPurify.sanitize(impact.businessImpact)}
+      </p>
+    `;
+  }
+
+  if (impact.strategicImpact) {
+    contentHTML += `
+      <p class="impact-item">
+        <strong>Strategic Impact:</strong>
+        ${DOMPurify.sanitize(impact.strategicImpact)}
+      </p>
+    `;
+  }
+
+  if (impact.stakeholders && impact.stakeholders.length > 0) {
+    const stakeholderList = impact.stakeholders.map(s => DOMPurify.sanitize(s)).join(', ');
+    contentHTML += `
+      <p class="impact-item">
+        <strong>Stakeholders:</strong>
+        ${stakeholderList}
+      </p>
+    `;
+  }
+
+  if (!contentHTML) return '';
+
+  return `
+    <div class="analysis-section impact-section">
+      <h4>📊 Impact Analysis</h4>
+      <div class="impact-content">
+        ${contentHTML}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Builds HTML for Scheduling Context section
+ * Shows why task starts when it does and dependencies
+ */
+export function buildSchedulingContext(schedulingContext) {
+  if (!schedulingContext) return '';
+
+  let contentHTML = '';
+
+  if (schedulingContext.rationale) {
+    contentHTML += `
+      <p class="scheduling-item">
+        <strong>Scheduling Rationale:</strong>
+        ${DOMPurify.sanitize(schedulingContext.rationale)}
+      </p>
+    `;
+  }
+
+  if (schedulingContext.predecessors && schedulingContext.predecessors.length > 0) {
+    const predList = schedulingContext.predecessors.map(p =>
+      `<li>${DOMPurify.sanitize(p)}</li>`
+    ).join('');
+    contentHTML += `
+      <div class="scheduling-item">
+        <strong>Depends On:</strong>
+        <ul class="dependency-list">${predList}</ul>
+      </div>
+    `;
+  }
+
+  if (schedulingContext.successors && schedulingContext.successors.length > 0) {
+    const succList = schedulingContext.successors.map(s =>
+      `<li>${DOMPurify.sanitize(s)}</li>`
+    ).join('');
+    contentHTML += `
+      <div class="scheduling-item">
+        <strong>Blocks:</strong>
+        <ul class="dependency-list">${succList}</ul>
+      </div>
+    `;
+  }
+
+  if (schedulingContext.isCriticalPath !== undefined) {
+    const criticalPathIcon = schedulingContext.isCriticalPath ? '✅' : '❌';
+    contentHTML += `
+      <p class="scheduling-item">
+        <strong>Critical Path:</strong>
+        ${criticalPathIcon} ${schedulingContext.isCriticalPath ? 'Yes' : 'No'}
+        ${schedulingContext.isCriticalPath ? '- Any delay impacts final deadline' : '- Has schedule flexibility'}
+      </p>
+    `;
+  }
+
+  if (schedulingContext.slackDays !== undefined && schedulingContext.slackDays !== null) {
+    contentHTML += `
+      <p class="scheduling-item">
+        <strong>Schedule Slack:</strong>
+        ${schedulingContext.slackDays} day${schedulingContext.slackDays !== 1 ? 's' : ''}
+      </p>
+    `;
+  }
+
+  if (!contentHTML) return '';
+
+  return `
+    <div class="analysis-section scheduling-section">
+      <h4>🎯 Why This Task Starts Now</h4>
+      <div class="scheduling-content">
+        ${contentHTML}
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Builds the HTML legend element for the Gantt chart.
  * Creates a visual legend showing color-coded categories and their meanings.
  * @param {Array<Object>} legendData - Array of legend items
