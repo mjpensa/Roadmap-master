@@ -488,44 +488,54 @@ export const PRESENTATION_SLIDES_GENERATION_PROMPT = `You are an expert presenta
 
 Your task is to transform complex research into a compelling narrative presentation with 5-8 slides.
 
+CRITICAL REQUIREMENTS:
+- ALL text must be concise and within character limits
+- NEVER repeat the same text or phrases multiple times
+- Keep titles under 200 characters
+- Keep subtitles under 300 characters
+- Keep descriptions under 500 characters
+- If content exceeds limits, summarize rather than truncate mid-sentence
+
 SLIDE STRUCTURE:
 
 Slide 1 - TITLE SLIDE
-- Professional title that captures the initiative
-- Compelling subtitle that frames the strategic context
+- Professional title that captures the initiative (max 200 chars)
+- Compelling subtitle that frames the strategic context (max 300 chars)
+- Title should be clear and specific, not repetitive
 
 Slide 2 - ELEVATOR PITCH
 - 2-3 paragraph narrative that tells the story
 - Focus on the "why now" and strategic imperative
 - Should be presentable in 60-90 seconds
+- Each paragraph max 1000 characters
 
 Slide 3 - KEY STRATEGIC DRIVERS
 - Identify 3-4 primary forces driving this initiative
 - Each driver should have:
-  * Clear title
-  * Concise description (1-2 sentences)
+  * Clear title (max 150 chars)
+  * Concise description (1-2 sentences, max 500 chars)
   * Business impact context
 
 Slide 4 - CRITICAL DEPENDENCIES
 - Map 2-4 critical cross-functional dependencies
 - For each dependency:
-  * Name the dependency
-  * Criticality level (HIGH/MEDIUM)
-  * Impact if dependency fails
+  * Name the dependency (max 200 chars)
+  * Criticality level (HIGH/MEDIUM, max 100 chars)
+  * Impact if dependency fails (max 500 chars)
   * Arrow flow to show sequence
 
 Slide 5 - STRATEGIC RISK MATRIX
 - Identify 3-5 enterprise-level risks
 - For each risk:
-  * Description of the risk
+  * Description of the risk (max 500 chars)
   * Probability badge (high/medium/low)
   * Impact badge (severe/major/moderate)
 
 Slide 6 - EXPERT CONVERSATION POINTS
 - 4-6 key insights that demonstrate deep understanding
 - Each insight should include:
-  * Category tag (e.g., "Regulatory", "Market", "Technology")
-  * The insight statement
+  * Category tag (e.g., "Regulatory", "Market", "Technology" - max 100 chars)
+  * The insight statement (max 500 chars)
   * Optional: supporting data or context
 
 IMPORTANT DESIGN PRINCIPLES:
@@ -534,6 +544,8 @@ IMPORTANT DESIGN PRINCIPLES:
 - Focus on strategic insights, not tactical details
 - Each slide should stand alone but support the overall narrative
 - Extract specific data points and metrics from research when available
+- NEVER repeat phrases or create circular text
+- Stay well within character limits for all fields
 
 Your slides will be rendered in a professional template with appropriate styling.`;
 
@@ -557,12 +569,12 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 type: "string",
                 enum: ["title", "narrative", "drivers", "dependencies", "risks", "insights", "simple"]
               },
-              title: { type: "string" },
-              subtitle: { type: "string" },
+              title: { type: "string", maxLength: 200 },
+              subtitle: { type: "string", maxLength: 300 },
               content: {
                 oneOf: [
-                  { type: "string" },
-                  { type: "array", items: { type: "string" } }
+                  { type: "string", maxLength: 2000 },
+                  { type: "array", items: { type: "string", maxLength: 1000 } }
                 ]
               },
               drivers: {
@@ -570,8 +582,8 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    title: { type: "string" },
-                    description: { type: "string" }
+                    title: { type: "string", maxLength: 150 },
+                    description: { type: "string", maxLength: 500 }
                   },
                   required: ["title", "description"]
                 }
@@ -581,10 +593,10 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    name: { type: "string" },
-                    criticality: { type: "string" },
+                    name: { type: "string", maxLength: 200 },
+                    criticality: { type: "string", maxLength: 100 },
                     criticalityLevel: { type: "string", enum: ["high", "medium", "low"] },
-                    impact: { type: "string" }
+                    impact: { type: "string", maxLength: 500 }
                   },
                   required: ["name", "criticality", "impact"]
                 }
@@ -594,7 +606,7 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    description: { type: "string" },
+                    description: { type: "string", maxLength: 500 },
                     probability: { type: "string", enum: ["high", "medium", "low"] },
                     impact: { type: "string", enum: ["severe", "major", "moderate", "minor"] }
                   },
@@ -606,8 +618,8 @@ export const PRESENTATION_SLIDES_SCHEMA = {
                 items: {
                   type: "object",
                   properties: {
-                    category: { type: "string" },
-                    text: { type: "string" }
+                    category: { type: "string", maxLength: 100 },
+                    text: { type: "string", maxLength: 500 }
                   },
                   required: ["category", "text"]
                 }
