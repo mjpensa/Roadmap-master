@@ -21,42 +21,52 @@ export class DraggableGantt {
     this.gridElement = gridElement;
     this.ganttData = ganttData;
     this.onTaskUpdate = onTaskUpdate;
-    this.draggedTask = null;
+    this.dragState = null;
     this.dragIndicator = null;
-    this.originalPosition = null;
+
+    // Bind methods for event listeners
+    this._handleMouseDown = this._handleMouseDown.bind(this);
+    this._handleMouseMove = this._handleMouseMove.bind(this);
+    this._handleMouseUp = this._handleMouseUp.bind(this);
   }
 
   /**
-   * Enables dragging on all task bars
+   * Enables dragging on all task bars using mouse events
    * @returns {void}
    */
   enableDragging() {
-    const bars = this.gridElement.querySelectorAll('.gantt-bar');
+    // Use event delegation on the grid for mouse events
+    this.gridElement.addEventListener('mousedown', this._handleMouseDown);
+    document.addEventListener('mousemove', this._handleMouseMove);
+    document.addEventListener('mouseup', this._handleMouseUp);
 
-    bars.forEach(bar => {
-      // Make bars draggable
-      bar.setAttribute('draggable', 'true');
-      bar.style.cursor = 'move';
-
-      // Add drag event listeners
-      bar.addEventListener('dragstart', this._handleDragStart.bind(this));
-      bar.addEventListener('dragend', this._handleDragEnd.bind(this));
-    });
-
-    // Phase 1 Fix: Add drop zones to the grid element for better event capturing
-    // This ensures events bubble up properly even when pointer-events are disabled on children
-    this.gridElement.addEventListener('dragover', this._handleDragOver.bind(this));
-    this.gridElement.addEventListener('drop', this._handleDrop.bind(this));
+    console.log('✓ Bar dragging enabled (mouse events)');
   }
 
   /**
-   * Handles the start of a drag operation
-   * @param {DragEvent} event - The drag event
+   * Handles mouse down to initiate drag
+   * @param {MouseEvent} event - The mouse event
    * @private
    */
-  _handleDragStart(event) {
-    const bar = event.target;
-    // Phase 1 Fix: Use closest() for more reliable parent element finding
+  _handleMouseDown(event) {
+    const target = event.target;
+    const bar = target.closest('.gantt-bar');
+    if (!bar) return;
+
+    // Check if clicking on resize handle (within 6px of edge) - if so, let ResizableGantt handle it
+    const rect = bar.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const HANDLE_WIDTH = 6;
+
+    if (x <= HANDLE_WIDTH || x >= rect.width - HANDLE_WIDTH) {
+      // This is a resize operation, not a drag - let ResizableGantt handle it
+      return;
+    }
+
+    // This is a drag operation (clicking in the middle of the bar)
+    event.preventDefault();
+    event.stopImmediatePropagation(); // Prevent other handlers (like resize) from also processing this event
+
     const barArea = bar.closest('.gantt-bar-area');
     const gridColumnStyle = bar.style.gridColumn;
 
@@ -66,7 +76,6 @@ export class DraggableGantt {
     const [startCol, endCol] = gridColumnStyle.split('/').map(v => parseInt(v.trim()));
     const duration = endCol - startCol;
 
-    // Phase 1 Fix: Use data attributes for row identification
     const rowId = barArea.getAttribute('data-row-id');
     const taskIndex = parseInt(barArea.getAttribute('data-task-index'));
 
@@ -75,25 +84,22 @@ export class DraggableGantt {
       return;
     }
 
-    this.draggedTask = {
-      element: bar,
+    this.dragState = {
+      bar: bar,
       barArea: barArea,
-      rowId: rowId, // Phase 1: Store row ID instead of just element reference
+      rowId: rowId,
+      startX: event.clientX,
+      startY: event.clientY,
       originalStartCol: startCol,
       originalEndCol: endCol,
       duration: duration,
       taskIndex: taskIndex,
-      taskData: this.ganttData.data[taskIndex]
-    };
-
-    // Store original position for potential rollback
-    this.originalPosition = {
-      startCol: startCol,
-      endCol: endCol
+      taskData: this.ganttData.data[taskIndex],
+      originalGridColumn: gridColumnStyle
     };
 
     console.log('📦 Dragged task info:', {
-      taskName: this.draggedTask.taskData.title,
+      taskName: this.dragState.taskData.title,
       rowId: rowId,
       originalStartCol: startCol,
       originalEndCol: endCol,
@@ -102,266 +108,114 @@ export class DraggableGantt {
     });
 
     // Add visual feedback
-    bar.style.opacity = '0.5';
-    bar.style.pointerEvents = 'none'; // Allow drop events to pass through
     bar.classList.add('dragging');
-
-    // Also disable pointer events on time cells within this bar area so they don't block drops
-    const timeCells = barArea.querySelectorAll('.gantt-time-cell');
-    timeCells.forEach(cell => {
-      cell.style.pointerEvents = 'none';
-    });
-
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/html', bar.innerHTML);
+    bar.style.opacity = '0.5';
+    document.body.style.cursor = 'move';
+    document.body.classList.add('dragging');
 
     // Create drag indicator
     this._createDragIndicator();
   }
 
   /**
-   * Handles drag over a bar area
-   * @param {DragEvent} event - The drag event
+   * Handles mouse move during drag
+   * @param {MouseEvent} event - The mouse event
    * @private
    */
-  _handleDragOver(event) {
-    event.preventDefault();
+  _handleMouseMove(event) {
+    if (!this.dragState) return;
 
-    // Only allow drop on the same row where the drag started
-    if (!this.draggedTask) return;
+    const deltaX = event.clientX - this.dragState.startX;
+    const barArea = this.dragState.barArea;
+    const rect = barArea.getBoundingClientRect();
+    const columnWidth = rect.width / this.ganttData.timeColumns.length;
+    const columnDelta = Math.round(deltaX / columnWidth);
 
-    // Phase 1 Fix: Find the target bar area using closest() for reliability
-    const targetBarArea = event.target.closest('.gantt-bar-area');
-    if (!targetBarArea) {
-      event.dataTransfer.dropEffect = 'none';
-      return;
-    }
+    let newStartCol = this.dragState.originalStartCol + columnDelta;
+    let newEndCol = newStartCol + this.dragState.duration;
 
-    const targetRowId = targetBarArea.getAttribute('data-row-id');
+    // Clamp to valid range
+    const numCols = this.ganttData.timeColumns.length;
+    newStartCol = Math.max(1, Math.min(newStartCol, numCols - this.dragState.duration + 1));
+    newEndCol = newStartCol + this.dragState.duration;
 
-    // Phase 1 Fix: Compare row IDs instead of element references
-    if (targetRowId !== this.draggedTask.rowId) {
-      event.dataTransfer.dropEffect = 'none';
-      // Add visual feedback for invalid drop
-      targetBarArea.classList.add('invalid-drop-zone');
-    } else {
-      event.dataTransfer.dropEffect = 'move';
-      // Add visual feedback for valid drop
-      targetBarArea.classList.add('valid-drop-zone');
-      // Remove invalid class if previously added
-      targetBarArea.classList.remove('invalid-drop-zone');
-    }
+    // Live update the bar visual
+    this.dragState.bar.style.gridColumn = `${newStartCol} / ${newEndCol}`;
   }
 
   /**
-   * Handles drop on a bar area
-   * @param {DragEvent} event - The drag event
+   * Handles mouse up to complete drag
+   * @param {MouseEvent} event - The mouse event
    * @private
    */
-  async _handleDrop(event) {
-    event.preventDefault();
-    event.stopPropagation();
+  async _handleMouseUp(event) {
+    if (!this.dragState) return;
 
-    console.log('🎯 Drop event fired!');
+    console.log('🎯 Drag completed!');
 
-    // Phase 1 Fix: Use closest() to find bar area
-    const barArea = event.target.closest('.gantt-bar-area');
+    // Parse final grid column
+    const gridColumnStyle = this.dragState.bar.style.gridColumn;
+    const [newStartCol, newEndCol] = gridColumnStyle.split('/').map(v => parseInt(v.trim()));
 
-    if (!this.draggedTask) {
-      console.warn('No dragged task found');
-      return;
-    }
-
-    if (!barArea) {
-      console.warn('Could not find bar area for drop');
-      this._rollbackDrag();
-      return;
-    }
-
-    const targetRowId = barArea.getAttribute('data-row-id');
-
-    // Phase 1 Fix: Only allow drop on the same row using row ID comparison
-    if (targetRowId !== this.draggedTask.rowId) {
-      console.warn('Cannot drop on a different row');
-      this._rollbackDrag();
-      return;
-    }
-
-    // Calculate the new column position based on mouse X position
-    const newStartCol = this._getColumnFromMousePosition(event, barArea);
-    const newEndCol = newStartCol + this.draggedTask.duration;
-
-    console.log('📍 Drop position calculated:', {
+    console.log('📍 Final position:', {
       newStartCol,
       newEndCol,
-      duration: this.draggedTask.duration,
-      originalStartCol: this.draggedTask.originalStartCol,
-      originalEndCol: this.draggedTask.originalEndCol
+      duration: this.dragState.duration,
+      originalStartCol: this.dragState.originalStartCol,
+      originalEndCol: this.dragState.originalEndCol
     });
 
-    // Validate the new position
-    const numCols = this.ganttData.timeColumns.length;
-    if (newStartCol < 1 || newEndCol > numCols + 1) {
-      console.warn('Cannot drop task beyond chart boundaries');
-      this._rollbackDrag();
-      return;
-    }
+    // Check if anything actually changed
+    const hasChanged =
+      newStartCol !== this.dragState.originalStartCol ||
+      newEndCol !== this.dragState.originalEndCol;
 
-    // Update the visual position
-    console.log(`Updating bar gridColumn to: ${newStartCol} / ${newEndCol}`);
-    this.draggedTask.element.style.gridColumn = `${newStartCol} / ${newEndCol}`;
+    if (hasChanged) {
+      // Update the data model
+      this.ganttData.data[this.dragState.taskIndex].bar.startCol = newStartCol;
+      this.ganttData.data[this.dragState.taskIndex].bar.endCol = newEndCol;
 
-    // Update the data model
-    this.ganttData.data[this.draggedTask.taskIndex].bar.startCol = newStartCol;
-    this.ganttData.data[this.draggedTask.taskIndex].bar.endCol = newEndCol;
+      // Notify callback with updated task info
+      if (this.onTaskUpdate) {
+        const taskInfo = {
+          taskName: this.dragState.taskData.title,
+          entity: this.dragState.taskData.entity,
+          sessionId: this.ganttData.sessionId,
+          taskIndex: this.dragState.taskIndex,
+          oldStartCol: this.dragState.originalStartCol,
+          oldEndCol: this.dragState.originalEndCol,
+          newStartCol: newStartCol,
+          newEndCol: newEndCol,
+          startDate: this.ganttData.timeColumns[newStartCol - 1],
+          endDate: this.ganttData.timeColumns[newEndCol - 2] // -2 because endCol is exclusive
+        };
 
-    // Notify callback with updated task info
-    if (this.onTaskUpdate) {
-      const taskInfo = {
-        taskName: this.draggedTask.taskData.title,
-        entity: this.draggedTask.taskData.entity,
-        sessionId: this.ganttData.sessionId,
-        oldStartCol: this.draggedTask.originalStartCol,
-        oldEndCol: this.draggedTask.originalEndCol,
-        newStartCol: newStartCol,
-        newEndCol: newEndCol,
-        startDate: this.ganttData.timeColumns[newStartCol - 1],
-        endDate: this.ganttData.timeColumns[newEndCol - 2] // -2 because endCol is exclusive
-      };
-
-      try {
-        await this.onTaskUpdate(taskInfo);
-        console.log('✓ Task position updated successfully:', taskInfo);
-      } catch (error) {
-        console.error('Failed to persist task update:', error);
-        // Rollback on error
-        this._rollbackDrag();
+        try {
+          await this.onTaskUpdate(taskInfo);
+          console.log('✓ Task position updated successfully:', taskInfo);
+        } catch (error) {
+          console.error('Failed to persist task update:', error);
+          // Rollback on error
+          this.dragState.bar.style.gridColumn = this.dragState.originalGridColumn;
+          this.ganttData.data[this.dragState.taskIndex].bar.startCol = this.dragState.originalStartCol;
+          this.ganttData.data[this.dragState.taskIndex].bar.endCol = this.dragState.originalEndCol;
+        }
       }
     }
-  }
 
-  /**
-   * Handles the end of a drag operation
-   * @param {DragEvent} event - The drag event
-   * @private
-   */
-  _handleDragEnd(event) {
-    console.log('🏁 Drag ended');
-
-    if (this.draggedTask) {
-      // Restore opacity and pointer events on the bar
-      this.draggedTask.element.style.opacity = '1';
-      this.draggedTask.element.style.pointerEvents = '';
-      this.draggedTask.element.classList.remove('dragging');
-
-      // Restore pointer events on time cells
-      const timeCells = this.draggedTask.barArea.querySelectorAll('.gantt-time-cell');
-      timeCells.forEach(cell => {
-        cell.style.pointerEvents = '';
-      });
-
-      console.log('✓ Bar visual properties restored. Final gridColumn:', this.draggedTask.element.style.gridColumn);
-    }
-
-    // Phase 1: Clean up visual feedback classes from all bar areas
-    const allBarAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
-    allBarAreas.forEach(barArea => {
-      barArea.classList.remove('valid-drop-zone', 'invalid-drop-zone');
-    });
+    // Clean up visual feedback
+    this.dragState.bar.classList.remove('dragging');
+    this.dragState.bar.style.opacity = '1';
+    document.body.style.cursor = '';
+    document.body.classList.remove('dragging');
 
     // Remove drag indicator
     this._removeDragIndicator();
 
-    this.draggedTask = null;
-    this.originalPosition = null;
+    this.dragState = null;
   }
 
-  /**
-   * Rolls back a drag operation to original position
-   * @private
-   */
-  _rollbackDrag() {
-    console.warn('⚠️ Rolling back drag operation');
 
-    if (!this.draggedTask || !this.originalPosition) {
-      console.warn('Cannot rollback: missing draggedTask or originalPosition');
-      return;
-    }
-
-    // Restore visual position
-    this.draggedTask.element.style.gridColumn =
-      `${this.originalPosition.startCol} / ${this.originalPosition.endCol}`;
-
-    // Restore data model
-    this.ganttData.data[this.draggedTask.taskIndex].bar.startCol = this.originalPosition.startCol;
-    this.ganttData.data[this.draggedTask.taskIndex].bar.endCol = this.originalPosition.endCol;
-
-    console.log('✓ Drag operation rolled back to:', this.originalPosition);
-  }
-
-  /**
-   * Finds the task index by matching the bar element
-   * @param {HTMLElement} bar - The bar element
-   * @returns {number} The task index, or -1 if not found
-   * @private
-   */
-  _findTaskIndexByBar(bar) {
-    const barArea = bar.parentElement;
-    const allBarAreas = Array.from(this.gridElement.querySelectorAll('.gantt-bar-area'));
-    const barAreaIndex = allBarAreas.indexOf(barArea);
-
-    // Account for swimlanes - they don't have task data
-    let taskIndex = 0;
-    for (let i = 0; i <= barAreaIndex && taskIndex < this.ganttData.data.length; i++) {
-      if (i === barAreaIndex) {
-        return taskIndex;
-      }
-      // Only increment if not a swimlane
-      if (!this.ganttData.data[taskIndex].isSwimlane) {
-        taskIndex++;
-      }
-    }
-
-    return -1;
-  }
-
-  /**
-   * Calculates the column number from mouse position within a bar area
-   * @param {DragEvent} event - The drag event
-   * @param {HTMLElement} barArea - The bar area element
-   * @returns {number} The column number (1-indexed)
-   * @private
-   */
-  _getColumnFromMousePosition(event, barArea) {
-    // Get the bar area dimensions and position
-    const rect = barArea.getBoundingClientRect();
-    const mouseX = event.clientX;
-
-    // Calculate relative position within the bar area
-    const relativeX = mouseX - rect.left;
-
-    // Get the number of columns
-    const numCols = this.ganttData.timeColumns.length;
-
-    // Calculate which column the mouse is over
-    const columnWidth = rect.width / numCols;
-    const column = Math.floor(relativeX / columnWidth) + 1; // +1 because grid columns are 1-indexed
-
-    // Clamp to valid range
-    const clampedColumn = Math.max(1, Math.min(column, numCols));
-
-    console.log('Mouse position calculation:', {
-      mouseX,
-      rectLeft: rect.left,
-      relativeX,
-      columnWidth,
-      calculatedColumn: column,
-      clampedColumn,
-      numCols
-    });
-
-    return clampedColumn;
-  }
 
   /**
    * Creates a visual indicator during drag
@@ -403,19 +257,10 @@ export class DraggableGantt {
    * @returns {void}
    */
   disableDragging() {
-    const bars = this.gridElement.querySelectorAll('.gantt-bar');
+    this.gridElement.removeEventListener('mousedown', this._handleMouseDown);
+    document.removeEventListener('mousemove', this._handleMouseMove);
+    document.removeEventListener('mouseup', this._handleMouseUp);
 
-    bars.forEach(bar => {
-      bar.setAttribute('draggable', 'false');
-      bar.style.cursor = 'pointer';
-
-      // Remove event listeners by cloning (removes all listeners)
-      const newBar = bar.cloneNode(true);
-      bar.parentNode.replaceChild(newBar, bar);
-    });
-
-    // Remove grid-level listeners
-    this.gridElement.removeEventListener('dragover', this._handleDragOver.bind(this));
-    this.gridElement.removeEventListener('drop', this._handleDrop.bind(this));
+    console.log('✓ Bar dragging disabled');
   }
 }

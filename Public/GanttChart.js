@@ -552,7 +552,37 @@ export class GanttChart {
     this.draggableGantt.enableDragging();
     this.resizableGantt.enableResizing();
     this.contextMenu.enable();
+    this._addCursorFeedback();
     console.log('✓ Drag-to-edit, bar resizing, and context menu functionality enabled');
+  }
+
+  /**
+   * Adds dynamic cursor feedback based on mouse position over bars
+   * @private
+   */
+  _addCursorFeedback() {
+    this.gridElement.addEventListener('mousemove', (event) => {
+      const bar = event.target.closest('.gantt-bar');
+      if (!bar) return;
+
+      // Don't change cursor if actively dragging or resizing
+      if (document.body.classList.contains('dragging') ||
+          document.body.classList.contains('resizing')) {
+        return;
+      }
+
+      const rect = bar.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const HANDLE_WIDTH = 6;
+
+      if (x <= HANDLE_WIDTH || x >= rect.width - HANDLE_WIDTH) {
+        // Hovering over resize handle
+        bar.style.cursor = 'ew-resize';
+      } else {
+        // Hovering over middle (drag area)
+        bar.style.cursor = 'move';
+      }
+    });
   }
 
   /**

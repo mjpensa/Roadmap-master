@@ -55,7 +55,7 @@ export class ResizableGantt {
   }
 
   /**
-   * Handles mouse down on bars to detect resize handle clicks
+   * Handles mouse down on bars to detect resize handle clicks or drag initiation
    * @param {MouseEvent} event - The mouse event
    * @private
    */
@@ -76,6 +76,10 @@ export class ResizableGantt {
     } else if (x >= rect.width - HANDLE_WIDTH) {
       // Resizing from right (end date)
       this._startResize(bar, 'right', event);
+    } else {
+      // Clicking in the middle - trigger drag mode
+      // Set cursor to indicate dragging is possible
+      bar.style.cursor = 'move';
     }
   }
 
@@ -88,7 +92,7 @@ export class ResizableGantt {
    */
   _startResize(bar, handle, event) {
     event.preventDefault();
-    event.stopPropagation(); // Prevent drag from starting
+    event.stopImmediatePropagation(); // Prevent other handlers (like drag) from also processing this event
 
     const barArea = bar.closest('.gantt-bar-area');
     const taskIndex = parseInt(barArea.getAttribute('data-task-index'));
