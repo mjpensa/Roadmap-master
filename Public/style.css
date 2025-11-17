@@ -199,12 +199,12 @@
   font-weight: 500; /* Increased from 400 for better readability */
   color: #FFFFFF; /* Text Color */
   border-bottom: 1px solid #0D0D0D; /* Grid line color */
-  background-color: #354259; /* Set task title background - static blue */
+  background-color: #546579; /* Set task title background - static blue */
   font-size: 26px; /* Increased from 24px for better readability */
 }
 
 .gantt-row-label.task:hover {
-  background-color: #354259; /* Keep static blue on hover */
+  background-color: #546579; /* Keep static blue on hover */
   cursor: pointer;
 }
 
@@ -222,7 +222,7 @@
 
 .gantt-bar-area.task:hover,
 .gantt-bar-area.task.row-hover {
-  background-color: #354259; /* Hover effect */
+  background-color: #546579; /* Hover effect */
   cursor: pointer;
 }
 
@@ -864,7 +864,7 @@ body.dragging {
 }
 
 .color-option:hover {
-  background-color: #354259;
+  background-color: #546579;
 }
 
 .color-preview {
