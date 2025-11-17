@@ -102,7 +102,7 @@ async function processFiles(files) {
     for (const file of filesArray) {
         // Check mime type (preferred) or rely on extension fallback
         const isValidMime = SUPPORTED_FILE_MIMES.includes(file.type);
-        const isValidExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
+        const isValidExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(`.${ext}`));
 
         if (isValidMime || isValidExtension) {
             validFiles.push(file);
@@ -445,7 +445,7 @@ async function handleChartGenerate(event) {
     const validFiles = [];
     for (const file of uploadInput.files) {
       const isValidMime = SUPPORTED_FILE_MIMES.includes(file.type);
-      const isValidExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
+      const isValidExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(`.${ext}`));
 
       if (isValidMime || isValidExtension) {
         validFiles.push(file);
