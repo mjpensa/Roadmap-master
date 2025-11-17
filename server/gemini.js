@@ -87,37 +87,52 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
           console.log('Successfully repaired and parsed JSON!');
 
           // Log the repaired data structure for debugging
-          console.log('🔍 Repaired data structure:');
-          console.log('  - title:', repairedData.title);
-          console.log('  - timeColumns length:', repairedData.timeColumns?.length);
-          console.log('  - data length:', repairedData.data?.length);
+          console.log('🔍 Repaired data structure keys:', Object.keys(repairedData));
 
-          // Validate that the repaired data has the minimum required structure
-          // If jsonrepair corrupted the data by removing duplicate keys, reject it
-          if (!repairedData.data || !Array.isArray(repairedData.data)) {
-            console.error('❌ Repaired JSON is missing or has invalid data array');
-            throw new Error('Repaired JSON structure is invalid - missing data array');
-          }
+          // Validate based on response type (chart vs task analysis)
+          // Chart data has: title, timeColumns, data
+          // Task analysis has: taskName, status
+          const isChartData = repairedData.title && repairedData.timeColumns && repairedData.data;
+          const isTaskAnalysis = repairedData.taskName && repairedData.status;
 
-          if (!repairedData.timeColumns || !Array.isArray(repairedData.timeColumns)) {
-            console.error('❌ Repaired JSON is missing or has invalid timeColumns array');
-            throw new Error('Repaired JSON structure is invalid - missing timeColumns array');
-          }
+          if (isChartData) {
+            console.log('  - Detected chart data structure');
+            console.log('  - title:', repairedData.title);
+            console.log('  - timeColumns length:', repairedData.timeColumns?.length);
+            console.log('  - data length:', repairedData.data?.length);
 
-          // Check for suspiciously small data arrays that might indicate corruption
-          // The original malformed JSON showed we should have multiple items
-          if (repairedData.data.length < 2) {
-            console.warn('⚠️  Repaired data array has fewer than 2 items, possible data corruption from duplicate key removal');
-            console.log('  - data items:', JSON.stringify(repairedData.data, null, 2));
-          }
-
-          // Validate data items have required properties
-          for (let i = 0; i < repairedData.data.length; i++) {
-            const item = repairedData.data[i];
-            if (!item.title || typeof item.isSwimlane !== 'boolean' || !item.entity) {
-              console.error(`❌ Data item ${i} is missing required properties:`, item);
-              throw new Error(`Repaired JSON data item ${i} is invalid - missing required properties`);
+            // Validate chart data structure
+            if (!repairedData.data || !Array.isArray(repairedData.data)) {
+              console.error('❌ Repaired JSON is missing or has invalid data array');
+              throw new Error('Repaired JSON structure is invalid - missing data array');
             }
+
+            if (!repairedData.timeColumns || !Array.isArray(repairedData.timeColumns)) {
+              console.error('❌ Repaired JSON is missing or has invalid timeColumns array');
+              throw new Error('Repaired JSON structure is invalid - missing timeColumns array');
+            }
+
+            // Check for suspiciously small data arrays that might indicate corruption
+            if (repairedData.data.length < 2) {
+              console.warn('⚠️  Repaired data array has fewer than 2 items, possible data corruption from duplicate key removal');
+              console.log('  - data items:', JSON.stringify(repairedData.data, null, 2));
+            }
+
+            // Validate data items have required properties
+            for (let i = 0; i < repairedData.data.length; i++) {
+              const item = repairedData.data[i];
+              if (!item.title || typeof item.isSwimlane !== 'boolean' || !item.entity) {
+                console.error(`❌ Data item ${i} is missing required properties:`, item);
+                throw new Error(`Repaired JSON data item ${i} is invalid - missing required properties`);
+              }
+            }
+          } else if (isTaskAnalysis) {
+            console.log('  - Detected task analysis structure');
+            console.log('  - taskName:', repairedData.taskName);
+            console.log('  - status:', repairedData.status);
+            // Task analysis is valid as long as it has taskName and status
+          } else {
+            console.warn('⚠️  Unknown repaired data structure, proceeding with caution');
           }
 
           console.log('✅ Repaired JSON validation passed');
