@@ -73,8 +73,17 @@ export class GanttChart {
     }
 
     // Add Presentation Slides (if available) - positioned below the executive summary
+    console.log('🎭 Presentation Slides Data Check:', {
+      exists: !!this.ganttData.presentationSlides,
+      hasSlides: this.ganttData.presentationSlides?.slides?.length || 0,
+      data: this.ganttData.presentationSlides ? 'Present' : 'Missing'
+    });
+
     if (this.ganttData.presentationSlides) {
+      console.log('✓ Rendering presentation slides...');
       this._addPresentationSlides();
+    } else {
+      console.warn('⚠️ Presentation slides not available in chart data');
     }
 
     // Add footer stripe after Executive Summary and Presentation Slides
