@@ -118,6 +118,29 @@ export function getChart(chartId) {
 }
 
 /**
+ * Phase 6: Updates chart data by ID
+ * @param {string} chartId - The chart ID
+ * @param {Object} updatedData - The updated chart data
+ * @returns {boolean} True if successful, false if chart not found
+ */
+export function updateChart(chartId, updatedData) {
+  const existing = chartStore.get(chartId);
+  if (!existing) {
+    console.warn(`Attempted to update non-existent chart: ${chartId}`);
+    return false;
+  }
+
+  chartStore.set(chartId, {
+    ...existing,
+    data: updatedData,
+    lastModified: Date.now()
+  });
+
+  console.log(`✅ Chart ${chartId} updated successfully`);
+  return true;
+}
+
+/**
  * JOB MANAGEMENT
  */
 

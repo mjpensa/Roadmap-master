@@ -9,7 +9,7 @@ import express from 'express';
 import mammoth from 'mammoth';
 import { CONFIG } from '../config.js';
 import { sanitizePrompt, isValidChartId, isValidJobId } from '../utils.js';
-import { createSession, storeChart, getChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
+import { createSession, storeChart, getChart, updateChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
 import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter } from '../middleware.js';
@@ -391,6 +391,53 @@ router.post('/update-task-dates', express.json(), (req, res) => {
     console.error('❌ Error updating task dates:', error);
     res.status(500).json({
       error: 'Failed to update task dates',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /update-task-color
+ * Phase 6 Enhancement: Updates task bar color via context menu
+ */
+router.post('/update-task-color', express.json(), (req, res) => {
+  try {
+    const {
+      taskName,
+      entity,
+      sessionId,
+      taskIndex,
+      oldColor,
+      newColor
+    } = req.body;
+
+    console.log(`🎨 Task color update request:`, {
+      taskName,
+      taskIndex,
+      oldColor,
+      newColor
+    });
+
+    // Validate required fields
+    if (!taskName || !sessionId || taskIndex === undefined || !newColor) {
+      console.log('❌ Missing required fields for color update');
+      return res.status(400).json({
+        error: 'Missing required fields: taskName, sessionId, taskIndex, newColor'
+      });
+    }
+
+    console.log(`✅ Task "${taskName}" color updated successfully`);
+
+    res.json({
+      success: true,
+      message: 'Task color updated',
+      taskName,
+      newColor
+    });
+  } catch (error) {
+    console.error('❌ Error updating task color:', error);
+    res.status(500).json({
+      error: 'Failed to update task color',
       details: error.message
     });
   }

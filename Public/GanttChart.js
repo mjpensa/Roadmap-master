@@ -8,6 +8,8 @@
 import { CONFIG } from './config.js';
 import { safeGetElement, findTodayColumnPosition, buildLegend } from './Utils.js';
 import { DraggableGantt } from './DraggableGantt.js';
+import { ResizableGantt } from './ResizableGantt.js';
+import { ContextMenu } from './ContextMenu.js';
 
 /**
  * GanttChart Class
@@ -29,6 +31,8 @@ export class GanttChart {
     this.chartWrapper = null;
     this.gridElement = null;
     this.draggableGantt = null; // Phase 5: Drag-to-edit functionality
+    this.resizableGantt = null; // Phase 2: Bar resizing functionality
+    this.contextMenu = null; // Phase 5: Context menu for color changing
   }
 
   /**
@@ -163,16 +167,59 @@ export class GanttChart {
     // Use DocumentFragment to batch DOM operations for better performance
     const rowsFragment = document.createDocumentFragment();
 
-    for (const row of this.ganttData.data) {
+    this.ganttData.data.forEach((row, dataIndex) => {
       const isSwimlane = row.isSwimlane;
 
       // Create label cell
       const labelEl = document.createElement('div');
       labelEl.className = `gantt-row-label ${isSwimlane ? 'swimlane' : 'task'}`;
-      labelEl.textContent = row.title;
+
+      // Phase 3: Add row action buttons container
+      const labelContent = document.createElement('span');
+      labelContent.className = 'label-content';
+      labelContent.textContent = row.title;
+      labelEl.appendChild(labelContent);
+
+      // Phase 3: Add action buttons for tasks (not swimlanes)
+      if (!isSwimlane) {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'row-actions';
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'row-action-btn add-task';
+        addBtn.title = 'Add task below';
+        addBtn.textContent = '+';
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.addNewTaskRow(dataIndex);
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'row-action-btn delete-task';
+        deleteBtn.title = 'Delete this row';
+        deleteBtn.textContent = '×';
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeTaskRow(dataIndex);
+        });
+
+        actionsDiv.appendChild(addBtn);
+        actionsDiv.appendChild(deleteBtn);
+        labelEl.appendChild(actionsDiv);
+      }
+
+      // Phase 1 Enhancement: Add unique row identifier
+      labelEl.setAttribute('data-row-id', `row-${dataIndex}`);
+      labelEl.setAttribute('data-task-index', dataIndex);
+
+      // Phase 4: Add double-click to edit title
+      labelContent.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        this._makeEditable(labelContent, dataIndex);
+      });
 
       // Create bar area
-      const barAreaEl = this._createBarArea(row, numCols, isSwimlane);
+      const barAreaEl = this._createBarArea(row, numCols, isSwimlane, dataIndex);
 
       // Add click listeners for tasks
       if (!isSwimlane && row.bar && row.bar.startCol != null && this.onTaskClick) {
@@ -195,7 +242,7 @@ export class GanttChart {
       // Add both label and bar area to the fragment
       rowsFragment.appendChild(labelEl);
       rowsFragment.appendChild(barAreaEl);
-    }
+    });
 
     // Append all rows at once (single reflow) - major performance improvement
     this.gridElement.appendChild(rowsFragment);
@@ -206,16 +253,21 @@ export class GanttChart {
    * @param {Object} row - Row data
    * @param {number} numCols - Number of time columns
    * @param {boolean} isSwimlane - Whether this is a swimlane row
+   * @param {number} dataIndex - The index of this row in the data array
    * @returns {HTMLElement} The bar area element
    * @private
    */
-  _createBarArea(row, numCols, isSwimlane) {
+  _createBarArea(row, numCols, isSwimlane, dataIndex) {
     const barAreaEl = document.createElement('div');
     barAreaEl.className = `gantt-bar-area ${isSwimlane ? 'swimlane' : 'task'}`;
     barAreaEl.style.gridColumn = `2 / span ${numCols}`;
     barAreaEl.style.gridTemplateColumns = `repeat(${numCols}, 1fr)`;
     barAreaEl.style.position = 'relative';
     barAreaEl.style.display = 'grid';
+
+    // Phase 1 Enhancement: Add unique row identifiers
+    barAreaEl.setAttribute('data-row-id', `row-${dataIndex}`);
+    barAreaEl.setAttribute('data-task-index', dataIndex);
 
     // Create individual cell divs within the bar area for proper grid lines
     const cellsFragment = document.createDocumentFragment();
@@ -388,6 +440,7 @@ export class GanttChart {
 
   /**
    * Phase 5: Initializes drag-to-edit functionality
+   * Phase 2: Initializes bar resizing functionality
    * @private
    */
   _initializeDragToEdit() {
@@ -396,7 +449,7 @@ export class GanttChart {
       return;
     }
 
-    // Create callback for task updates
+    // Create callback for task updates (drag)
     const onTaskUpdate = async (taskInfo) => {
       console.log('Task updated via drag:', taskInfo);
 
@@ -422,6 +475,58 @@ export class GanttChart {
       }
     };
 
+    // Phase 2: Create callback for task resize
+    const onTaskResize = async (taskInfo) => {
+      console.log('Task resized:', taskInfo);
+
+      // Persist to server if sessionId is available
+      if (taskInfo.sessionId) {
+        try {
+          const response = await fetch('/update-task-dates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskInfo)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log('✓ Task resize persisted to server:', result);
+        } catch (error) {
+          console.error('Failed to persist task resize:', error);
+          throw error; // Re-throw to trigger rollback in ResizableGantt
+        }
+      }
+    };
+
+    // Phase 5: Create callback for color change
+    const onColorChange = async (taskInfo) => {
+      console.log('Bar color changed:', taskInfo);
+
+      // Persist to server if sessionId is available
+      if (taskInfo.sessionId) {
+        try {
+          const response = await fetch('/update-task-color', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskInfo)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log('✓ Color change persisted to server:', result);
+        } catch (error) {
+          console.error('Failed to persist color change:', error);
+          throw error; // Re-throw to trigger rollback in ContextMenu
+        }
+      }
+    };
+
     // Initialize DraggableGantt
     this.draggableGantt = new DraggableGantt(
       this.gridElement,
@@ -429,9 +534,25 @@ export class GanttChart {
       onTaskUpdate
     );
 
-    // Enable dragging by default
+    // Phase 2: Initialize ResizableGantt
+    this.resizableGantt = new ResizableGantt(
+      this.gridElement,
+      this.ganttData,
+      onTaskResize
+    );
+
+    // Phase 5: Initialize ContextMenu
+    this.contextMenu = new ContextMenu(
+      this.gridElement,
+      this.ganttData,
+      onColorChange
+    );
+
+    // Enable dragging, resizing, and context menu by default
     this.draggableGantt.enableDragging();
-    console.log('✓ Drag-to-edit functionality enabled');
+    this.resizableGantt.enableResizing();
+    this.contextMenu.enable();
+    console.log('✓ Drag-to-edit, bar resizing, and context menu functionality enabled');
   }
 
   /**
@@ -454,5 +575,159 @@ export class GanttChart {
       this.draggableGantt.disableDragging();
       console.log('Drag-to-edit disabled');
     }
+  }
+
+  /**
+   * Phase 3: Adds a new task row after the specified index
+   * @param {number} afterIndex - Index to insert after
+   * @public
+   */
+  addNewTaskRow(afterIndex) {
+    // Create new task data with default values
+    const newTask = {
+      title: 'New Task',
+      entity: 'New Entity',
+      isSwimlane: false,
+      bar: {
+        startCol: 2,
+        endCol: 4,
+        color: 'mid-grey'
+      }
+    };
+
+    // Insert into data model
+    this.ganttData.data.splice(afterIndex + 1, 0, newTask);
+
+    // Re-render the chart to show the new row
+    this.render();
+
+    console.log(`✓ Added new task row after index ${afterIndex}`);
+  }
+
+  /**
+   * Phase 3: Removes a task row at the specified index
+   * @param {number} taskIndex - Index of the task to remove
+   * @public
+   */
+  removeTaskRow(taskIndex) {
+    const taskData = this.ganttData.data[taskIndex];
+
+    if (!taskData) {
+      console.error('Cannot remove task: invalid index');
+      return;
+    }
+
+    // Don't allow removing swimlanes
+    if (taskData.isSwimlane) {
+      console.warn('Cannot remove swimlane rows');
+      return;
+    }
+
+    // Confirm deletion
+    if (!confirm(`Delete task "${taskData.title}"?`)) {
+      return;
+    }
+
+    // Remove from data model
+    this.ganttData.data.splice(taskIndex, 1);
+
+    // Re-render the chart
+    this.render();
+
+    console.log(`✓ Removed task row at index ${taskIndex}`);
+  }
+
+  /**
+   * Phase 3: Updates the data-task-index attributes after row changes
+   * @private
+   */
+  _updateRowIndices() {
+    const allLabels = Array.from(this.gridElement.querySelectorAll('.gantt-row-label'));
+    const allBarAreas = Array.from(this.gridElement.querySelectorAll('.gantt-bar-area'));
+
+    allLabels.forEach((label, index) => {
+      label.setAttribute('data-task-index', index);
+      label.setAttribute('data-row-id', `row-${index}`);
+    });
+
+    allBarAreas.forEach((barArea, index) => {
+      barArea.setAttribute('data-task-index', index);
+      barArea.setAttribute('data-row-id', `row-${index}`);
+    });
+  }
+
+  /**
+   * Phase 4: Makes a label editable with contenteditable
+   * @param {HTMLElement} labelElement - The label content element to make editable
+   * @param {number} taskIndex - The index of the task in the data array
+   * @private
+   */
+  _makeEditable(labelElement, taskIndex) {
+    const originalText = labelElement.textContent;
+
+    // Make editable
+    labelElement.setAttribute('contenteditable', 'true');
+    labelElement.classList.add('editing');
+    labelElement.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(labelElement);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const saveChanges = async () => {
+      labelElement.setAttribute('contenteditable', 'false');
+      labelElement.classList.remove('editing');
+
+      // Sanitize input - use textContent to prevent XSS
+      const newText = labelElement.textContent.trim();
+
+      // Set as text, not HTML (prevents XSS)
+      labelElement.textContent = newText;
+
+      // Only update if text actually changed
+      if (newText && newText !== originalText) {
+        // Update data model
+        this.ganttData.data[taskIndex].title = newText;
+
+        console.log(`✓ Title updated: "${originalText}" -> "${newText}"`);
+
+        // TODO: Persist to server in Phase 6
+        // await this._persistTitleChange(taskIndex, newText);
+      } else {
+        // Revert if empty or unchanged
+        labelElement.textContent = originalText;
+      }
+    };
+
+    const cancelEdit = () => {
+      labelElement.setAttribute('contenteditable', 'false');
+      labelElement.classList.remove('editing');
+      labelElement.textContent = originalText;
+    };
+
+    // Save on blur
+    const blurHandler = () => {
+      saveChanges();
+      labelElement.removeEventListener('blur', blurHandler);
+    };
+    labelElement.addEventListener('blur', blurHandler);
+
+    // Handle keyboard events
+    const keyHandler = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        labelElement.blur(); // Trigger save
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        labelElement.removeEventListener('blur', blurHandler);
+        cancelEdit();
+        labelElement.removeEventListener('keydown', keyHandler);
+      }
+    };
+    labelElement.addEventListener('keydown', keyHandler);
   }
 }
