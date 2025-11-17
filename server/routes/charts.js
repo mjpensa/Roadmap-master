@@ -264,6 +264,49 @@ ${researchTextCache}`;
         console.error(`Job ${jobId}: WARNING - presentationSlides has no slides. Slides count: ${presentationSlides.slides?.length || 0}`);
       } else {
         console.log(`Job ${jobId}: Presentation slides generated successfully with ${presentationSlides.slides.length} slides`);
+
+        // VALIDATION: Check for and remove duplicate slide titles
+        const seenTitles = new Set();
+        const uniqueSlides = [];
+        let duplicatesRemoved = 0;
+
+        for (const slide of presentationSlides.slides) {
+          const slideTitle = slide.title || '';
+          const slideSubtitle = slide.subtitle || '';
+
+          // Check if title is suspiciously long (likely duplicated content)
+          if (slideTitle.length > 300) {
+            console.warn(`Job ${jobId}: Detected suspiciously long title (${slideTitle.length} chars), likely duplicated. Truncating to first 200 chars.`);
+            slide.title = slideTitle.substring(0, 200);
+          }
+
+          // Check if subtitle is suspiciously long (likely duplicated content)
+          if (slideSubtitle.length > 500) {
+            console.warn(`Job ${jobId}: Detected suspiciously long subtitle (${slideSubtitle.length} chars), likely duplicated. Truncating to first 300 chars.`);
+            slide.subtitle = slideSubtitle.substring(0, 300);
+          }
+
+          // Check for duplicate titles
+          if (seenTitles.has(slideTitle)) {
+            duplicatesRemoved++;
+            console.warn(`Job ${jobId}: Removing duplicate slide with title: "${slideTitle.substring(0, 50)}..."`);
+            continue; // Skip this duplicate slide
+          }
+
+          seenTitles.add(slideTitle);
+          uniqueSlides.push(slide);
+        }
+
+        if (duplicatesRemoved > 0) {
+          console.log(`Job ${jobId}: Removed ${duplicatesRemoved} duplicate slides. Unique slides: ${uniqueSlides.length}`);
+          presentationSlides.slides = uniqueSlides;
+        }
+
+        // If we removed too many slides and have less than 3, discard the presentation
+        if (uniqueSlides.length < 3) {
+          console.error(`Job ${jobId}: Too many duplicates removed, only ${uniqueSlides.length} unique slides remain. Discarding presentation.`);
+          presentationSlides = null;
+        }
       }
     } catch (slidesError) {
       console.error(`Job ${jobId}: Failed to generate presentation slides:`, slidesError);
