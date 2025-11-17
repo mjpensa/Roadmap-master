@@ -14,36 +14,96 @@ const jobStore = new Map();
 
 /**
  * Starts the cleanup interval for expired sessions, charts, and jobs
+ * Enhanced with orphan detection and memory leak prevention
  */
 export function startCleanupInterval() {
   setInterval(() => {
     const now = Date.now();
     const expirationMs = CONFIG.STORAGE.EXPIRATION_MS;
 
-    // Clean up expired sessions
+    // Track cleanup statistics
+    let expiredSessions = 0;
+    let expiredCharts = 0;
+    let orphanedCharts = 0;
+    let expiredJobs = 0;
+    let completedJobs = 0;
+
+    // Set to track active sessions
+    const activeSessions = new Set();
+    const orphanedChartIds = new Set();
+
+    // Step 1: Clean up expired sessions and track active ones
     for (const [sessionId, session] of sessionStore.entries()) {
       if (now - session.createdAt > expirationMs) {
         sessionStore.delete(sessionId);
-        console.log(`Cleaned up expired session: ${sessionId}`);
+        expiredSessions++;
+        console.log(`🗑️  Cleaned up expired session: ${sessionId}`);
+      } else {
+        activeSessions.add(sessionId);
       }
     }
 
-    // Clean up expired charts
+    // Step 2: Clean up expired AND orphaned charts
     for (const [chartId, chart] of chartStore.entries()) {
-      if (now - chart.created > expirationMs) {
+      const isExpired = now - chart.created > expirationMs;
+      const isOrphaned = chart.sessionId && !activeSessions.has(chart.sessionId);
+
+      if (isExpired) {
         chartStore.delete(chartId);
-        console.log(`Cleaned up expired chart: ${chartId}`);
+        expiredCharts++;
+        console.log(`🗑️  Cleaned up expired chart: ${chartId}`);
+      } else if (isOrphaned) {
+        chartStore.delete(chartId);
+        orphanedCharts++;
+        orphanedChartIds.add(chartId);
+        console.log(`🗑️  Cleaned up orphaned chart: ${chartId} (session ${chart.sessionId} no longer exists)`);
       }
     }
 
-    // Clean up old jobs
+    // Step 3: Clean up old jobs (both expired and completed/failed)
+    // Completed/failed jobs should be cleaned up faster than active jobs
+    const jobRetentionMs = 10 * 60 * 1000; // 10 minutes for completed/failed jobs
+
     for (const [jobId, job] of jobStore.entries()) {
-      if (now - job.createdAt > expirationMs) {
+      const age = now - job.createdAt;
+      const isExpired = age > expirationMs;
+      const isCompleted = (job.status === 'complete' || job.status === 'error' || job.status === 'failed');
+      const isStaleCompleted = isCompleted && age > jobRetentionMs;
+
+      if (isExpired) {
         jobStore.delete(jobId);
-        console.log(`Cleaned up expired job: ${jobId}`);
+        expiredJobs++;
+        console.log(`🗑️  Cleaned up expired job: ${jobId}`);
+      } else if (isStaleCompleted) {
+        jobStore.delete(jobId);
+        completedJobs++;
+        console.log(`🗑️  Cleaned up stale ${job.status} job: ${jobId}`);
       }
     }
+
+    // Step 4: Log cleanup statistics
+    const totalCleaned = expiredSessions + expiredCharts + orphanedCharts + expiredJobs + completedJobs;
+
+    if (totalCleaned > 0) {
+      console.log('\n📊 Cleanup Summary:');
+      console.log(`  - Expired sessions: ${expiredSessions}`);
+      console.log(`  - Expired charts: ${expiredCharts}`);
+      console.log(`  - Orphaned charts: ${orphanedCharts}`);
+      console.log(`  - Expired jobs: ${expiredJobs}`);
+      console.log(`  - Stale completed jobs: ${completedJobs}`);
+      console.log(`  - Total items cleaned: ${totalCleaned}`);
+    }
+
+    // Log current storage state
+    console.log('\n💾 Storage State:');
+    console.log(`  - Active sessions: ${sessionStore.size}`);
+    console.log(`  - Active charts: ${chartStore.size}`);
+    console.log(`  - Active jobs: ${jobStore.size}`);
+    console.log(`  - Memory health: ${totalCleaned === 0 ? '✅ Good' : '⚠️  Cleaned up'}\n`);
+
   }, CONFIG.STORAGE.CLEANUP_INTERVAL_MS);
+
+  console.log(`✅ Storage cleanup interval started (every ${CONFIG.STORAGE.CLEANUP_INTERVAL_MS / 1000 / 60} minutes)`);
 }
 
 /**

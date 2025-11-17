@@ -89,6 +89,38 @@ app.use('/', analysisRoutes);
 // --- Error Handling ---
 app.use(handleUploadErrors);
 
+// --- Global Error Handlers (P2-3: Missing Error Boundaries Fix) ---
+// Catch unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Promise Rejection:', reason);
+  console.error('Promise:', promise);
+  // In production, you might want to log to a monitoring service
+  // For now, we log and continue (but this should be investigated)
+});
+
+// Catch uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  console.error('Stack trace:', error.stack);
+  // For uncaught exceptions, we should exit gracefully after logging
+  // This prevents the app from running in an undefined state
+  console.error('⚠️  Server will exit due to uncaught exception');
+  process.exit(1);
+});
+
+// Handle SIGTERM gracefully (for deployment platforms like Railway)
+process.on('SIGTERM', () => {
+  console.log('⚠️  SIGTERM signal received: closing HTTP server gracefully');
+  // In a production app, you'd close database connections, etc. here
+  process.exit(0);
+});
+
+// Handle SIGINT gracefully (Ctrl+C)
+process.on('SIGINT', () => {
+  console.log('\n⚠️  SIGINT signal received: shutting down gracefully');
+  process.exit(0);
+});
+
 // --- Start Storage Cleanup ---
 startCleanupInterval();
 
@@ -98,4 +130,5 @@ app.listen(port, () => {
   console.log(`📊 Server running at http://localhost:${port}`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('✅ All modules loaded successfully');
+  console.log('🛡️  Global error handlers enabled');
 });
