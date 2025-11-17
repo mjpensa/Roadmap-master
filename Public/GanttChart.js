@@ -102,7 +102,7 @@ export class GanttChart {
     this._addExportListener();
 
     // Add "Today" line
-    const today = new Date('2025-11-14T12:00:00');
+    const today = new Date();
     this.addTodayLine(today);
 
     // Phase 5: Initialize drag-to-edit functionality
