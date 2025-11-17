@@ -64,11 +64,11 @@ export class ResizableGantt {
     const bar = target.closest('.gantt-bar');
     if (!bar) return;
 
-    // Detect if clicking on resize handle (within 6px of edge)
+    // Detect if clicking on resize handle (within 10px of edge)
     const rect = bar.getBoundingClientRect();
     const x = event.clientX - rect.left;
 
-    const HANDLE_WIDTH = 6;
+    const HANDLE_WIDTH = 10; // Updated to match new resize handle width
 
     if (x <= HANDLE_WIDTH) {
       // Resizing from left (start date)
