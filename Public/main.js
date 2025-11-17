@@ -302,11 +302,33 @@ async function handleChartGenerate(event) {
     console.log('Has timeColumns:', !!ganttData?.timeColumns);
     console.log('Has data:', !!ganttData?.data);
 
-    // 6. Validate the data structure
-    if (!ganttData || !ganttData.timeColumns || !ganttData.data) {
-      console.error('Invalid data structure. Received:', ganttData);
-      throw new Error('Invalid chart data structure received from server');
+    // 6. Validate the data structure with detailed error reporting
+    if (!ganttData || typeof ganttData !== 'object') {
+      console.error('Invalid data structure - ganttData is not an object. Type:', typeof ganttData, 'Value:', ganttData);
+      throw new Error('Invalid chart data structure: Expected object, received ' + typeof ganttData);
     }
+
+    if (!ganttData.timeColumns) {
+      console.error('Invalid data structure - missing timeColumns. Keys:', Object.keys(ganttData), 'timeColumns value:', ganttData.timeColumns);
+      throw new Error('Invalid chart data structure: Missing timeColumns field');
+    }
+
+    if (!Array.isArray(ganttData.timeColumns)) {
+      console.error('Invalid data structure - timeColumns is not an array. Type:', typeof ganttData.timeColumns, 'Value:', ganttData.timeColumns);
+      throw new Error('Invalid chart data structure: timeColumns is not an array (type: ' + typeof ganttData.timeColumns + ')');
+    }
+
+    if (!ganttData.data) {
+      console.error('Invalid data structure - missing data. Keys:', Object.keys(ganttData), 'data value:', ganttData.data);
+      throw new Error('Invalid chart data structure: Missing data field');
+    }
+
+    if (!Array.isArray(ganttData.data)) {
+      console.error('Invalid data structure - data is not an array. Type:', typeof ganttData.data, 'Value:', ganttData.data);
+      throw new Error('Invalid chart data structure: data is not an array (type: ' + typeof ganttData.data + ')');
+    }
+
+    console.log('✓ Data structure validation passed - timeColumns:', ganttData.timeColumns.length, 'data:', ganttData.data.length);
 
     // Check for empty data
     if (ganttData.timeColumns.length === 0 || ganttData.data.length === 0) {

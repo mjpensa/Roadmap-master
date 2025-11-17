@@ -60,6 +60,24 @@ async function loadChartFromServer(chartId) {
     }
     ganttData = await response.json();
     console.log('Chart loaded from URL:', chartId);
+
+    // Validate the loaded data structure
+    if (!ganttData || typeof ganttData !== 'object') {
+      console.error('Invalid chart data structure. Type:', typeof ganttData);
+      throw new Error('Invalid chart data structure');
+    }
+
+    if (!ganttData.timeColumns || !Array.isArray(ganttData.timeColumns)) {
+      console.error('Invalid timeColumns. Type:', typeof ganttData.timeColumns, 'Keys:', Object.keys(ganttData));
+      throw new Error('Invalid timeColumns in chart data');
+    }
+
+    if (!ganttData.data || !Array.isArray(ganttData.data)) {
+      console.error('Invalid data array. Type:', typeof ganttData.data, 'Keys:', Object.keys(ganttData));
+      throw new Error('Invalid data array in chart data');
+    }
+
+    console.log('✓ Chart data validation passed - timeColumns:', ganttData.timeColumns.length, 'data:', ganttData.data.length);
   } catch (error) {
     console.error('Failed to load chart from URL:', error);
     displayChartNotFoundMessage();
@@ -78,13 +96,21 @@ function loadChartFromSessionStorage() {
 
       // Validate structure
       if (!ganttData || typeof ganttData !== 'object') {
+        console.error('Invalid gantt data structure from sessionStorage. Type:', typeof ganttData);
         throw new Error('Invalid gantt data structure');
       }
 
-      if (!Array.isArray(ganttData.data) || !ganttData.timeColumns) {
-        throw new Error('Gantt data missing required fields');
+      if (!ganttData.timeColumns || !Array.isArray(ganttData.timeColumns)) {
+        console.error('Invalid timeColumns from sessionStorage. Type:', typeof ganttData.timeColumns);
+        throw new Error('Gantt data missing valid timeColumns');
       }
-      console.log('Chart loaded from sessionStorage');
+
+      if (!ganttData.data || !Array.isArray(ganttData.data)) {
+        console.error('Invalid data array from sessionStorage. Type:', typeof ganttData.data);
+        throw new Error('Gantt data missing valid data array');
+      }
+
+      console.log('✓ Chart loaded from sessionStorage - timeColumns:', ganttData.timeColumns.length, 'data:', ganttData.data.length);
     }
   } catch (error) {
     console.error('Failed to parse ganttData from sessionStorage:', error);
