@@ -662,17 +662,26 @@
   color: #FFFFFF;
 }
 
+.legend-line {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Space between "Legend:" and first item */
+  flex-wrap: wrap; /* Allow wrapping if needed */
+}
+
 .legend-title {
   font-size: 44px; /* Increased from 40px for better visibility */
   font-weight: 700; /* Increased from 600 for more prominence */
-  margin: 0 0 28px 0; /* Increased bottom margin */
+  margin: 0;
   color: #FFFFFF;
+  flex-shrink: 0; /* Prevent title from shrinking */
 }
 
 .legend-list {
   display: flex;
   flex-wrap: wrap;
   gap: 40px; /* Increased from 30px for better spacing */
+  align-items: center;
 }
 
 .legend-item {

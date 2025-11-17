@@ -369,15 +369,21 @@ export class GanttChart {
 
     if (this.ganttData.legend.length === 0) return;
 
-    // Build legend with editable labels
+    // Build legend with editable labels (inline format)
     this.legendElement = document.createElement('div');
     this.legendElement.className = 'gantt-legend';
 
-    const title = document.createElement('h3');
-    title.className = 'legend-title';
-    title.textContent = 'Legend';
-    this.legendElement.appendChild(title);
+    // Create a single-line container for "Legend:" and items
+    const legendLine = document.createElement('div');
+    legendLine.className = 'legend-line';
 
+    // Add "Legend:" prefix
+    const title = document.createElement('span');
+    title.className = 'legend-title';
+    title.textContent = 'Legend:';
+    legendLine.appendChild(title);
+
+    // Create list container for items
     const list = document.createElement('div');
     list.className = 'legend-list';
 
@@ -411,7 +417,8 @@ export class GanttChart {
       list.appendChild(itemEl);
     });
 
-    this.legendElement.appendChild(list);
+    legendLine.appendChild(list);
+    this.legendElement.appendChild(legendLine);
     this.chartWrapper.appendChild(this.legendElement);
   }
 
