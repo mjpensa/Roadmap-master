@@ -53,10 +53,10 @@ export class DraggableGantt {
     const bar = target.closest('.gantt-bar');
     if (!bar) return;
 
-    // Check if clicking on resize handle (within 6px of edge) - if so, let ResizableGantt handle it
+    // Check if clicking on resize handle (within 10px of edge) - if so, let ResizableGantt handle it
     const rect = bar.getBoundingClientRect();
     const x = event.clientX - rect.left;
-    const HANDLE_WIDTH = 6;
+    const HANDLE_WIDTH = 10; // Updated to match new resize handle width
 
     if (x <= HANDLE_WIDTH || x >= rect.width - HANDLE_WIDTH) {
       // This is a resize operation, not a drag - let ResizableGantt handle it

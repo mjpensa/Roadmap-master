@@ -630,7 +630,7 @@ export class GanttChart {
 
       const rect = bar.getBoundingClientRect();
       const x = event.clientX - rect.left;
-      const HANDLE_WIDTH = 6;
+      const HANDLE_WIDTH = 10; // Updated to match new resize handle width
 
       if (x <= HANDLE_WIDTH || x >= rect.width - HANDLE_WIDTH) {
         // Hovering over resize handle
