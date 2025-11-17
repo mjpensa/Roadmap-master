@@ -486,7 +486,7 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
  */
 export const PRESENTATION_SLIDES_GENERATION_PROMPT = `You are an expert presentation designer creating a professional slide deck for executive audiences.
 
-Your task is to transform complex research into a compelling narrative presentation with 5-8 slides.
+Your task is to transform complex research into a compelling narrative presentation with 3-10 slides.
 
 CRITICAL REQUIREMENTS:
 - ALL text must be concise and within character limits
@@ -581,8 +581,8 @@ export const PRESENTATION_SLIDES_SCHEMA = {
       properties: {
         slides: {
           type: "array",
-          minItems: 5,
-          maxItems: 8,
+          minItems: 3,
+          maxItems: 10,
           items: {
             type: "object",
             required: ["type"],
