@@ -4,7 +4,7 @@
  * Handles task analysis modal functionality
  */
 
-import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList } from './Utils.js';
+import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext } from './Utils.js';
 import { ChatInterface } from './ChatInterface.js';
 
 /**
@@ -148,9 +148,14 @@ export class TaskAnalyzer {
     if (modalTitle) modalTitle.textContent = analysis.taskName;
 
     // Build analysis HTML (sanitized to prevent XSS)
+    // ORDER: Status, Dates, Timeline Scenarios (NEW), Risks (NEW), Impact (NEW), Scheduling Context (NEW), Facts, Assumptions, Summary/Rationale
     const analysisHTML = `
       ${buildAnalysisSection('Status', `<span class="status-pill status-${analysis.status.replace(/\s+/g, '-').toLowerCase()}">${DOMPurify.sanitize(analysis.status)}</span>`)}
       ${buildAnalysisSection('Dates', `${DOMPurify.sanitize(analysis.startDate || 'N/A')} to ${DOMPurify.sanitize(analysis.endDate || 'N/A')}`)}
+      ${buildTimelineScenarios(analysis.timelineScenarios)}
+      ${buildRiskAnalysis(analysis.risks)}
+      ${buildImpactAnalysis(analysis.impact)}
+      ${buildSchedulingContext(analysis.schedulingContext)}
       ${buildAnalysisList('Facts', analysis.facts, 'fact', 'source')}
       ${buildAnalysisList('Assumptions', analysis.assumptions, 'assumption', 'source')}
       ${buildAnalysisSection('Summary', analysis.summary)}

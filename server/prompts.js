@@ -71,7 +71,41 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
         - 'url': You MUST set this to \`null\`.
 3.  **DETERMINE STATUS:** Determine the task's 'status' ("completed", "in-progress", or "not-started") based on the current date (assume "November 2025") and the task's dates.
 4.  **PROVIDE RATIONALE:** You MUST provide a 'rationale' for 'in-progress' and 'not-started' tasks, analyzing the likelihood of on-time completion based on the 'facts' and 'assumptions'.
-5.  **CLEAN STRINGS:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n).`;
+5.  **CLEAN STRINGS:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n).
+
+**PHASE 1 ENHANCEMENT REQUIREMENTS:**
+
+6.  **SCHEDULING CONTEXT:** Analyze WHY this task starts when it does and provide dependency information:
+    - 'rationale': Explain the timing drivers (regulatory milestones, market events, predecessor completions, resource availability, etc.)
+    - 'predecessors': List tasks that must complete before this task can start (extract from research or infer from timeline)
+    - 'successors': List tasks that depend on this task's completion (extract from research or infer from timeline)
+    - 'isCriticalPath': Determine if this task is on the critical path (true if delays would push the final deadline)
+    - 'slackDays': Estimate schedule slack/float in days (how much delay is tolerable), or null if unknown
+
+7.  **TIMELINE SCENARIOS:** Provide three timeline estimates based on research:
+    - 'expected': The current planned end date with confidence level (high/medium/low based on data quality and assumptions)
+    - 'bestCase': Optimistic completion date assuming favorable conditions (explain assumptions briefly)
+    - 'worstCase': Pessimistic completion date accounting for likely risks (explain risks briefly)
+    - 'likelyDelayFactors': List 2-4 specific factors most likely to cause delays (resource constraints, dependencies, regulatory approvals, technical complexity, etc.)
+
+8.  **RISK ANALYSIS:** Identify 2-5 specific risks or roadblocks:
+    - 'name': Brief risk description (e.g., "Regulatory approval delays")
+    - 'severity': Impact level - "high" (project-critical), "medium" (significant impact), or "low" (minor impact)
+    - 'likelihood': Probability - "probable" (>60%), "possible" (30-60%), or "unlikely" (<30%)
+    - 'impact': Describe what happens if this risk occurs (timeline, cost, scope, quality impact)
+    - 'mitigation': Suggest concrete actions to reduce or avoid the risk
+
+9.  **IMPACT ANALYSIS:** Assess consequences of delays or failure:
+    - 'downstreamTasks': Estimate number of tasks that would be blocked or delayed (based on successors and research)
+    - 'businessImpact': Describe business consequences (revenue loss, customer impact, compliance penalties, market share, etc.)
+    - 'strategicImpact': Describe effect on strategic goals, company roadmap, competitive position, etc.
+    - 'stakeholders': List key stakeholders affected (teams, executives, customers, partners, regulators, etc.)
+
+**IMPORTANT NOTES:**
+- If research data is insufficient for Phase 1 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
+- All Phase 1 fields should be populated when possible - they provide critical decision-making insights.
+- Ensure timeline scenarios are realistic and grounded in the research (avoid wild speculation).
+- Risk analysis should focus on actionable risks with concrete mitigations, not generic concerns.`;
 
 /**
  * Q&A System Prompt Template
@@ -169,7 +203,76 @@ export const TASK_ANALYSIS_SCHEMA = {
       }
     },
     rationale: { type: "string" }, // For 'in-progress' or 'not-started'
-    summary: { type: "string" } // For 'completed'
+    summary: { type: "string" }, // For 'completed'
+
+    // PHASE 1 ENHANCEMENTS
+
+    // Scheduling Context - Explains why task starts when it does
+    schedulingContext: {
+      type: "object",
+      properties: {
+        rationale: { type: "string" },
+        predecessors: { type: "array", items: { type: "string" } },
+        successors: { type: "array", items: { type: "string" } },
+        isCriticalPath: { type: "boolean" },
+        slackDays: { type: "number" }
+      }
+    },
+
+    // Timeline Scenarios - Best/worst/expected case estimates
+    timelineScenarios: {
+      type: "object",
+      properties: {
+        expected: {
+          type: "object",
+          properties: {
+            date: { type: "string" },
+            confidence: { type: "string", enum: ["high", "medium", "low"] }
+          }
+        },
+        bestCase: {
+          type: "object",
+          properties: {
+            date: { type: "string" },
+            assumptions: { type: "string" }
+          }
+        },
+        worstCase: {
+          type: "object",
+          properties: {
+            date: { type: "string" },
+            risks: { type: "string" }
+          }
+        },
+        likelyDelayFactors: { type: "array", items: { type: "string" } }
+      }
+    },
+
+    // Structured Risk Analysis
+    risks: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          severity: { type: "string", enum: ["high", "medium", "low"] },
+          likelihood: { type: "string", enum: ["probable", "possible", "unlikely"] },
+          impact: { type: "string" },
+          mitigation: { type: "string" }
+        }
+      }
+    },
+
+    // Impact Analysis - Consequences of delays
+    impact: {
+      type: "object",
+      properties: {
+        downstreamTasks: { type: "number" },
+        businessImpact: { type: "string" },
+        strategicImpact: { type: "string" },
+        stakeholders: { type: "array", items: { type: "string" } }
+      }
+    }
   },
   required: ["taskName", "status"]
 };
