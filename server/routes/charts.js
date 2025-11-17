@@ -11,7 +11,7 @@ import { CONFIG } from '../config.js';
 import { sanitizePrompt, isValidChartId, isValidJobId } from '../utils.js';
 import { createSession, storeChart, getChart, updateChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
 import { callGeminiForJson } from '../gemini.js';
-import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_GENERATION_PROMPT, PRESENTATION_SLIDES_SCHEMA } from '../prompts.js';
+import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter } from '../middleware.js';
 
 const router = express.Router();
@@ -217,204 +217,168 @@ ${researchTextCache}`;
       progress: 'Generating presentation slides...'
     });
 
-    // NEW: Presentation Slides Generation
+    // NEW: Presentation Slides Generation (Two-Phase Approach)
     let presentationSlides = null;
     try {
-      console.log(`Job ${jobId}: Generating presentation slides from research data...`);
+      console.log(`Job ${jobId}: Generating presentation slides (Phase 1: Outline)...`);
 
-      const presentationSlidesQuery = `${sanitizedPrompt}
+      // PHASE 1: Generate slide outline (types and titles only)
+      const outlineQuery = `Based on the following research, create an outline for a professional presentation slide deck.
 
-Create a professional presentation slide deck that synthesizes the research into a compelling executive narrative.
+Research Summary: ${sanitizedPrompt}
 
 Research Content:
-${researchTextCache}`;
+${researchTextCache.substring(0, 50000)}`; // Limit research content to avoid token limits
 
-      const presentationSlidesPayload = {
-        contents: [{ parts: [{ text: presentationSlidesQuery }] }],
-        systemInstruction: { parts: [{ text: PRESENTATION_SLIDES_GENERATION_PROMPT }] },
+      const outlinePayload = {
+        contents: [{ parts: [{ text: outlineQuery }] }],
+        systemInstruction: { parts: [{ text: PRESENTATION_SLIDES_OUTLINE_PROMPT }] },
         generationConfig: {
           responseMimeType: "application/json",
-          responseSchema: PRESENTATION_SLIDES_SCHEMA,
-          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
+          responseSchema: PRESENTATION_SLIDES_OUTLINE_SCHEMA,
+          maxOutputTokens: 2000,
           temperature: 0.7,
           topP: CONFIG.API.TOP_P,
           topK: CONFIG.API.TOP_K
         }
       };
 
-      const slidesResponse = await callGeminiForJson(
-        presentationSlidesPayload,
+      const outlineResponse = await callGeminiForJson(
+        outlinePayload,
         CONFIG.API.RETRY_COUNT,
         (attemptNum, error) => {
           updateJob(jobId, {
             status: 'processing',
-            progress: `Retrying presentation slides generation (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
+            progress: `Retrying presentation outline generation (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
           });
-          console.log(`Job ${jobId}: Retrying presentation slides due to error: ${error.message}`);
+          console.log(`Job ${jobId}: Retrying outline generation due to error: ${error.message}`);
         }
       );
 
-      // Extract the presentationSlides object from the response
-      console.log(`Job ${jobId}: Raw slidesResponse keys:`, Object.keys(slidesResponse || {}));
-      console.log(`Job ${jobId}: Raw slidesResponse preview:`, JSON.stringify(slidesResponse).substring(0, 500));
-      presentationSlides = slidesResponse.presentationSlides || slidesResponse;
+      const outline = outlineResponse.outline;
 
-      // Debug: Log the structure
-      console.log(`Job ${jobId}: presentationSlides after extraction:`, {
-        exists: !!presentationSlides,
-        isObject: typeof presentationSlides === 'object',
-        hasSlides: !!presentationSlides?.slides,
-        slidesCount: presentationSlides?.slides?.length || 0
+      if (!outline || !Array.isArray(outline) || outline.length === 0) {
+        throw new Error('Failed to generate slide outline - no slides in outline');
+      }
+
+      console.log(`Job ${jobId}: ✓ Generated outline with ${outline.length} slides`);
+      outline.forEach((item, index) => {
+        console.log(`  Slide ${index + 1}: type="${item.type}", title="${item.title}"`);
       });
 
-      // Debug: Log the first slide structure
-      if (presentationSlides?.slides?.[0]) {
-        console.log(`Job ${jobId}: First slide structure:`, JSON.stringify(presentationSlides.slides[0], null, 2));
+      // PHASE 2: Generate content for each slide
+      updateJob(jobId, {
+        status: 'processing',
+        progress: 'Generating detailed slide content...'
+      });
+
+      console.log(`Job ${jobId}: Generating detailed content for ${outline.length} slides...`);
+
+      const slides = [];
+      for (let i = 0; i < outline.length; i++) {
+        const slideOutline = outline[i];
+        console.log(`Job ${jobId}: Generating content for slide ${i + 1}/${outline.length}: "${slideOutline.title}"`);
+
+        // Build prompt based on slide type
+        let slidePrompt = `Generate detailed, professional content for this ${slideOutline.type} slide.
+
+Slide Title: ${slideOutline.title}
+Slide Type: ${slideOutline.type}
+
+Research Summary: ${sanitizedPrompt}
+
+Key Research Points:
+${researchTextCache.substring(0, 20000)}
+
+`;
+
+        // Add type-specific instructions
+        switch (slideOutline.type) {
+          case 'title':
+            slidePrompt += `For this TITLE slide, provide:
+- title: "${slideOutline.title}"
+- subtitle: A compelling subtitle that frames the strategic context (1-2 sentences)`;
+            break;
+          case 'narrative':
+            slidePrompt += `For this NARRATIVE slide, provide:
+- title: "${slideOutline.title}"
+- content: Array of 2-3 paragraphs telling the strategic story (each 2-4 sentences)`;
+            break;
+          case 'drivers':
+            slidePrompt += `For this DRIVERS slide, provide:
+- title: "${slideOutline.title}"
+- drivers: Array of 3-4 strategic drivers, each with:
+  * title: Driver name
+  * description: 1-2 sentence explanation`;
+            break;
+          case 'dependencies':
+            slidePrompt += `For this DEPENDENCIES slide, provide:
+- title: "${slideOutline.title}"
+- dependencies: Array of 2-4 critical dependencies, each with:
+  * name: Dependency name
+  * criticality: "Critical", "High", or "Medium"
+  * criticalityLevel: "high", "medium", or "low"
+  * impact: What happens if this dependency fails (1-2 sentences)`;
+            break;
+          case 'risks':
+            slidePrompt += `For this RISKS slide, provide:
+- title: "${slideOutline.title}"
+- risks: Array of 3-5 strategic risks, each with:
+  * description: Risk description (1-2 sentences)
+  * probability: "high", "medium", or "low"
+  * impact: "severe", "major", "moderate", or "minor"`;
+            break;
+          case 'insights':
+            slidePrompt += `For this INSIGHTS slide, provide:
+- title: "${slideOutline.title}"
+- insights: Array of 4-6 key insights, each with:
+  * category: Category tag (e.g., "Market", "Technology", "Regulatory")
+  * text: The insight statement (1-2 sentences)`;
+            break;
+          default:
+            slidePrompt += `For this SIMPLE slide, provide:
+- title: "${slideOutline.title}"
+- content: Array of 3-5 bullet points (each 1-2 sentences)`;
+        }
+
+        const slidePayload = {
+          contents: [{ parts: [{ text: slidePrompt }] }],
+          systemInstruction: { parts: [{ text: PRESENTATION_SLIDE_CONTENT_PROMPT }] },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: PRESENTATION_SLIDE_CONTENT_SCHEMA,
+            maxOutputTokens: 4000,
+            temperature: 0.7,
+            topP: CONFIG.API.TOP_P,
+            topK: CONFIG.API.TOP_K
+          }
+        };
+
+        const slideResponse = await callGeminiForJson(
+          slidePayload,
+          CONFIG.API.RETRY_COUNT,
+          (attemptNum, error) => {
+            console.log(`Job ${jobId}: Retrying slide ${i + 1} content generation (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`);
+          }
+        );
+
+        const slide = slideResponse.slide;
+        if (slide) {
+          slides.push(slide);
+          console.log(`Job ${jobId}: ✓ Generated content for slide ${i + 1}: type="${slide.type}"`);
+        } else {
+          console.warn(`Job ${jobId}: ⚠️ Failed to generate content for slide ${i + 1}, skipping`);
+        }
       }
 
-      if (!presentationSlides) {
-        console.error(`Job ${jobId}: WARNING - presentationSlides is null/undefined in response. Full response keys:`, Object.keys(slidesResponse || {}));
-        console.error(`Job ${jobId}: Full response preview:`, JSON.stringify(slidesResponse).substring(0, 1000));
-      } else if (!presentationSlides.slides || !Array.isArray(presentationSlides.slides)) {
-        console.error(`Job ${jobId}: WARNING - presentationSlides.slides is not an array. Type:`, typeof presentationSlides.slides);
-        console.error(`Job ${jobId}: presentationSlides structure:`, JSON.stringify(presentationSlides).substring(0, 500));
-      } else if (presentationSlides.slides.length === 0) {
-        console.error(`Job ${jobId}: WARNING - presentationSlides has no slides (empty array)`);
+      if (slides.length > 0) {
+        presentationSlides = { slides };
+        console.log(`Job ${jobId}: ✓ Successfully generated ${slides.length} slides with content`);
       } else {
-        console.log(`Job ${jobId}: Presentation slides generated successfully with ${presentationSlides.slides.length} slides`);
-
-        // Log all slide types and titles before validation
-        console.log(`Job ${jobId}: Initial slides before validation:`);
-        presentationSlides.slides.forEach((slide, index) => {
-          console.log(`  Slide ${index + 1}: type="${slide.type}", title="${slide.title?.substring(0, 50) || 'N/A'}"`);
-        });
-
-        // VALIDATION: Check for and remove duplicate slide titles and slides without content
-        const seenTitles = new Set();
-        const uniqueSlides = [];
-        let duplicatesRemoved = 0;
-        let emptyContentRemoved = 0;
-
-        for (let i = 0; i < presentationSlides.slides.length; i++) {
-          const slide = presentationSlides.slides[i];
-          const slideTitle = slide.title || '';
-          const slideSubtitle = slide.subtitle || '';
-
-          // Check if title is suspiciously long (likely duplicated content)
-          if (slideTitle.length > 300) {
-            console.warn(`Job ${jobId}: Detected suspiciously long title (${slideTitle.length} chars), likely duplicated. Truncating to first 200 chars.`);
-            slide.title = slideTitle.substring(0, 200);
-          }
-
-          // Check if subtitle is suspiciously long (likely duplicated content)
-          if (slideSubtitle.length > 500) {
-            console.warn(`Job ${jobId}: Detected suspiciously long subtitle (${slideSubtitle.length} chars), likely duplicated. Truncating to first 300 chars.`);
-            slide.subtitle = slideSubtitle.substring(0, 300);
-          }
-
-          // Validate that slides have required content based on their type
-          // Title slides can have just title/subtitle, all others MUST have actual content
-          let hasRequiredContent = true;
-          switch (slide.type) {
-            case 'title':
-              // Title slides need at least a title OR subtitle
-              if ((!slide.title || slide.title.trim().length === 0) &&
-                  (!slide.subtitle || slide.subtitle.trim().length === 0)) {
-                console.warn(`Job ${jobId}: Title slide missing both title and subtitle`);
-                hasRequiredContent = false;
-              }
-              break;
-            case 'narrative':
-              // Narrative slides MUST have content array (not just a title)
-              if (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0) {
-                console.warn(`Job ${jobId}: Narrative slide "${slideTitle}" missing content array`);
-                hasRequiredContent = false;
-              }
-              break;
-            case 'drivers':
-              // Drivers slides need drivers array OR fallback to content array
-              if ((!slide.drivers || !Array.isArray(slide.drivers) || slide.drivers.length === 0) &&
-                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
-                console.warn(`Job ${jobId}: Drivers slide "${slideTitle}" missing both drivers and content arrays`);
-                hasRequiredContent = false;
-              }
-              break;
-            case 'dependencies':
-              // Dependencies slides need dependencies array OR fallback to content array
-              if ((!slide.dependencies || !Array.isArray(slide.dependencies) || slide.dependencies.length === 0) &&
-                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
-                console.warn(`Job ${jobId}: Dependencies slide "${slideTitle}" missing both dependencies and content arrays`);
-                hasRequiredContent = false;
-              }
-              break;
-            case 'risks':
-              // Risks slides need risks array OR fallback to content array
-              if ((!slide.risks || !Array.isArray(slide.risks) || slide.risks.length === 0) &&
-                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
-                console.warn(`Job ${jobId}: Risks slide "${slideTitle}" missing both risks and content arrays`);
-                hasRequiredContent = false;
-              }
-              break;
-            case 'insights':
-              // Insights slides need insights array OR fallback to content array
-              if ((!slide.insights || !Array.isArray(slide.insights) || slide.insights.length === 0) &&
-                  (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
-                console.warn(`Job ${jobId}: Insights slide "${slideTitle}" missing both insights and content arrays`);
-                hasRequiredContent = false;
-              }
-              break;
-            case 'simple':
-              // Simple slides MUST have content (not just a title)
-              if (!slide.content || (Array.isArray(slide.content) && slide.content.length === 0) ||
-                  (typeof slide.content === 'string' && slide.content.trim().length === 0)) {
-                console.warn(`Job ${jobId}: Simple slide "${slideTitle}" missing content`);
-                hasRequiredContent = false;
-              }
-              break;
-          }
-
-          // Skip slides without required content
-          if (!hasRequiredContent) {
-            emptyContentRemoved++;
-            console.warn(`Job ${jobId}: ❌ REMOVING slide ${i + 1} - type="${slide.type}", title="${slideTitle.substring(0, 50)}..." - REASON: Missing required content fields`);
-            // Log detailed info about what's missing
-            console.warn(`Job ${jobId}:   Has content array: ${!!(slide.content && Array.isArray(slide.content) && slide.content.length > 0)}`);
-            console.warn(`Job ${jobId}:   Has type-specific array: ${!!(
-              (slide.type === 'drivers' && slide.drivers?.length) ||
-              (slide.type === 'dependencies' && slide.dependencies?.length) ||
-              (slide.type === 'risks' && slide.risks?.length) ||
-              (slide.type === 'insights' && slide.insights?.length)
-            )}`);
-            continue;
-          }
-
-          // Check for duplicate titles
-          if (seenTitles.has(slideTitle)) {
-            duplicatesRemoved++;
-            console.warn(`Job ${jobId}: ❌ REMOVING slide ${i + 1} - type="${slide.type}", title="${slideTitle.substring(0, 50)}..." - REASON: Duplicate title`);
-            continue; // Skip this duplicate slide
-          }
-
-          seenTitles.add(slideTitle);
-          uniqueSlides.push(slide);
-          console.log(`Job ${jobId}: ✓ KEEPING slide ${i + 1} - type="${slide.type}", title="${slideTitle.substring(0, 50)}"`);
-        }
-
-        if (duplicatesRemoved > 0 || emptyContentRemoved > 0) {
-          console.log(`Job ${jobId}: Validation complete - Removed ${duplicatesRemoved} duplicates and ${emptyContentRemoved} slides with missing content. Valid slides: ${uniqueSlides.length}`);
-          presentationSlides.slides = uniqueSlides;
-        }
-
-        // If we removed ALL slides, discard the presentation
-        // Changed threshold from 3 to 1 - having 1-2 slides is better than none
-        if (uniqueSlides.length < 1) {
-          console.error(`Job ${jobId}: ❌ All slides removed during validation - discarding presentation`);
-          console.error(`Job ${jobId}: Details - Duplicates: ${duplicatesRemoved}, Missing content: ${emptyContentRemoved}, Valid: ${uniqueSlides.length}`);
-          presentationSlides = null;
-        } else if (uniqueSlides.length < 3) {
-          console.warn(`Job ${jobId}: ⚠️ Only ${uniqueSlides.length} valid slide(s) remain after validation (removed ${duplicatesRemoved} duplicates, ${emptyContentRemoved} with missing content)`);
-        }
+        console.error(`Job ${jobId}: ❌ No slides generated successfully`);
+        presentationSlides = null;
       }
+
     } catch (slidesError) {
       console.error(`Job ${jobId}: ❌ FAILED to generate presentation slides`);
       console.error(`Job ${jobId}: Error type:`, slidesError.constructor.name);
