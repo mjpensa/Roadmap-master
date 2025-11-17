@@ -561,6 +561,8 @@ export const PRESENTATION_SLIDES_SCHEMA = {
       properties: {
         slides: {
           type: "array",
+          minItems: 5,
+          maxItems: 8,
           items: {
             type: "object",
             required: ["type"],
