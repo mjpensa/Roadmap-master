@@ -2940,7 +2940,44 @@ body.dragging {
   flex: 1;
 }
 
-/* Section Highlight Animation */
+/* Section Isolation Styles */
+.section-isolated {
+  min-height: 100vh;
+  margin-top: 0 !important;
+}
+
+#gantt-chart-container.section-isolated {
+  margin-top: 24px !important;
+}
+
+/* Section Activation Animation */
+.section-activated {
+  animation: sectionActivate 0.8s ease;
+}
+
+@keyframes sectionActivate {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Active menu item indicator */
+.hamburger-nav-item.active {
+  background: rgba(80, 175, 123, 0.2);
+  border-left: 4px solid #50AF7B;
+  padding-left: 16px;
+}
+
+/* Section Highlight Animation (legacy - for scroll-based navigation) */
 .section-highlight {
   animation: highlightPulse 1.5s ease;
 }
