@@ -23,19 +23,20 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 p-12 min-h-screen">
-    <div class="max-w-7xl mx-auto">
-        <!-- Main Title -->
-        <h1 class="text-6xl font-extralight text-white mb-4">
-            <span class="dotted-underline-red">Title of the</span> slide
-        </h1>
+<body class="bg-slate-900 min-h-screen">
+    <!-- Horizontal Stripe Graphic - Full Width (positioned below title) -->
+    <div class="absolute left-0 right-0 z-10" style="top: 130px;">
+        <img src="Public/horizontal-stripe.svg" alt="" class="w-full h-auto" style="max-height: 30px;">
+    </div>
 
-        <!-- Horizontal Stripe Graphic -->
-        <div class="mb-12">
-            <img src="Public/horizontal-stripe.svg" alt="" class="w-full h-auto" style="max-height: 30px;">
-        </div>
+    <div class="p-12">
+        <div class="max-w-7xl mx-auto">
+            <!-- Main Title -->
+            <h1 class="text-6xl font-extralight text-white mb-16">
+                <span class="dotted-underline-red">Title of the</span> slide
+            </h1>
 
-        <!-- LOREM Section -->
+            <!-- LOREM Section -->
         <div class="mb-12">
             <div class="grid grid-cols-4 gap-8 mb-8">
                 <div class="text-white font-bold text-sm">LOREM</div>
@@ -119,6 +120,7 @@
                     </p>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </body>
