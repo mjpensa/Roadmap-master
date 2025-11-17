@@ -1,5 +1,6 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import multer from 'multer';
 import mammoth from 'mammoth';
 import { readFileSync } from 'fs';
@@ -41,8 +42,32 @@ const port = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Enable trust proxy for Railway deployment (fixes rate limiter warnings)
-app.set('trust proxy', true);
+// Configure trust proxy for Railway deployment
+// Railway uses a single proxy layer, so we trust only 1 hop
+// This prevents IP spoofing while allowing proper client IP detection
+app.set('trust proxy', 1);
+
+// --- Security Middleware ---
+// Add security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled to allow Tailwind CDN (will be removed in production)
+  crossOriginEmbedderPolicy: false // Required for some external resources
+}));
+
+// Remove X-Powered-By header
+app.disable('x-powered-by');
+
+// Add cache control headers for static assets
+app.use((req, res, next) => {
+  // Cache static assets for 1 day
+  if (req.path.match(/\.(jpg|jpeg|png|gif|ico|css|js|svg)$/)) {
+    res.set('Cache-Control', 'public, max-age=86400'); // 1 day
+  } else {
+    // Don't cache HTML pages
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 
 // --- Middleware ---
 app.use(express.json());
