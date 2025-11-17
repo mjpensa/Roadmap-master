@@ -465,6 +465,167 @@ export function buildSchedulingContext(schedulingContext) {
 }
 
 /**
+ * PHASE 2 ENHANCEMENT - NEW RENDERING FUNCTIONS
+ */
+
+/**
+ * Builds HTML for Progress Indicators section (in-progress tasks only)
+ * Shows completion percentage, milestones, velocity, and active blockers
+ */
+export function buildProgressIndicators(progress, taskStatus) {
+  // Only show for in-progress tasks
+  if (!progress || taskStatus !== 'in-progress') return '';
+
+  let contentHTML = '';
+
+  // Progress bar with percentage
+  if (progress.percentComplete !== undefined && progress.percentComplete !== null) {
+    const percent = Math.min(100, Math.max(0, progress.percentComplete)); // Clamp to 0-100
+    const velocityClass = progress.velocity || 'on-track';
+    const velocityLabel = velocityClass === 'on-track' ? 'On Track' :
+                          velocityClass === 'behind' ? 'Behind Schedule' : 'Ahead of Schedule';
+    const velocityIcon = velocityClass === 'on-track' ? '✓' :
+                         velocityClass === 'behind' ? '⚠️' : '⚡';
+
+    contentHTML += `
+      <div class="progress-bar-container">
+        <div class="progress-header">
+          <span class="progress-percent">${percent}% Complete</span>
+          <span class="velocity-badge velocity-${velocityClass}">
+            ${velocityIcon} ${velocityLabel}
+          </span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill progress-${velocityClass}" style="width: ${percent}%"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Milestones
+  if (progress.milestones && progress.milestones.length > 0) {
+    const milestoneItems = progress.milestones.map(milestone => {
+      const statusIcon = milestone.completed ? '✅' : '⬜';
+      const statusClass = milestone.completed ? 'completed' : 'pending';
+      return `
+        <li class="milestone-item milestone-${statusClass}">
+          <span class="milestone-icon">${statusIcon}</span>
+          <div class="milestone-details">
+            <span class="milestone-name">${DOMPurify.sanitize(milestone.name)}</span>
+            <span class="milestone-date">${DOMPurify.sanitize(milestone.date || 'TBD')}</span>
+          </div>
+        </li>
+      `;
+    }).join('');
+
+    contentHTML += `
+      <div class="milestones-section">
+        <h5>Milestones</h5>
+        <ul class="milestones-list">${milestoneItems}</ul>
+      </div>
+    `;
+  }
+
+  // Active Blockers
+  if (progress.activeBlockers && progress.activeBlockers.length > 0) {
+    const blockerItems = progress.activeBlockers.map(blocker =>
+      `<li>🚫 ${DOMPurify.sanitize(blocker)}</li>`
+    ).join('');
+
+    contentHTML += `
+      <div class="blockers-section">
+        <h5>Active Blockers</h5>
+        <ul class="blockers-list">${blockerItems}</ul>
+      </div>
+    `;
+  }
+
+  if (!contentHTML) return '';
+
+  return `
+    <div class="analysis-section progress-section">
+      <h4>📈 Progress Tracking</h4>
+      <div class="progress-content">
+        ${contentHTML}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Builds HTML for Motivators & Accelerators section
+ * Shows factors that can speed up completion or ensure success
+ */
+export function buildAccelerators(accelerators) {
+  if (!accelerators) return '';
+
+  let contentHTML = '';
+
+  // External Drivers
+  if (accelerators.externalDrivers && accelerators.externalDrivers.length > 0) {
+    const driverItems = accelerators.externalDrivers.map(driver =>
+      `<li>${DOMPurify.sanitize(driver)}</li>`
+    ).join('');
+    contentHTML += `
+      <div class="accelerator-subsection">
+        <h5>External Drivers</h5>
+        <ul class="accelerator-list">${driverItems}</ul>
+      </div>
+    `;
+  }
+
+  // Internal Incentives
+  if (accelerators.internalIncentives && accelerators.internalIncentives.length > 0) {
+    const incentiveItems = accelerators.internalIncentives.map(incentive =>
+      `<li>${DOMPurify.sanitize(incentive)}</li>`
+    ).join('');
+    contentHTML += `
+      <div class="accelerator-subsection">
+        <h5>Internal Incentives</h5>
+        <ul class="accelerator-list">${incentiveItems}</ul>
+      </div>
+    `;
+  }
+
+  // Efficiency Opportunities
+  if (accelerators.efficiencyOpportunities && accelerators.efficiencyOpportunities.length > 0) {
+    const opportunityItems = accelerators.efficiencyOpportunities.map(opportunity =>
+      `<li>${DOMPurify.sanitize(opportunity)}</li>`
+    ).join('');
+    contentHTML += `
+      <div class="accelerator-subsection">
+        <h5>Efficiency Opportunities</h5>
+        <ul class="accelerator-list">${opportunityItems}</ul>
+      </div>
+    `;
+  }
+
+  // Success Factors
+  if (accelerators.successFactors && accelerators.successFactors.length > 0) {
+    const factorItems = accelerators.successFactors.map(factor =>
+      `<li>${DOMPurify.sanitize(factor)}</li>`
+    ).join('');
+    contentHTML += `
+      <div class="accelerator-subsection">
+        <h5>Success Factors</h5>
+        <ul class="accelerator-list">${factorItems}</ul>
+      </div>
+    `;
+  }
+
+  if (!contentHTML) return '';
+
+  return `
+    <div class="analysis-section accelerators-section">
+      <h4>⚡ Motivators & Accelerators</h4>
+      <div class="accelerators-content">
+        ${contentHTML}
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Builds the HTML legend element for the Gantt chart.
  * Creates a visual legend showing color-coded categories and their meanings.
  * @param {Array<Object>} legendData - Array of legend items
