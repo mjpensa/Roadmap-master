@@ -62,11 +62,15 @@ export class GanttChart {
     this._createGrid();
     this._addLegend();
 
+    // Add footer stripe after Gantt chart
+    this._addGanttFooterSVG();
+
     // Add Executive Summary (if available) - positioned below the chart
     if (this.ganttData.executiveSummary) {
       this._addExecutiveSummary();
     }
 
+    // Add footer stripe after Executive Summary
     this._addFooterSVG();
 
     // Add export and edit mode toggle buttons
@@ -468,7 +472,28 @@ export class GanttChart {
   }
 
   /**
-   * Adds the footer SVG decoration
+   * Adds the footer SVG decoration after the Gantt chart
+   * @private
+   */
+  _addGanttFooterSVG() {
+    if (!this.footerSVG) return;
+
+    const encodedFooterSVG = encodeURIComponent(this.footerSVG.replace(/(\r\n|\n|\r)/gm, ''));
+
+    const footerSvgEl = document.createElement('div');
+    footerSvgEl.className = 'gantt-footer-svg';
+
+    // Apply all styles inline
+    footerSvgEl.style.height = '30px';
+    footerSvgEl.style.backgroundImage = `url("data:image/svg+xml,${encodedFooterSVG}")`;
+    footerSvgEl.style.backgroundRepeat = 'repeat-x';
+    footerSvgEl.style.backgroundSize = 'auto 30px';
+
+    this.chartWrapper.appendChild(footerSvgEl);
+  }
+
+  /**
+   * Adds the footer SVG decoration after the Executive Summary
    * @private
    */
   _addFooterSVG() {
