@@ -41,6 +41,9 @@ const port = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Enable trust proxy for Railway deployment (fixes rate limiter warnings)
+app.set('trust proxy', true);
+
 // --- Middleware ---
 app.use(express.json());
 app.use(express.static(join(__dirname, 'Public'))); // Use 'Public' (uppercase)
@@ -54,15 +57,30 @@ const upload = multer({
     fieldSize: 50 * 1024 * 1024 // 50MB total field size
   },
   fileFilter: (req, file, cb) => {
-    // Validate file types
+    // Validate file types - check both MIME type and extension
     const allowedMimes = [
       'text/markdown',
       'text/plain',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/octet-stream' // Some browsers send .md files with this MIME type
     ];
 
+    // Get file extension
+    const fileExtension = file.originalname.toLowerCase().split('.').pop();
+    const allowedExtensions = ['md', 'txt', 'docx'];
+
+    // Check if MIME type is allowed
     if (allowedMimes.includes(file.mimetype)) {
-      cb(null, true);
+      // For application/octet-stream, verify the extension
+      if (file.mimetype === 'application/octet-stream') {
+        if (allowedExtensions.includes(fileExtension)) {
+          cb(null, true);
+        } else {
+          cb(new Error(`Invalid file extension: .${fileExtension}. Only .md, .txt, and .docx files are allowed.`));
+        }
+      } else {
+        cb(null, true);
+      }
     } else {
       cb(new Error(`Invalid file type: ${file.mimetype}. Only .md, .txt, and .docx files are allowed.`));
     }
