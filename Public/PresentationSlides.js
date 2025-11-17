@@ -119,43 +119,48 @@ export class PresentationSlides {
     const slide = this.slidesData.slides[index];
     container.innerHTML = '';
 
-    const slideCard = document.createElement('div');
-    slideCard.className = `slide-card slide-type-${slide.type}`;
+    // Create swiper-slide structure matching the template
+    const swiperSlide = document.createElement('div');
+    swiperSlide.className = `swiper-slide slide-${slide.type}`;
+
+    const slideContainer = document.createElement('div');
+    slideContainer.className = 'slide-container';
 
     // Add slide number
     const slideNumber = document.createElement('div');
     slideNumber.className = 'slide-number';
     slideNumber.textContent = `${String(index + 1).padStart(2, '0')}`;
-    slideCard.appendChild(slideNumber);
 
     // Render based on slide type
     switch (slide.type) {
       case 'title':
-        this._renderTitleSlide(slideCard, slide);
+        this._renderTitleSlide(slideContainer, slide);
         break;
       case 'narrative':
-        this._renderNarrativeSlide(slideCard, slide);
+        this._renderNarrativeSlide(slideContainer, slide);
         break;
       case 'drivers':
-        this._renderDriversSlide(slideCard, slide);
+        this._renderDriversSlide(slideContainer, slide);
         break;
       case 'dependencies':
-        this._renderDependenciesSlide(slideCard, slide);
+        this._renderDependenciesSlide(slideContainer, slide);
         break;
       case 'risks':
-        this._renderRisksSlide(slideCard, slide);
+        this._renderRisksSlide(slideContainer, slide);
         break;
       case 'insights':
-        this._renderInsightsSlide(slideCard, slide);
+        this._renderInsightsSlide(slideContainer, slide);
         break;
       case 'simple':
-        this._renderSimpleSlide(slideCard, slide);
+        this._renderSimpleSlide(slideContainer, slide);
         break;
       default:
-        this._renderSimpleSlide(slideCard, slide);
+        this._renderSimpleSlide(slideContainer, slide);
     }
 
-    container.appendChild(slideCard);
+    slideContainer.appendChild(slideNumber);
+    swiperSlide.appendChild(slideContainer);
+    container.appendChild(swiperSlide);
   }
 
   /**
@@ -178,12 +183,13 @@ export class PresentationSlides {
    * @private
    */
   _renderNarrativeSlide(container, slide) {
-    const content = document.createElement('div');
-    content.className = 'narrative-slide';
+    const header = document.createElement('div');
+    header.className = 'narrative-header';
 
-    const header = document.createElement('h2');
-    header.className = 'narrative-title';
-    header.textContent = slide.title || 'Elevator Pitch';
+    const title = document.createElement('h2');
+    title.className = 'narrative-title';
+    title.textContent = slide.title || 'Elevator Pitch';
+    header.appendChild(title);
 
     const narrativeContent = document.createElement('div');
     narrativeContent.className = 'narrative-content';
@@ -200,9 +206,8 @@ export class PresentationSlides {
       narrativeContent.appendChild(p);
     }
 
-    content.appendChild(header);
-    content.appendChild(narrativeContent);
-    container.appendChild(content);
+    container.appendChild(header);
+    container.appendChild(narrativeContent);
   }
 
   /**
@@ -210,12 +215,13 @@ export class PresentationSlides {
    * @private
    */
   _renderDriversSlide(container, slide) {
-    const content = document.createElement('div');
-    content.className = 'drivers-slide';
+    const header = document.createElement('div');
+    header.className = 'drivers-header';
 
-    const header = document.createElement('h2');
-    header.className = 'drivers-title';
-    header.textContent = slide.title || 'Key Strategic Drivers';
+    const title = document.createElement('h2');
+    title.className = 'drivers-title';
+    title.textContent = slide.title || 'Key Strategic Drivers';
+    header.appendChild(title);
 
     const driversList = document.createElement('div');
     driversList.className = 'drivers-list';
@@ -235,9 +241,8 @@ export class PresentationSlides {
       });
     }
 
-    content.appendChild(header);
-    content.appendChild(driversList);
-    container.appendChild(content);
+    container.appendChild(header);
+    container.appendChild(driversList);
   }
 
   /**
@@ -245,12 +250,13 @@ export class PresentationSlides {
    * @private
    */
   _renderDependenciesSlide(container, slide) {
-    const content = document.createElement('div');
-    content.className = 'dependencies-slide';
+    const header = document.createElement('div');
+    header.className = 'dependencies-header';
 
-    const header = document.createElement('h2');
-    header.className = 'dependencies-title';
-    header.textContent = slide.title || 'Critical Dependencies';
+    const title = document.createElement('h2');
+    title.className = 'dependencies-title';
+    title.textContent = slide.title || 'Critical Dependencies';
+    header.appendChild(title);
 
     const dependenciesFlow = document.createElement('div');
     dependenciesFlow.className = 'dependencies-flow';
@@ -269,9 +275,8 @@ export class PresentationSlides {
       });
     }
 
-    content.appendChild(header);
-    content.appendChild(dependenciesFlow);
-    container.appendChild(content);
+    container.appendChild(header);
+    container.appendChild(dependenciesFlow);
   }
 
   /**
@@ -279,12 +284,13 @@ export class PresentationSlides {
    * @private
    */
   _renderRisksSlide(container, slide) {
-    const content = document.createElement('div');
-    content.className = 'risks-slide';
+    const header = document.createElement('div');
+    header.className = 'risks-header';
 
-    const header = document.createElement('h2');
-    header.className = 'risks-title';
-    header.textContent = slide.title || 'Strategic Risk Matrix';
+    const title = document.createElement('h2');
+    title.className = 'risks-title';
+    title.textContent = slide.title || 'Strategic Risk Matrix';
+    header.appendChild(title);
 
     // Create 3x3 risk matrix grid
     const riskMatrix = document.createElement('div');
@@ -337,18 +343,10 @@ export class PresentationSlides {
     yAxisLabel.className = 'axis-label y-axis';
     yAxisLabel.textContent = 'Probability';
 
-    content.appendChild(header);
-
-    // Create wrapper for matrix + axis labels
-    const matrixWrapper = document.createElement('div');
-    matrixWrapper.style.position = 'relative';
-    matrixWrapper.style.display = 'inline-block';
-    matrixWrapper.appendChild(riskMatrix);
-    matrixWrapper.appendChild(xAxisLabel);
-    matrixWrapper.appendChild(yAxisLabel);
-
-    content.appendChild(matrixWrapper);
-    container.appendChild(content);
+    container.appendChild(header);
+    container.appendChild(riskMatrix);
+    container.appendChild(xAxisLabel);
+    container.appendChild(yAxisLabel);
   }
 
   /**
@@ -387,12 +385,13 @@ export class PresentationSlides {
    * @private
    */
   _renderInsightsSlide(container, slide) {
-    const content = document.createElement('div');
-    content.className = 'insights-slide';
+    const header = document.createElement('div');
+    header.className = 'insights-header';
 
-    const header = document.createElement('h2');
-    header.className = 'insights-title';
-    header.textContent = slide.title || 'Expert Conversation Points';
+    const title = document.createElement('h2');
+    title.className = 'insights-title';
+    title.textContent = slide.title || 'Expert Conversation Points';
+    header.appendChild(title);
 
     const insightsGrid = document.createElement('div');
     insightsGrid.className = 'insights-grid';
@@ -409,9 +408,8 @@ export class PresentationSlides {
       });
     }
 
-    content.appendChild(header);
-    content.appendChild(insightsGrid);
-    container.appendChild(content);
+    container.appendChild(header);
+    container.appendChild(insightsGrid);
   }
 
   /**
@@ -420,30 +418,24 @@ export class PresentationSlides {
    */
   _renderSimpleSlide(container, slide) {
     const content = document.createElement('div');
-    content.className = 'simple-slide';
+    content.className = 'simple-content';
 
     const header = document.createElement('h2');
     header.className = 'simple-title';
     header.textContent = slide.title || 'Summary';
 
-    const textContainer = document.createElement('div');
-    textContainer.className = 'simple-text';
+    const textContent = document.createElement('p');
+    textContent.className = 'simple-text';
 
     // Handle content as array or string for backwards compatibility
     if (Array.isArray(slide.content)) {
-      slide.content.forEach(item => {
-        const p = document.createElement('p');
-        p.textContent = item;
-        textContainer.appendChild(p);
-      });
+      textContent.textContent = slide.content.join(' ');
     } else {
-      const p = document.createElement('p');
-      p.textContent = slide.content || slide.text || '';
-      textContainer.appendChild(p);
+      textContent.textContent = slide.content || slide.text || '';
     }
 
     content.appendChild(header);
-    content.appendChild(textContainer);
+    content.appendChild(textContent);
     container.appendChild(content);
   }
 
