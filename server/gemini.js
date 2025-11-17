@@ -5,6 +5,7 @@
  */
 
 import { CONFIG, getGeminiApiUrl } from './config.js';
+import { jsonrepair } from 'jsonrepair';
 
 const API_URL = getGeminiApiUrl();
 
@@ -50,8 +51,48 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
         }
       }
 
-      const extractedJsonText = result.candidates[0].content.parts[0].text;
-      return JSON.parse(extractedJsonText); // Return the parsed JSON
+      let extractedJsonText = result.candidates[0].content.parts[0].text;
+
+      // Clean up the JSON text before parsing
+      // Remove markdown code blocks if present
+      extractedJsonText = extractedJsonText.trim();
+      if (extractedJsonText.startsWith('```json')) {
+        extractedJsonText = extractedJsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (extractedJsonText.startsWith('```')) {
+        extractedJsonText = extractedJsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      try {
+        return JSON.parse(extractedJsonText);
+      } catch (parseError) {
+        // Extract error position from error message
+        const positionMatch = parseError.message.match(/position (\d+)/);
+        const errorPosition = positionMatch ? parseInt(positionMatch[1]) : 0;
+
+        // Log the problematic JSON for debugging
+        console.error('JSON Parse Error:', parseError.message);
+        console.error('Total JSON length:', extractedJsonText.length);
+        console.error('Problematic JSON (first 500 chars):', extractedJsonText.substring(0, 500));
+        if (errorPosition > 0) {
+          const contextStart = Math.max(0, errorPosition - 200);
+          const contextEnd = Math.min(extractedJsonText.length, errorPosition + 200);
+          console.error('Problematic JSON (around error position):', extractedJsonText.substring(contextStart, contextEnd));
+        }
+
+        // Try to repair the JSON using jsonrepair library
+        try {
+          console.log('Attempting to repair JSON using jsonrepair library...');
+          const repairedJsonText = jsonrepair(extractedJsonText);
+          const repairedData = JSON.parse(repairedJsonText);
+          console.log('Successfully repaired and parsed JSON!');
+          return repairedData;
+        } catch (repairError) {
+          console.error('JSON repair failed:', repairError.message);
+          console.error('Saving full JSON response to help debug...');
+          console.error('Full JSON response:', extractedJsonText);
+          throw parseError; // Throw the original error
+        }
+      }
 
     } catch (error) {
       console.log(`Attempt ${attempt + 1}/${retryCount} failed:`, error.message);
