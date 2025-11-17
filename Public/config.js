@@ -1,6 +1,7 @@
 /**
  * Centralized Configuration for AI Roadmap Generator
  * Phase 2 Enhancement: Consolidates magic strings and numbers for better maintainability
+ * Phase 5 Enhancement: Added drag-to-edit color configurations
  */
 
 export const CONFIG = {
@@ -17,6 +18,10 @@ export const CONFIG = {
 
     // Grid and borders
     GRID_BORDER: '#0D0D0D',
+
+    // Phase 5: Drag-to-edit visual feedback
+    DRAG_HOVER: 'rgba(186, 57, 48, 0.1)',
+    PRIMARY: '#BA3930',
 
     // Available bar colors (in priority order)
     BAR_COLORS: {

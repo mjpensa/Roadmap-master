@@ -513,8 +513,65 @@
 /* --- SVG FOOTER (Applied by chart-renderer.js) --- */
 /* ------------------------------------------------------------------- */
 .gantt-footer-svg {
-  /* This class is just a container. 
+  /* This class is just a container.
      Styles are applied directly via JS.
   */
   width: 100%;
+}
+
+/* ------------------------------------------------------------------- */
+/* --- PHASE 5: DRAG-TO-EDIT STYLES --- */
+/* ------------------------------------------------------------------- */
+
+/* Draggable bars: Add visual feedback */
+.gantt-bar[draggable="true"] {
+  cursor: move !important;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Bar being dragged */
+.gantt-bar.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+  z-index: 1000;
+}
+
+/* Time cells during drag */
+.gantt-time-cell.drag-over {
+  background-color: rgba(186, 57, 48, 0.1) !important;
+  transition: background-color 0.15s ease;
+}
+
+/* Drag indicator (floating notification) */
+.drag-indicator {
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effect for draggable bars */
+.gantt-bar[draggable="true"]:hover {
+  filter: brightness(1.1);
+  transform: scale(1.01);
+}
+
+/* Prevent text selection during drag */
+body.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
