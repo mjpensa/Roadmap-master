@@ -161,18 +161,8 @@
                         Upload Research Documents
                     </h2>
 
-                    <!-- Upload Mode Toggle -->
-                    <div class="flex gap-4 mb-6">
-                        <button type="button" id="file-mode-btn" class="px-6 py-3 rounded-lg font-semibold text-lg transition-colors bg-custom-button text-white">
-                            Upload Files
-                        </button>
-                        <button type="button" id="folder-mode-btn" class="px-6 py-3 rounded-lg font-semibold text-lg transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600">
-                            Upload Folder
-                        </button>
-                    </div>
-
                     <!--
-                      File/Folder Dropzone
+                      File Dropzone
                     -->
                     <label for="upload-input" class="border-2 border-dashed border-custom-outline rounded-lg p-12 md:p-16 flex flex-col items-center justify-center text-center cursor-pointer transition-colors min-h-[350px] dropzone-container">
 
@@ -222,7 +212,7 @@
                         </div>
                     </label>
 
-                    <!-- The actual file/folder inputs, hidden but functional -->
+                    <!-- The actual file input, hidden but functional -->
                     <input type="file" id="upload-input" multiple accept=".md, .txt, .docx, application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden">
                 </section>
                 
