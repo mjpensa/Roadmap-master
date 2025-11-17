@@ -481,7 +481,123 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
 };
 
 /**
- * Presentation Slides Generation Prompt
+ * Presentation Slides Generation - Phase 1: Outline
+ * Generates slide types and titles only
+ */
+export const PRESENTATION_SLIDES_OUTLINE_PROMPT = `You are an expert presentation designer creating a slide deck outline for executive audiences.
+
+Your task is to create an outline for a compelling narrative presentation with 5-8 slides based on the research provided.
+
+SLIDE TYPES AVAILABLE:
+- "title": Opening title slide with project name
+- "narrative": Elevator pitch / strategic narrative (2-3 paragraphs)
+- "drivers": Key strategic drivers (3-4 items)
+- "dependencies": Critical dependencies (2-4 items)
+- "risks": Strategic risk assessment (3-5 items)
+- "insights": Expert conversation points / key insights (4-6 items)
+- "simple": General content slide
+
+REQUIREMENTS:
+- First slide MUST be type "title"
+- Include a mix of slide types that tell a complete story
+- Each slide must have a UNIQUE title
+- Titles should be clear and professional (under 150 characters)
+- Create 5-8 slides total
+
+IMPORTANT: You are ONLY creating the outline. Slide titles and types only. Content will be generated in a separate step.`;
+
+export const PRESENTATION_SLIDES_OUTLINE_SCHEMA = {
+  type: "object",
+  properties: {
+    outline: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          type: { type: "string" },
+          title: { type: "string" }
+        }
+      }
+    }
+  }
+};
+
+/**
+ * Presentation Slides Generation - Phase 2: Content
+ * Generates detailed content for a specific slide
+ */
+export const PRESENTATION_SLIDE_CONTENT_PROMPT = `You are an expert presentation designer. Generate detailed, professional content for a specific slide.
+
+CRITICAL REQUIREMENTS:
+- Keep all text concise and scannable
+- Use professional business language
+- Extract specific data points and metrics from research when available
+- NEVER repeat phrases or create circular text
+- Focus on strategic insights, not tactical details`;
+
+export const PRESENTATION_SLIDE_CONTENT_SCHEMA = {
+  type: "object",
+  properties: {
+    slide: {
+      type: "object",
+      properties: {
+        type: { type: "string" },
+        title: { type: "string" },
+        subtitle: { type: "string" },
+        content: {
+          type: "array",
+          items: { type: "string" }
+        },
+        drivers: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" }
+            }
+          }
+        },
+        dependencies: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              criticality: { type: "string" },
+              criticalityLevel: { type: "string" },
+              impact: { type: "string" }
+            }
+          }
+        },
+        risks: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              description: { type: "string" },
+              probability: { type: "string" },
+              impact: { type: "string" }
+            }
+          }
+        },
+        insights: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              category: { type: "string" },
+              text: { type: "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+/**
+ * Presentation Slides Generation Prompt (DEPRECATED - kept for reference)
  * Creates professional slide deck from research data
  */
 export const PRESENTATION_SLIDES_GENERATION_PROMPT = `You are an expert presentation designer creating a professional slide deck for executive audiences.
