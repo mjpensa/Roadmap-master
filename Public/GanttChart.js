@@ -66,9 +66,6 @@ export class GanttChart {
     this._createGrid();
     this._addLegend();
 
-    // Add footer stripe after Gantt chart
-    this._addGanttFooterSVG();
-
     // Add Executive Summary (if available) - positioned below the chart
     if (this.ganttData.executiveSummary) {
       this._addExecutiveSummary();
