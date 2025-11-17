@@ -301,58 +301,109 @@ export class ExecutiveSummary {
     const riskMatrix = document.createElement('div');
     riskMatrix.className = 'risk-matrix';
 
+    // Group risks by probability and impact for positioning
+    const risksByCell = {};
     this.summaryData.risks.forEach(risk => {
-      const riskItem = document.createElement('div');
-      riskItem.className = `risk-item ${risk.category}`;
-
-      const riskHeader = document.createElement('div');
-      riskHeader.className = 'risk-header';
-
-      const probabilityBadge = document.createElement('span');
-      probabilityBadge.className = `probability-badge probability-${risk.probability}`;
-      probabilityBadge.textContent = risk.probability.toUpperCase();
-
-      const impactBadge = document.createElement('span');
-      impactBadge.className = `impact-badge impact-${risk.impact}`;
-      impactBadge.textContent = risk.impact.toUpperCase();
-
-      riskHeader.appendChild(probabilityBadge);
-      riskHeader.appendChild(impactBadge);
-
-      const description = document.createElement('p');
-      description.className = 'risk-description';
-      description.textContent = risk.description;
-
-      riskItem.appendChild(riskHeader);
-      riskItem.appendChild(description);
-
-      // Add early indicators if available
-      if (risk.earlyIndicators && risk.earlyIndicators.length > 0) {
-        const details = document.createElement('details');
-        details.className = 'early-warnings';
-
-        const summary = document.createElement('summary');
-        summary.textContent = 'Early Indicators';
-
-        const indicatorsList = document.createElement('ul');
-        risk.earlyIndicators.forEach(indicator => {
-          const li = document.createElement('li');
-          li.textContent = indicator;
-          indicatorsList.appendChild(li);
-        });
-
-        details.appendChild(summary);
-        details.appendChild(indicatorsList);
-        riskItem.appendChild(details);
+      const key = `${risk.probability}-${risk.impact}`;
+      if (!risksByCell[key]) {
+        risksByCell[key] = [];
       }
-
-      riskMatrix.appendChild(riskItem);
+      risksByCell[key].push(risk);
     });
+
+    // Build matrix: 4 rows (header + 3 probability levels) x 4 columns (label + 3 impact levels)
+
+    // Row 1: Column headers
+    riskMatrix.appendChild(this._createMatrixLabel('')); // Empty top-left corner
+    riskMatrix.appendChild(this._createMatrixLabel('Low'));
+    riskMatrix.appendChild(this._createMatrixLabel('Medium'));
+    riskMatrix.appendChild(this._createMatrixLabel('High'));
+
+    // Row 2: High Probability
+    riskMatrix.appendChild(this._createMatrixLabel('High'));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'low', risksByCell['high-low']));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'medium', risksByCell['high-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'high', risksByCell['high-high']));
+
+    // Row 3: Medium Probability
+    riskMatrix.appendChild(this._createMatrixLabel('Medium'));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'low', risksByCell['medium-low']));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'medium', risksByCell['medium-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'high', risksByCell['medium-high']));
+
+    // Row 4: Low Probability
+    riskMatrix.appendChild(this._createMatrixLabel('Low'));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'low', risksByCell['low-low']));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'medium', risksByCell['low-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'high', risksByCell['low-high']));
 
     card.appendChild(header);
     card.appendChild(riskMatrix);
 
     return card;
+  }
+
+  /**
+   * Creates a matrix label cell
+   * @private
+   * @param {string} text - The label text
+   * @returns {HTMLElement} The matrix label element
+   */
+  _createMatrixLabel(text) {
+    const label = document.createElement('div');
+    label.className = 'matrix-label';
+    label.textContent = text;
+    return label;
+  }
+
+  /**
+   * Creates a matrix cell with risks
+   * @private
+   * @param {string} probability - The probability level (low, medium, high)
+   * @param {string} impact - The impact level (low, medium, high)
+   * @param {Array} risks - Array of risk objects for this cell
+   * @returns {HTMLElement} The matrix cell element
+   */
+  _createMatrixCell(probability, impact, risks) {
+    const cell = document.createElement('div');
+    cell.className = `matrix-cell ${probability}-${impact}`;
+
+    if (risks && risks.length > 0) {
+      risks.forEach(risk => {
+        const riskItem = document.createElement('div');
+        riskItem.className = 'risk-item';
+
+        const description = document.createElement('p');
+        description.className = 'risk-description';
+        description.textContent = risk.description;
+
+        riskItem.appendChild(description);
+
+        // Add early indicators if available
+        if (risk.earlyIndicators && risk.earlyIndicators.length > 0) {
+          const details = document.createElement('details');
+          details.className = 'early-warnings';
+
+          const summary = document.createElement('summary');
+          summary.textContent = 'Early Indicators';
+
+          const indicatorsList = document.createElement('ul');
+          risk.earlyIndicators.forEach(indicator => {
+            const li = document.createElement('li');
+            li.textContent = indicator;
+            indicatorsList.appendChild(li);
+          });
+
+          details.appendChild(summary);
+          details.appendChild(indicatorsList);
+          riskItem.appendChild(details);
+        }
+
+        cell.appendChild(riskItem);
+      });
+    }
+
+    return cell;
   }
 
   /**
