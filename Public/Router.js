@@ -111,7 +111,7 @@ class Router {
         }
 
         // Also get the legend and other Gantt-specific elements
-        const legend = document.querySelector('.legend');
+        const legend = document.querySelector('.gantt-legend');
         const exportContainer = document.querySelector('.export-container');
         const todayLine = document.querySelector('.today-line');
 
