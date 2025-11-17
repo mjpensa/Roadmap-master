@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <title>AI Roadmap Generator</title>
     
     <!-- 1. Load Tailwind CSS -->
@@ -43,9 +43,23 @@
     
     <!-- 5. Add custom styles -->
     <style>
+        /* Ensure proper viewport scaling and prevent layout issues */
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+            font-size: 16px; /* Base font size for rem calculations */
+        }
+
+        body {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+
         /* Apply the custom text color globally to WHITE (#FFFFFF) */
         body, h1, h2, p, div, span, label {
-            color: #FFFFFF; 
+            color: #FFFFFF;
         }
 
         /* Style the placeholder with the white color and slight opacity */
@@ -64,7 +78,20 @@
         /* New: Style for scaling the content on hover */
         .dropzone-container:hover .dropzone-content {
              /* Scale the content up slightly on hover */
-             transform: scale(1.03); 
+             transform: scale(1.03);
+        }
+
+        /* Ensure responsive text scaling */
+        @media screen and (max-width: 640px) {
+            html {
+                font-size: 14px;
+            }
+        }
+
+        @media screen and (min-width: 1920px) {
+            html {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
