@@ -86,27 +86,27 @@ export function getQASystemPrompt(taskName, entity) {
  * Gantt Chart JSON Schema
  */
 export const GANTT_CHART_SCHEMA = {
-  type: "OBJECT",
+  type: "object",
   properties: {
-    title: { type: "STRING" },
+    title: { type: "string" },
     timeColumns: {
-      type: "ARRAY",
-      items: { type: "STRING" }
+      type: "array",
+      items: { type: "string" }
     },
     data: {
-      type: "ARRAY",
+      type: "array",
       items: {
-        type: "OBJECT",
+        type: "object",
         properties: {
-          title: { type: "STRING" },
-          isSwimlane: { type: "BOOLEAN" },
-          entity: { type: "STRING" },
+          title: { type: "string" },
+          isSwimlane: { type: "boolean" },
+          entity: { type: "string" },
           bar: {
-            type: "OBJECT",
+            type: "object",
             properties: {
-              startCol: { type: "NUMBER" },
-              endCol: { type: "NUMBER" },
-              color: { type: "STRING" }
+              startCol: { type: "number" },
+              endCol: { type: "number" },
+              color: { type: "string" }
             },
           }
         },
@@ -114,12 +114,12 @@ export const GANTT_CHART_SCHEMA = {
       }
     },
     legend: {
-      type: "ARRAY",
+      type: "array",
       items: {
-        type: "OBJECT",
+        type: "object",
         properties: {
-          color: { type: "STRING" },
-          label: { type: "STRING" }
+          color: { type: "string" },
+          label: { type: "string" }
         },
         required: ["color", "label"]
       }
@@ -132,36 +132,36 @@ export const GANTT_CHART_SCHEMA = {
  * Task Analysis JSON Schema
  */
 export const TASK_ANALYSIS_SCHEMA = {
-  type: "OBJECT",
+  type: "object",
   properties: {
-    taskName: { type: "STRING" },
-    startDate: { type: "STRING" },
-    endDate: { type: "STRING" },
-    status: { type: "STRING", enum: ["completed", "in-progress", "not-started", "n/a"] },
+    taskName: { type: "string" },
+    startDate: { type: "string" },
+    endDate: { type: "string" },
+    status: { type: "string", enum: ["completed", "in-progress", "not-started", "n/a"] },
     facts: {
-      type: "ARRAY",
+      type: "array",
       items: {
-        type: "OBJECT",
+        type: "object",
         properties: {
-          fact: { type: "STRING" },
-          source: { type: "STRING" },
-          url: { type: "STRING" } // Can be a URL string or null
+          fact: { type: "string" },
+          source: { type: "string" },
+          url: { type: "string" } // Can be a URL string or null
         }
       }
     },
     assumptions: {
-      type: "ARRAY",
+      type: "array",
       items: {
-        type: "OBJECT",
+        type: "object",
         properties: {
-          assumption: { type: "STRING" },
-          source: { type: "STRING" },
-          url: { type: "STRING" } // Can be a URL string or null
+          assumption: { type: "string" },
+          source: { type: "string" },
+          url: { type: "string" } // Can be a URL string or null
         }
       }
     },
-    rationale: { type: "STRING" }, // For 'in-progress' or 'not-started'
-    summary: { type: "STRING" } // For 'completed'
+    rationale: { type: "string" }, // For 'in-progress' or 'not-started'
+    summary: { type: "string" } // For 'completed'
   },
   required: ["taskName", "status"]
 };
