@@ -91,11 +91,20 @@ export function getSession(sessionId) {
  */
 export function storeChart(ganttData, sessionId) {
   const chartId = crypto.randomBytes(16).toString('hex');
+
+  console.log(`💾 Storing chart with ID: ${chartId}`);
+  console.log(`📊 Chart data keys:`, Object.keys(ganttData || {}));
+  console.log(`📊 TimeColumns count:`, ganttData?.timeColumns?.length || 0);
+  console.log(`📊 Tasks count:`, ganttData?.data?.length || 0);
+
   chartStore.set(chartId, {
     data: ganttData,
     sessionId: sessionId,
     created: Date.now()
   });
+
+  console.log(`✅ Chart ${chartId} stored successfully. Total charts in storage: ${chartStore.size}`);
+
   return chartId;
 }
 

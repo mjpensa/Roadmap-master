@@ -283,25 +283,51 @@ router.get('/job/:id', apiLimiter, (req, res) => {
  */
 router.get('/chart/:id', (req, res) => {
   const chartId = req.params.id;
+  console.log(`📊 Chart request received for ID: ${chartId}`);
 
   // Validate chart ID format
   if (!isValidChartId(chartId)) {
+    console.log(`❌ Invalid chart ID format: ${chartId}`);
     return res.status(400).json({ error: CONFIG.ERRORS.INVALID_CHART_ID });
   }
 
   const chart = getChart(chartId);
   if (!chart) {
+    console.log(`❌ Chart not found in storage: ${chartId}`);
+    console.log(`📋 Available chart IDs in storage: [listing not implemented]`);
     return res.status(404).json({
       error: CONFIG.ERRORS.CHART_NOT_FOUND
     });
   }
 
+  // Validate the chart data structure before sending
+  if (!chart.data) {
+    console.error(`❌ Chart ${chartId} has no data property`);
+    return res.status(500).json({ error: 'Chart data is corrupted' });
+  }
+
+  if (!chart.data.timeColumns || !Array.isArray(chart.data.timeColumns)) {
+    console.error(`❌ Chart ${chartId} has invalid timeColumns. Type:`, typeof chart.data.timeColumns);
+    return res.status(500).json({ error: 'Chart data structure is invalid' });
+  }
+
+  if (!chart.data.data || !Array.isArray(chart.data.data)) {
+    console.error(`❌ Chart ${chartId} has invalid data array. Type:`, typeof chart.data.data);
+    return res.status(500).json({ error: 'Chart data structure is invalid' });
+  }
+
+  console.log(`✅ Chart ${chartId} found - returning ${chart.data.timeColumns.length} timeColumns and ${chart.data.data.length} tasks`);
+
   // Return chart data along with sessionId for subsequent requests
-  res.json({
+  const responseData = {
     ...chart.data,
     sessionId: chart.sessionId,
     chartId: chartId
-  });
+  };
+
+  console.log(`📤 Sending chart data with keys:`, Object.keys(responseData));
+
+  res.json(responseData);
 });
 
 export default router;
