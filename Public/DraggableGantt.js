@@ -43,12 +43,11 @@ export class DraggableGantt {
       bar.addEventListener('dragend', this._handleDragEnd.bind(this));
     });
 
-    // Add drop zones on time cells
-    const timeCells = this.gridElement.querySelectorAll('.gantt-time-cell');
-    timeCells.forEach(cell => {
-      cell.addEventListener('dragover', this._handleDragOver.bind(this));
-      cell.addEventListener('drop', this._handleDrop.bind(this));
-      cell.addEventListener('dragleave', this._handleDragLeave.bind(this));
+    // Add drop zones on bar areas (each row's timeline container)
+    const barAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
+    barAreas.forEach(barArea => {
+      barArea.addEventListener('dragover', this._handleDragOver.bind(this));
+      barArea.addEventListener('drop', this._handleDrop.bind(this));
     });
   }
 
@@ -111,7 +110,7 @@ export class DraggableGantt {
   }
 
   /**
-   * Handles drag over a time cell
+   * Handles drag over a bar area
    * @param {DragEvent} event - The drag event
    * @private
    */
@@ -119,23 +118,18 @@ export class DraggableGantt {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
 
-    // Highlight the cell being hovered over
-    const cell = event.currentTarget;
-    cell.style.backgroundColor = CONFIG.COLORS.DRAG_HOVER || 'rgba(186, 57, 48, 0.1)';
+    // Only allow drop on the same row where the drag started
+    if (!this.draggedTask) return;
+
+    const barArea = event.currentTarget;
+    if (barArea !== this.draggedTask.barArea) {
+      event.dataTransfer.dropEffect = 'none';
+      return;
+    }
   }
 
   /**
-   * Handles drag leave from a time cell
-   * @param {DragEvent} event - The drag event
-   * @private
-   */
-  _handleDragLeave(event) {
-    const cell = event.currentTarget;
-    cell.style.backgroundColor = '';
-  }
-
-  /**
-   * Handles drop on a time cell
+   * Handles drop on a bar area
    * @param {DragEvent} event - The drag event
    * @private
    */
@@ -145,16 +139,22 @@ export class DraggableGantt {
 
     console.log('🎯 Drop event fired!', event.currentTarget);
 
-    const cell = event.currentTarget;
-    cell.style.backgroundColor = '';
+    const barArea = event.currentTarget;
 
     if (!this.draggedTask) {
       console.warn('No dragged task found');
       return;
     }
 
-    // Calculate the new column position
-    const newStartCol = this._getColumnFromCell(cell);
+    // Only allow drop on the same row
+    if (barArea !== this.draggedTask.barArea) {
+      console.warn('Cannot drop on a different row');
+      this._rollbackDrag();
+      return;
+    }
+
+    // Calculate the new column position based on mouse X position
+    const newStartCol = this._getColumnFromMousePosition(event, barArea);
     const newEndCol = newStartCol + this.draggedTask.duration;
 
     console.log('📍 Drop position calculated:', {
@@ -167,7 +167,7 @@ export class DraggableGantt {
 
     // Validate the new position
     const numCols = this.ganttData.timeColumns.length;
-    if (newEndCol > numCols + 1) {
+    if (newStartCol < 1 || newEndCol > numCols + 1) {
       console.warn('Cannot drop task beyond chart boundaries');
       this._rollbackDrag();
       return;
@@ -226,12 +226,6 @@ export class DraggableGantt {
     // Remove drag indicator
     this._removeDragIndicator();
 
-    // Clear all cell highlights
-    const cells = this.gridElement.querySelectorAll('.gantt-time-cell');
-    cells.forEach(cell => {
-      cell.style.backgroundColor = '';
-    });
-
     this.draggedTask = null;
     this.originalPosition = null;
   }
@@ -286,25 +280,41 @@ export class DraggableGantt {
   }
 
   /**
-   * Gets the column number from a cell element
-   * @param {HTMLElement} cell - The cell element
-   * @returns {number} The column number
+   * Calculates the column number from mouse position within a bar area
+   * @param {DragEvent} event - The drag event
+   * @param {HTMLElement} barArea - The bar area element
+   * @returns {number} The column number (1-indexed)
    * @private
    */
-  _getColumnFromCell(cell) {
-    // First try to get from inline style
-    if (cell.style.gridColumn) {
-      const col = parseInt(cell.style.gridColumn.toString().split('/')[0].trim());
-      console.log('Column from inline style:', col);
-      return col;
-    }
+  _getColumnFromMousePosition(event, barArea) {
+    // Get the bar area dimensions and position
+    const rect = barArea.getBoundingClientRect();
+    const mouseX = event.clientX;
 
-    // Fall back to computed style
-    const cellStyle = window.getComputedStyle(cell);
-    const gridColumn = cellStyle.gridColumn;
-    const col = parseInt(gridColumn.toString().split('/')[0].trim());
-    console.log('Column from computed style:', col, 'raw:', gridColumn);
-    return col;
+    // Calculate relative position within the bar area
+    const relativeX = mouseX - rect.left;
+
+    // Get the number of columns
+    const numCols = this.ganttData.timeColumns.length;
+
+    // Calculate which column the mouse is over
+    const columnWidth = rect.width / numCols;
+    const column = Math.floor(relativeX / columnWidth) + 1; // +1 because grid columns are 1-indexed
+
+    // Clamp to valid range
+    const clampedColumn = Math.max(1, Math.min(column, numCols));
+
+    console.log('Mouse position calculation:', {
+      mouseX,
+      rectLeft: rect.left,
+      relativeX,
+      columnWidth,
+      calculatedColumn: column,
+      clampedColumn,
+      numCols
+    });
+
+    return clampedColumn;
   }
 
   /**
