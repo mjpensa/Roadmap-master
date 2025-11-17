@@ -33,6 +33,7 @@ export class GanttChart {
     this.draggableGantt = null; // Phase 5: Drag-to-edit functionality
     this.resizableGantt = null; // Phase 2: Bar resizing functionality
     this.contextMenu = null; // Phase 5: Context menu for color changing
+    this.isEditMode = false; // Edit mode toggle - default is read-only
   }
 
   /**
@@ -59,9 +60,19 @@ export class GanttChart {
     this._addLegend();
     this._addFooterSVG();
 
-    // Add export button
+    // Add export and edit mode toggle buttons
     const exportContainer = document.createElement('div');
     exportContainer.className = 'export-container';
+
+    // Edit mode toggle button
+    const editModeBtn = document.createElement('button');
+    editModeBtn.id = 'edit-mode-toggle-btn';
+    editModeBtn.className = 'edit-mode-toggle-button';
+    editModeBtn.textContent = this.isEditMode ? '🔓 Edit Mode: ON' : '🔒 Edit Mode: OFF';
+    editModeBtn.title = 'Toggle edit mode to enable/disable chart customization';
+    exportContainer.appendChild(editModeBtn);
+
+    // Export button
     const exportBtn = document.createElement('button');
     exportBtn.id = 'export-png-btn';
     exportBtn.className = 'export-button';
@@ -72,7 +83,8 @@ export class GanttChart {
     this.container.appendChild(this.chartWrapper);
     this.container.appendChild(exportContainer);
 
-    // Add export listener
+    // Add listeners
+    this._addEditModeToggleListener();
     this._addExportListener();
 
     // Add "Today" line
@@ -212,10 +224,12 @@ export class GanttChart {
       labelEl.setAttribute('data-row-id', `row-${dataIndex}`);
       labelEl.setAttribute('data-task-index', dataIndex);
 
-      // Phase 4: Add double-click to edit title
+      // Phase 4: Add double-click to edit title (only in edit mode)
       labelContent.addEventListener('dblclick', (e) => {
         e.stopPropagation();
-        this._makeEditable(labelContent, dataIndex);
+        if (this.isEditMode) {
+          this._makeEditable(labelContent, dataIndex);
+        }
       });
 
       // Create bar area
@@ -351,6 +365,34 @@ export class GanttChart {
     footerSvgEl.style.backgroundSize = 'auto 30px';
 
     this.chartWrapper.appendChild(footerSvgEl);
+  }
+
+  /**
+   * Adds edit mode toggle functionality
+   * @private
+   */
+  _addEditModeToggleListener() {
+    const editModeBtn = document.getElementById('edit-mode-toggle-btn');
+
+    if (!editModeBtn) {
+      console.warn('Edit mode toggle button not found.');
+      return;
+    }
+
+    editModeBtn.addEventListener('click', () => {
+      this.isEditMode = !this.isEditMode;
+      editModeBtn.textContent = this.isEditMode ? '🔓 Edit Mode: ON' : '🔒 Edit Mode: OFF';
+      // Change button color based on state (green when on, red when off)
+      editModeBtn.style.backgroundColor = this.isEditMode ? '#50AF7B' : '#BA3930';
+
+      if (this.isEditMode) {
+        this._enableAllEditFeatures();
+        console.log('✓ Edit mode enabled');
+      } else {
+        this._disableAllEditFeatures();
+        console.log('✓ Edit mode disabled');
+      }
+    });
   }
 
   /**
@@ -548,12 +590,12 @@ export class GanttChart {
       onColorChange
     );
 
-    // Enable dragging, resizing, and context menu by default
-    this.draggableGantt.enableDragging();
-    this.resizableGantt.enableResizing();
-    this.contextMenu.enable();
+    // Add cursor feedback (will only be active when edit mode is enabled)
     this._addCursorFeedback();
-    console.log('✓ Drag-to-edit, bar resizing, and context menu functionality enabled');
+
+    // Edit features are disabled by default (edit mode is off)
+    // They will be enabled when user toggles edit mode
+    console.log('✓ Drag-to-edit, bar resizing, and context menu functionality initialized (disabled by default)');
   }
 
   /**
@@ -564,6 +606,12 @@ export class GanttChart {
     this.gridElement.addEventListener('mousemove', (event) => {
       const bar = event.target.closest('.gantt-bar');
       if (!bar) return;
+
+      // Only show edit cursors when in edit mode
+      if (!this.isEditMode) {
+        bar.style.cursor = 'pointer';
+        return;
+      }
 
       // Don't change cursor if actively dragging or resizing
       if (document.body.classList.contains('dragging') ||
@@ -582,6 +630,52 @@ export class GanttChart {
         // Hovering over middle (drag area)
         bar.style.cursor = 'move';
       }
+    });
+  }
+
+  /**
+   * Enables all editing features
+   * @private
+   */
+  _enableAllEditFeatures() {
+    // Enable drag, resize, and context menu
+    if (this.draggableGantt) {
+      this.draggableGantt.enableDragging();
+    }
+    if (this.resizableGantt) {
+      this.resizableGantt.enableResizing();
+    }
+    if (this.contextMenu) {
+      this.contextMenu.enable();
+    }
+
+    // Add edit-mode class to grid to enable CSS-based features
+    this.gridElement.classList.add('edit-mode-enabled');
+  }
+
+  /**
+   * Disables all editing features
+   * @private
+   */
+  _disableAllEditFeatures() {
+    // Disable drag, resize, and context menu
+    if (this.draggableGantt) {
+      this.draggableGantt.disableDragging();
+    }
+    if (this.resizableGantt) {
+      this.resizableGantt.disableResizing();
+    }
+    if (this.contextMenu) {
+      this.contextMenu.disable();
+    }
+
+    // Remove edit-mode class from grid to disable CSS-based features
+    this.gridElement.classList.remove('edit-mode-enabled');
+
+    // Reset all bar cursors to pointer
+    const bars = this.gridElement.querySelectorAll('.gantt-bar');
+    bars.forEach(bar => {
+      bar.style.cursor = 'pointer';
     });
   }
 

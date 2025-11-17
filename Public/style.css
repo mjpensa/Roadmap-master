@@ -85,8 +85,9 @@
   align-items: center;
 }
 
-.gantt-row-label:hover .row-actions {
-  display: flex; /* Show on hover */
+/* Show row actions on hover only when edit mode is enabled */
+.gantt-grid.edit-mode-enabled .gantt-row-label:hover .row-actions {
+  display: flex;
 }
 
 .row-action-btn {
@@ -249,10 +250,11 @@
 .gantt-bar[data-color="dark-blue"] { background-color: #3B82F6; } /* Bright Blue */
 
 
-/* 13. Export Button Styling */
+/* 13. Export Button and Edit Mode Toggle Styling */
 .export-container {
   display: flex;
   justify-content: center;
+  gap: 16px; /* Space between buttons */
   padding: 32px 0 24px 0; /* Increased padding for more prominence */
   font-family: 'Work Sans', sans-serif; /* CHANGED */
 }
@@ -278,6 +280,26 @@
   background-color: #4a4a4a;
   cursor: not-allowed;
   transform: none; /* No lift when disabled */
+}
+
+/* Edit Mode Toggle Button */
+.edit-mode-toggle-button {
+  font-family: 'Work Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #BA3930; /* Red for locked/disabled state */
+  border: none;
+  border-radius: 8px;
+  padding: 16px 48px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+.edit-mode-toggle-button:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+  filter: brightness(1.1); /* Brighten on hover */
 }
 
 /* ------------------------------------------------------------------- */
