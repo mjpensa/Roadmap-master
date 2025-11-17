@@ -429,6 +429,29 @@
   margin: 0;
 }
 
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.modal-export-btn {
+  font-size: 20px;
+  color: #AAAAAA;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.modal-export-btn:hover {
+  color: #50AF7B;
+  background-color: rgba(80, 175, 123, 0.1);
+}
+
 .modal-close {
   font-size: 28px;
   font-weight: 300;
@@ -1232,6 +1255,178 @@
   left: 0;
   color: #50AF7B;
   font-weight: bold;
+}
+
+/* ------------------------------------------------------------------- */
+/* --- PHASE 3 ENHANCEMENTS - MULTI-COLUMN LAYOUT & POLISH --- */
+/* ------------------------------------------------------------------- */
+
+/* Two-Column Layout */
+.analysis-layout {
+  display: flex;
+  gap: 24px;
+  flex-direction: column;
+}
+
+@media (min-width: 1000px) {
+  .analysis-layout {
+    flex-direction: row;
+  }
+
+  .analysis-sidebar {
+    flex: 0 0 280px;
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+  }
+
+  .analysis-main {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Quick Facts Panel */
+.quick-facts-panel {
+  background-color: #1A1A1A;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.quick-facts-panel h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #383838;
+}
+
+.quick-fact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #2A2A2A;
+}
+
+.quick-fact:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.fact-label {
+  font-size: 12px;
+  color: #888888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fact-value {
+  font-size: 13px;
+  color: #FFFFFF;
+  font-weight: 500;
+  text-align: right;
+}
+
+.fact-value.impact-highlight {
+  color: #EE9E20;
+  font-weight: 600;
+}
+
+.fact-value.confidence-high {
+  color: #50AF7B;
+}
+
+.fact-value.confidence-medium {
+  color: #EE9E20;
+}
+
+.fact-value.confidence-low {
+  color: #BA3930;
+}
+
+.quick-fact.alert-fact {
+  background-color: #2F120F;
+  margin: 0 -16px;
+  padding: 10px 16px;
+  border-left: 3px solid #BA3930;
+}
+
+.quick-fact.alert-fact .fact-label {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.quick-fact.alert-fact .fact-value {
+  color: #BA3930;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Confidence Badge in Header */
+.confidence-badge-header {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  margin-left: 12px;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.confidence-badge-header.confidence-high {
+  background-color: #1A3025;
+  color: #50AF7B;
+}
+
+.confidence-badge-header.confidence-medium {
+  background-color: #382A13;
+  color: #EE9E20;
+}
+
+.confidence-badge-header.confidence-low {
+  background-color: #2F120F;
+  color: #BA3930;
+}
+
+/* Enhanced Visual Polish */
+/* Add subtle shadows to major sections */
+.timeline-scenarios-section,
+.risks-section,
+.impact-section,
+.scheduling-section,
+.progress-section,
+.accelerators-section {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.timeline-scenarios-section:hover,
+.risks-section:hover,
+.impact-section:hover,
+.scheduling-section:hover,
+.progress-section:hover,
+.accelerators-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Improve modal shadow */
+.modal-content {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* Add subtle gradient to modal header */
+.modal-header {
+  background: linear-gradient(135deg, #1A1A1A 0%, #242424 100%);
 }
 
 /* ------------------------------------------------------------------- */

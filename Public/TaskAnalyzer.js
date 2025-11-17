@@ -58,7 +58,10 @@ export class TaskAnalyzer {
     modalContent.innerHTML = `
       <div class="modal-header">
         <h3 class="modal-title">Analyzing...</h3>
-        <button class="modal-close" id="modal-close-btn">&times;</button>
+        <div class="modal-actions">
+          <button class="modal-export-btn" id="modal-export-btn" title="Export Analysis">📥</button>
+          <button class="modal-close" id="modal-close-btn">&times;</button>
+        </div>
       </div>
       <div class="modal-body" id="modal-body-content">
         <div class="modal-spinner"></div>
@@ -143,15 +146,19 @@ export class TaskAnalyzer {
     const modalBody = safeGetElement('modal-body-content', 'TaskAnalyzer._displayAnalysis');
     if (!modalBody) return;
 
-    // Update modal title
+    // Update modal title with confidence badge (Phase 3)
     const modalTitle = safeQuerySelector('.modal-title', 'TaskAnalyzer._displayAnalysis');
-    if (modalTitle) modalTitle.textContent = analysis.taskName;
+    if (modalTitle) {
+      const confidenceBadge = this._buildConfidenceBadge(analysis.confidence);
+      modalTitle.innerHTML = `${DOMPurify.sanitize(analysis.taskName)} ${confidenceBadge}`;
+    }
 
-    // Build analysis HTML (sanitized to prevent XSS)
-    // ORDER: Status, Dates, Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
-    const analysisHTML = `
-      ${buildAnalysisSection('Status', `<span class="status-pill status-${analysis.status.replace(/\s+/g, '-').toLowerCase()}">${DOMPurify.sanitize(analysis.status)}</span>`)}
-      ${buildAnalysisSection('Dates', `${DOMPurify.sanitize(analysis.startDate || 'N/A')} to ${DOMPurify.sanitize(analysis.endDate || 'N/A')}`)}
+    // Build quick facts sidebar (Phase 3)
+    const quickFactsHTML = this._buildQuickFacts(analysis);
+
+    // Build main analysis content
+    // ORDER: Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
+    const mainContentHTML = `
       ${buildTimelineScenarios(analysis.timelineScenarios)}
       ${buildRiskAnalysis(analysis.risks)}
       ${buildImpactAnalysis(analysis.impact)}
@@ -163,14 +170,222 @@ export class TaskAnalyzer {
       ${buildAnalysisSection('Summary', analysis.summary)}
       ${buildAnalysisSection('Rationale / Hurdles', analysis.rationale)}
     `;
+
+    // Create two-column layout with sidebar (Phase 3)
+    const analysisHTML = `
+      <div class="analysis-layout">
+        <aside class="analysis-sidebar">
+          ${quickFactsHTML}
+        </aside>
+        <main class="analysis-main">
+          ${mainContentHTML}
+        </main>
+      </div>
+    `;
+
     modalBody.innerHTML = DOMPurify.sanitize(analysisHTML);
 
     // Add collapsible functionality to major sections
     this._initializeCollapsibleSections();
 
+    // Add export button listener (Phase 3)
+    this._attachExportListener(analysis);
+
     // Add chat interface
     this.chatInterface = new ChatInterface(modalBody, taskIdentifier);
     this.chatInterface.render();
+  }
+
+  /**
+   * Attaches export button event listener (Phase 3)
+   * @param {Object} analysis - The analysis data
+   * @private
+   */
+  _attachExportListener(analysis) {
+    const exportBtn = document.getElementById('modal-export-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        this._exportAnalysis(analysis);
+      });
+    }
+  }
+
+  /**
+   * Exports analysis as a text file (Phase 3)
+   * @param {Object} analysis - The analysis data
+   * @private
+   */
+  _exportAnalysis(analysis) {
+    let content = `TASK ANALYSIS: ${analysis.taskName}\n`;
+    content += `${'='.repeat(60)}\n\n`;
+
+    // Status and dates
+    content += `Status: ${analysis.status}\n`;
+    content += `Timeline: ${analysis.startDate || 'N/A'} - ${analysis.endDate || 'N/A'}\n\n`;
+
+    // Timeline Scenarios
+    if (analysis.timelineScenarios) {
+      content += `TIMELINE SCENARIOS\n${'─'.repeat(40)}\n`;
+      if (analysis.timelineScenarios.bestCase) {
+        content += `Best-Case: ${analysis.timelineScenarios.bestCase.date}\n`;
+        if (analysis.timelineScenarios.bestCase.assumptions) {
+          content += `  ${analysis.timelineScenarios.bestCase.assumptions}\n`;
+        }
+      }
+      if (analysis.timelineScenarios.expected) {
+        content += `Expected: ${analysis.timelineScenarios.expected.date} (${analysis.timelineScenarios.expected.confidence} confidence)\n`;
+      }
+      if (analysis.timelineScenarios.worstCase) {
+        content += `Worst-Case: ${analysis.timelineScenarios.worstCase.date}\n`;
+        if (analysis.timelineScenarios.worstCase.risks) {
+          content += `  ${analysis.timelineScenarios.worstCase.risks}\n`;
+        }
+      }
+      content += '\n';
+    }
+
+    // Risks
+    if (analysis.risks && analysis.risks.length > 0) {
+      content += `RISKS & ROADBLOCKS\n${'─'.repeat(40)}\n`;
+      analysis.risks.forEach((risk, i) => {
+        content += `${i + 1}. [${risk.severity?.toUpperCase()}] ${risk.name}\n`;
+        content += `   Impact: ${risk.impact}\n`;
+        content += `   Mitigation: ${risk.mitigation}\n\n`;
+      });
+    }
+
+    // Impact
+    if (analysis.impact) {
+      content += `IMPACT ANALYSIS\n${'─'.repeat(40)}\n`;
+      if (analysis.impact.downstreamTasks !== undefined) {
+        content += `Downstream Tasks: ${analysis.impact.downstreamTasks}\n`;
+      }
+      if (analysis.impact.businessImpact) {
+        content += `Business Impact: ${analysis.impact.businessImpact}\n`;
+      }
+      if (analysis.impact.strategicImpact) {
+        content += `Strategic Impact: ${analysis.impact.strategicImpact}\n`;
+      }
+      content += '\n';
+    }
+
+    // Download the file
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${analysis.taskName.replace(/[^a-z0-9]/gi, '_')}_analysis.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Builds confidence badge HTML for the modal header (Phase 3)
+   * @param {Object} confidence - Confidence assessment data
+   * @returns {string} HTML for confidence badge
+   * @private
+   */
+  _buildConfidenceBadge(confidence) {
+    if (!confidence || !confidence.level) return '';
+
+    const level = confidence.level.toLowerCase();
+    const icon = level === 'high' ? '✓' : level === 'medium' ? '◐' : '!';
+    const title = confidence.rationale || `${confidence.dataQuality || ''} data quality`;
+
+    return `<span class="confidence-badge-header confidence-${level}" title="${DOMPurify.sanitize(title)}">${icon} ${DOMPurify.sanitize(level)} confidence</span>`;
+  }
+
+  /**
+   * Builds quick facts sidebar HTML (Phase 3)
+   * @param {Object} analysis - The analysis data
+   * @returns {string} HTML for quick facts panel
+   * @private
+   */
+  _buildQuickFacts(analysis) {
+    const statusClass = analysis.status.replace(/\s+/g, '-').toLowerCase();
+    const criticalPath = analysis.schedulingContext?.isCriticalPath;
+    const downstreamTasks = analysis.impact?.downstreamTasks;
+
+    let quickFactsHTML = `
+      <div class="quick-facts-panel">
+        <h4>Quick Facts</h4>
+
+        <div class="quick-fact">
+          <span class="fact-label">Status</span>
+          <span class="status-pill status-${statusClass}">${DOMPurify.sanitize(analysis.status)}</span>
+        </div>
+
+        <div class="quick-fact">
+          <span class="fact-label">Timeline</span>
+          <span class="fact-value">${DOMPurify.sanitize(analysis.startDate || 'N/A')} - ${DOMPurify.sanitize(analysis.endDate || 'N/A')}</span>
+        </div>
+    `;
+
+    // Add critical path indicator
+    if (criticalPath !== undefined) {
+      const cpIcon = criticalPath ? '🔴' : '🟢';
+      const cpText = criticalPath ? 'Critical Path' : 'Has Flexibility';
+      quickFactsHTML += `
+        <div class="quick-fact">
+          <span class="fact-label">Path Status</span>
+          <span class="fact-value">${cpIcon} ${cpText}</span>
+        </div>
+      `;
+    }
+
+    // Add downstream impact
+    if (downstreamTasks !== undefined && downstreamTasks !== null) {
+      quickFactsHTML += `
+        <div class="quick-fact">
+          <span class="fact-label">Downstream</span>
+          <span class="fact-value impact-highlight">${downstreamTasks} task${downstreamTasks !== 1 ? 's' : ''}</span>
+        </div>
+      `;
+    }
+
+    // Add confidence assessment
+    if (analysis.confidence) {
+      const conf = analysis.confidence;
+      const levelIcon = conf.level === 'high' ? '✓' : conf.level === 'medium' ? '◐' : '!';
+      quickFactsHTML += `
+        <div class="quick-fact">
+          <span class="fact-label">Confidence</span>
+          <span class="fact-value confidence-${conf.level}">${levelIcon} ${DOMPurify.sanitize(conf.level)}</span>
+        </div>
+        <div class="quick-fact">
+          <span class="fact-label">Data Quality</span>
+          <span class="fact-value">${DOMPurify.sanitize(conf.dataQuality || 'Unknown')}</span>
+        </div>
+      `;
+
+      if (conf.assumptionCount !== undefined) {
+        quickFactsHTML += `
+          <div class="quick-fact">
+            <span class="fact-label">Assumptions</span>
+            <span class="fact-value">${conf.assumptionCount}</span>
+          </div>
+        `;
+      }
+    }
+
+    // Add high-severity risks count
+    if (analysis.risks && analysis.risks.length > 0) {
+      const highRisks = analysis.risks.filter(r => r.severity === 'high').length;
+      if (highRisks > 0) {
+        quickFactsHTML += `
+          <div class="quick-fact alert-fact">
+            <span class="fact-label">🔴 High Risks</span>
+            <span class="fact-value">${highRisks}</span>
+          </div>
+        `;
+      }
+    }
+
+    quickFactsHTML += `</div>`;
+
+    return quickFactsHTML;
   }
 
   /**

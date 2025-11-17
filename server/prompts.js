@@ -118,13 +118,22 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - 'efficiencyOpportunities': Parallel workstreams, automation, additional resources, process improvements (2-4 items)
     - 'successFactors': Critical conditions that must be maintained for on-time delivery (2-4 items)
 
+**PHASE 3 ENHANCEMENT REQUIREMENTS:**
+
+12. **CONFIDENCE ASSESSMENT:** Evaluate the reliability of the analysis:
+    - 'level': Overall confidence level in the analysis - "high" (strong evidence, few assumptions), "medium" (moderate evidence, some assumptions), or "low" (limited evidence, many assumptions)
+    - 'dataQuality': Quality of available research data - "complete" (comprehensive research coverage), "partial" (some gaps in data), or "limited" (minimal research available)
+    - 'assumptionCount': Count the total number of assumptions made in the analysis (from assumptions array)
+    - 'rationale': Brief explanation of confidence level (1-2 sentences explaining why confidence is high/medium/low)
+
 **IMPORTANT NOTES:**
-- If research data is insufficient for Phase 1 or Phase 2 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
-- All Phase 1 and Phase 2 fields should be populated when possible - they provide critical decision-making insights.
+- If research data is insufficient for Phase 1, 2, or 3 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
+- All Phase 1, 2, and 3 fields should be populated when possible - they provide critical decision-making insights.
 - Ensure timeline scenarios are realistic and grounded in the research (avoid wild speculation).
 - Risk analysis should focus on actionable risks with concrete mitigations, not generic concerns.
 - Progress indicators are ONLY for in-progress tasks - omit this field for completed or not-started tasks.
-- Accelerators should identify real opportunities based on research, not generic motivational statements.`;
+- Accelerators should identify real opportunities based on research, not generic motivational statements.
+- Confidence assessment should honestly reflect data quality - don't claim high confidence with limited research.`;
 
 /**
  * Q&A System Prompt Template
@@ -324,6 +333,19 @@ export const TASK_ANALYSIS_SCHEMA = {
         internalIncentives: { type: "array", items: { type: "string" } },
         efficiencyOpportunities: { type: "array", items: { type: "string" } },
         successFactors: { type: "array", items: { type: "string" } }
+      }
+    },
+
+    // PHASE 3 ENHANCEMENTS
+
+    // Confidence Assessment - Data quality and certainty indicators
+    confidence: {
+      type: "object",
+      properties: {
+        level: { type: "string", enum: ["high", "medium", "low"] },
+        dataQuality: { type: "string", enum: ["complete", "partial", "limited"] },
+        assumptionCount: { type: "number" },
+        rationale: { type: "string" }
       }
     }
   },
