@@ -334,6 +334,12 @@ export class PresentationSlides {
     riskMatrix.appendChild(this._createMatrixCell('low', 'medium', risksByCell['low-medium']));
     riskMatrix.appendChild(this._createMatrixCell('low', 'high', risksByCell['low-high']));
 
+    // Create wrapper for matrix and axis labels
+    const matrixWrapper = document.createElement('div');
+    matrixWrapper.style.position = 'relative';
+    matrixWrapper.style.display = 'inline-block';
+    matrixWrapper.style.margin = '0 auto';
+
     // Add axis labels
     const xAxisLabel = document.createElement('span');
     xAxisLabel.className = 'axis-label x-axis';
@@ -343,10 +349,12 @@ export class PresentationSlides {
     yAxisLabel.className = 'axis-label y-axis';
     yAxisLabel.textContent = 'Probability';
 
+    matrixWrapper.appendChild(riskMatrix);
+    matrixWrapper.appendChild(xAxisLabel);
+    matrixWrapper.appendChild(yAxisLabel);
+
     container.appendChild(header);
-    container.appendChild(riskMatrix);
-    container.appendChild(xAxisLabel);
-    container.appendChild(yAxisLabel);
+    container.appendChild(matrixWrapper);
   }
 
   /**
