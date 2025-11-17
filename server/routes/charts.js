@@ -292,53 +292,88 @@ ${researchTextCache.substring(0, 20000)}
 
 `;
 
-        // Add type-specific instructions
+        // Add type-specific instructions (detailed, following original prompt)
         switch (slideOutline.type) {
           case 'title':
-            slidePrompt += `For this TITLE slide, provide:
-- title: "${slideOutline.title}"
-- subtitle: A compelling subtitle that frames the strategic context (1-2 sentences)`;
+            slidePrompt += `For this TITLE slide, provide a JSON object with:
+- type: "title"
+- title: "${slideOutline.title}" (Professional title that captures the initiative, max 200 chars)
+- subtitle: A compelling subtitle that frames the strategic context (max 300 chars, 1-2 sentences)
+
+Example: { "type": "title", "title": "${slideOutline.title}", "subtitle": "Strategic Initiative for Market Leadership" }`;
             break;
           case 'narrative':
-            slidePrompt += `For this NARRATIVE slide, provide:
+            slidePrompt += `For this NARRATIVE/ELEVATOR PITCH slide, provide a JSON object with:
+- type: "narrative"
 - title: "${slideOutline.title}"
-- content: Array of 2-3 paragraphs telling the strategic story (each 2-4 sentences)`;
+- content: Array of 2-3 paragraph strings that tell the strategic story
+
+Focus on the "why now" and strategic imperative. Should be presentable in 60-90 seconds.
+Each paragraph should be 2-4 sentences (max 1000 chars each).
+Extract specific data points and metrics from the research.
+
+Example: { "type": "narrative", "title": "${slideOutline.title}", "content": ["First paragraph explaining the strategic context and why this matters now...", "Second paragraph outlining the key objectives and expected outcomes...", "Third paragraph describing the path forward and timeline..."] }`;
             break;
           case 'drivers':
-            slidePrompt += `For this DRIVERS slide, provide:
+            slidePrompt += `For this KEY STRATEGIC DRIVERS slide, provide a JSON object with:
+- type: "drivers"
 - title: "${slideOutline.title}"
-- drivers: Array of 3-4 strategic drivers, each with:
-  * title: Driver name
-  * description: 1-2 sentence explanation`;
+- drivers: Array of 3-4 driver objects, each with:
+  * title: Clear driver name (max 150 chars)
+  * description: Concise explanation of why this driver matters (1-2 sentences, max 500 chars)
+
+Extract specific drivers from the research. Focus on market forces, technology trends, business needs, or competitive pressures.
+
+Example: { "type": "drivers", "title": "${slideOutline.title}", "drivers": [{"title": "Market Demand Growth", "description": "Customer demand for digital solutions has increased 300% over the past 18 months, creating urgent need for scalable infrastructure."}, {"title": "Competitive Pressure", "description": "Three major competitors have launched similar initiatives, requiring us to accelerate our timeline to maintain market position."}, ...] }`;
             break;
           case 'dependencies':
-            slidePrompt += `For this DEPENDENCIES slide, provide:
+            slidePrompt += `For this CRITICAL DEPENDENCIES slide, provide a JSON object with:
+- type: "dependencies"
 - title: "${slideOutline.title}"
-- dependencies: Array of 2-4 critical dependencies, each with:
-  * name: Dependency name
-  * criticality: "Critical", "High", or "Medium"
+- dependencies: Array of 2-4 dependency objects, each with:
+  * name: Dependency name (max 200 chars)
+  * criticality: Criticality description (max 100 chars, e.g., "Critical", "High", "Medium")
   * criticalityLevel: "high", "medium", or "low"
-  * impact: What happens if this dependency fails (1-2 sentences)`;
+  * impact: Detailed impact description if this dependency fails (max 500 chars)
+
+Identify critical dependencies such as infrastructure, partnerships, regulatory approvals, budget, resources, or technology.
+
+Example: { "type": "dependencies", "title": "${slideOutline.title}", "dependencies": [{"name": "Cloud Infrastructure Migration", "criticality": "Critical", "criticalityLevel": "high", "impact": "Without cloud infrastructure in place by Q2, the entire project timeline will slip 6-9 months, jeopardizing our market window."}, ...] }`;
             break;
           case 'risks':
-            slidePrompt += `For this RISKS slide, provide:
+            slidePrompt += `For this STRATEGIC RISK MATRIX slide, provide a JSON object with:
+- type: "risks"
 - title: "${slideOutline.title}"
-- risks: Array of 3-5 strategic risks, each with:
-  * description: Risk description (1-2 sentences)
+- risks: Array of 3-5 risk objects, each with:
+  * description: Detailed risk description (max 500 chars)
   * probability: "high", "medium", or "low"
-  * impact: "severe", "major", "moderate", or "minor"`;
+  * impact: "severe", "major", "moderate", or "minor"
+
+Identify strategic risks from the research including regulatory, technical, market, organizational, or financial risks.
+
+Example: { "type": "risks", "title": "${slideOutline.title}", "risks": [{"description": "Regulatory changes in data privacy laws could require significant architecture redesign, affecting 40% of planned features.", "probability": "medium", "impact": "major"}, {"description": "Key talent shortage in AI/ML space may delay development by 3-6 months.", "probability": "high", "impact": "moderate"}, ...] }`;
             break;
           case 'insights':
-            slidePrompt += `For this INSIGHTS slide, provide:
+            slidePrompt += `For this EXPERT CONVERSATION POINTS/KEY INSIGHTS slide, provide a JSON object with:
+- type: "insights"
 - title: "${slideOutline.title}"
-- insights: Array of 4-6 key insights, each with:
-  * category: Category tag (e.g., "Market", "Technology", "Regulatory")
-  * text: The insight statement (1-2 sentences)`;
+- insights: Array of 4-6 insight objects, each with:
+  * category: Category tag (e.g., "Market", "Technology", "Regulatory", "Organizational" - max 100 chars)
+  * text: The insight statement with supporting detail (max 500 chars)
+
+Extract key insights, conversation points, or strategic observations from the research.
+
+Example: { "type": "insights", "title": "${slideOutline.title}", "insights": [{"category": "Market", "text": "Current market trends indicate a 5-year window of opportunity before saturation, with early movers capturing 60-70% market share."}, {"category": "Technology", "text": "Emerging AI capabilities will reduce operational costs by 40% within 24 months, creating significant competitive advantage for early adopters."}, ...] }`;
             break;
           default:
-            slidePrompt += `For this SIMPLE slide, provide:
+            slidePrompt += `For this SIMPLE/GENERAL CONTENT slide, provide a JSON object with:
+- type: "simple"
 - title: "${slideOutline.title}"
-- content: Array of 3-5 bullet points (each 1-2 sentences)`;
+- content: Array of 3-5 text strings (bullet points or short paragraphs)
+
+Each item should be concise and actionable (1-3 sentences).
+
+Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key takeaway about project scope and objectives", "Important milestone or deliverable to highlight", "Critical success factor or requirement", ...] }`;
         }
 
         const slidePayload = {
