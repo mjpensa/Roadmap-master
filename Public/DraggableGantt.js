@@ -100,8 +100,15 @@ export class DraggableGantt {
 
     // Add visual feedback
     bar.style.opacity = '0.5';
-    bar.style.pointerEvents = 'none'; // Allow drop events to pass through to cells below
+    bar.style.pointerEvents = 'none'; // Allow drop events to pass through
     bar.classList.add('dragging');
+
+    // Also disable pointer events on time cells within this bar area so they don't block drops
+    const timeCells = barArea.querySelectorAll('.gantt-time-cell');
+    timeCells.forEach(cell => {
+      cell.style.pointerEvents = 'none';
+    });
+
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/html', bar.innerHTML);
 
@@ -215,10 +222,16 @@ export class DraggableGantt {
     console.log('🏁 Drag ended');
 
     if (this.draggedTask) {
-      // Restore opacity and pointer events
+      // Restore opacity and pointer events on the bar
       this.draggedTask.element.style.opacity = '1';
       this.draggedTask.element.style.pointerEvents = '';
       this.draggedTask.element.classList.remove('dragging');
+
+      // Restore pointer events on time cells
+      const timeCells = this.draggedTask.barArea.querySelectorAll('.gantt-time-cell');
+      timeCells.forEach(cell => {
+        cell.style.pointerEvents = '';
+      });
 
       console.log('✓ Bar visual properties restored. Final gridColumn:', this.draggedTask.element.style.gridColumn);
     }
