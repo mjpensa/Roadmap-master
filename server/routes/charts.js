@@ -283,13 +283,20 @@ ${researchTextCache}`;
       } else {
         console.log(`Job ${jobId}: Presentation slides generated successfully with ${presentationSlides.slides.length} slides`);
 
+        // Log all slide types and titles before validation
+        console.log(`Job ${jobId}: Initial slides before validation:`);
+        presentationSlides.slides.forEach((slide, index) => {
+          console.log(`  Slide ${index + 1}: type="${slide.type}", title="${slide.title?.substring(0, 50) || 'N/A'}"`);
+        });
+
         // VALIDATION: Check for and remove duplicate slide titles and slides without content
         const seenTitles = new Set();
         const uniqueSlides = [];
         let duplicatesRemoved = 0;
         let emptyContentRemoved = 0;
 
-        for (const slide of presentationSlides.slides) {
+        for (let i = 0; i < presentationSlides.slides.length; i++) {
+          const slide = presentationSlides.slides[i];
           const slideTitle = slide.title || '';
           const slideSubtitle = slide.subtitle || '';
 
@@ -306,7 +313,7 @@ ${researchTextCache}`;
           }
 
           // Validate that slides have required content based on their type
-          // Made less strict - only fail if completely missing critical fields
+          // Title slides can have just title/subtitle, all others MUST have actual content
           let hasRequiredContent = true;
           switch (slide.type) {
             case 'title':
@@ -318,15 +325,14 @@ ${researchTextCache}`;
               }
               break;
             case 'narrative':
-              // Narrative slides need content array OR title
-              if ((!slide.content || !Array.isArray(slide.content) || slide.content.length === 0) &&
-                  (!slide.title || slide.title.trim().length === 0)) {
-                console.warn(`Job ${jobId}: Narrative slide "${slideTitle}" missing both content and title`);
+              // Narrative slides MUST have content array (not just a title)
+              if (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0) {
+                console.warn(`Job ${jobId}: Narrative slide "${slideTitle}" missing content array`);
                 hasRequiredContent = false;
               }
               break;
             case 'drivers':
-              // Drivers slides need drivers array OR fallback to content
+              // Drivers slides need drivers array OR fallback to content array
               if ((!slide.drivers || !Array.isArray(slide.drivers) || slide.drivers.length === 0) &&
                   (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
                 console.warn(`Job ${jobId}: Drivers slide "${slideTitle}" missing both drivers and content arrays`);
@@ -334,7 +340,7 @@ ${researchTextCache}`;
               }
               break;
             case 'dependencies':
-              // Dependencies slides need dependencies array OR fallback to content
+              // Dependencies slides need dependencies array OR fallback to content array
               if ((!slide.dependencies || !Array.isArray(slide.dependencies) || slide.dependencies.length === 0) &&
                   (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
                 console.warn(`Job ${jobId}: Dependencies slide "${slideTitle}" missing both dependencies and content arrays`);
@@ -342,7 +348,7 @@ ${researchTextCache}`;
               }
               break;
             case 'risks':
-              // Risks slides need risks array OR fallback to content
+              // Risks slides need risks array OR fallback to content array
               if ((!slide.risks || !Array.isArray(slide.risks) || slide.risks.length === 0) &&
                   (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
                 console.warn(`Job ${jobId}: Risks slide "${slideTitle}" missing both risks and content arrays`);
@@ -350,7 +356,7 @@ ${researchTextCache}`;
               }
               break;
             case 'insights':
-              // Insights slides need insights array OR fallback to content
+              // Insights slides need insights array OR fallback to content array
               if ((!slide.insights || !Array.isArray(slide.insights) || slide.insights.length === 0) &&
                   (!slide.content || !Array.isArray(slide.content) || slide.content.length === 0)) {
                 console.warn(`Job ${jobId}: Insights slide "${slideTitle}" missing both insights and content arrays`);
@@ -358,10 +364,10 @@ ${researchTextCache}`;
               }
               break;
             case 'simple':
-              // Simple slides need content OR title
-              if ((!slide.content || (Array.isArray(slide.content) && slide.content.length === 0)) &&
-                  (!slide.title || slide.title.trim().length === 0)) {
-                console.warn(`Job ${jobId}: Simple slide "${slideTitle}" missing both content and title`);
+              // Simple slides MUST have content (not just a title)
+              if (!slide.content || (Array.isArray(slide.content) && slide.content.length === 0) ||
+                  (typeof slide.content === 'string' && slide.content.trim().length === 0)) {
+                console.warn(`Job ${jobId}: Simple slide "${slideTitle}" missing content`);
                 hasRequiredContent = false;
               }
               break;
@@ -370,19 +376,28 @@ ${researchTextCache}`;
           // Skip slides without required content
           if (!hasRequiredContent) {
             emptyContentRemoved++;
-            console.warn(`Job ${jobId}: Removing slide with type "${slide.type}" and title "${slideTitle.substring(0, 50)}..." due to missing content`);
+            console.warn(`Job ${jobId}: ❌ REMOVING slide ${i + 1} - type="${slide.type}", title="${slideTitle.substring(0, 50)}..." - REASON: Missing required content fields`);
+            // Log detailed info about what's missing
+            console.warn(`Job ${jobId}:   Has content array: ${!!(slide.content && Array.isArray(slide.content) && slide.content.length > 0)}`);
+            console.warn(`Job ${jobId}:   Has type-specific array: ${!!(
+              (slide.type === 'drivers' && slide.drivers?.length) ||
+              (slide.type === 'dependencies' && slide.dependencies?.length) ||
+              (slide.type === 'risks' && slide.risks?.length) ||
+              (slide.type === 'insights' && slide.insights?.length)
+            )}`);
             continue;
           }
 
           // Check for duplicate titles
           if (seenTitles.has(slideTitle)) {
             duplicatesRemoved++;
-            console.warn(`Job ${jobId}: Removing duplicate slide with title: "${slideTitle.substring(0, 50)}..."`);
+            console.warn(`Job ${jobId}: ❌ REMOVING slide ${i + 1} - type="${slide.type}", title="${slideTitle.substring(0, 50)}..." - REASON: Duplicate title`);
             continue; // Skip this duplicate slide
           }
 
           seenTitles.add(slideTitle);
           uniqueSlides.push(slide);
+          console.log(`Job ${jobId}: ✓ KEEPING slide ${i + 1} - type="${slide.type}", title="${slideTitle.substring(0, 50)}"`);
         }
 
         if (duplicatesRemoved > 0 || emptyContentRemoved > 0) {
