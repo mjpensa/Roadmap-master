@@ -79,12 +79,23 @@ async function processFiles(files) {
 
     // Show loading indicator for large file sets
     if (files.length > 100) {
-        dropzonePrompt.innerHTML = `
-            <div class="flex flex-col items-center justify-center">
-                <div class="spinner w-12 h-12 border-3 border-gray-200 border-t-custom-button rounded-full animate-spin mb-4"></div>
-                <p class="text-xl">Processing ${files.length} files...</p>
-            </div>
-        `;
+        // Clear existing content safely
+        dropzonePrompt.textContent = '';
+
+        // Create loading UI using DOM methods (XSS-safe)
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'flex flex-col items-center justify-center';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner w-12 h-12 border-3 border-gray-200 border-t-custom-button rounded-full animate-spin mb-4';
+
+        const text = document.createElement('p');
+        text.className = 'text-xl';
+        text.textContent = `Processing ${files.length} files...`;
+
+        loadingDiv.appendChild(spinner);
+        loadingDiv.appendChild(text);
+        dropzonePrompt.appendChild(loadingDiv);
     }
 
     // Use setTimeout to allow UI to update before processing
@@ -121,18 +132,40 @@ async function processFiles(files) {
         // Reset the input field
         fileInput.value = '';
 
-        // Restore dropzone prompt
-        dropzonePrompt.innerHTML = `
-            <svg class="w-20 h-20 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-            </svg>
-            <p id="dropzone-title" class="text-2xl md:text-3xl font-medium mt-6">
-                ${uploadMode === 'folder' ? 'Drop folder here or click to browse' : 'Drop files here or click to browse'}
-            </p>
-            <p class="text-lg md:text-xl opacity-60 mt-3">
-                Supports .doc, .docx, .md, and .txt files
-            </p>
-        `;
+        // Restore dropzone prompt using safe DOM methods
+        dropzonePrompt.textContent = ''; // Clear existing content
+
+        // Create SVG element
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'w-20 h-20 opacity-80');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('stroke-width', '1.5');
+        svg.setAttribute('stroke', 'currentColor');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('d', 'M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z');
+
+        svg.appendChild(path);
+
+        // Create title paragraph
+        const title = document.createElement('p');
+        title.id = 'dropzone-title';
+        title.className = 'text-2xl md:text-3xl font-medium mt-6';
+        title.textContent = 'Drop files here or click to browse';
+
+        // Create subtitle paragraph
+        const subtitle = document.createElement('p');
+        subtitle.className = 'text-lg md:text-xl opacity-60 mt-3';
+        subtitle.textContent = 'Supports .doc, .docx, .md, and .txt files';
+
+        // Append all elements
+        dropzonePrompt.appendChild(svg);
+        dropzonePrompt.appendChild(title);
+        dropzonePrompt.appendChild(subtitle);
+
         dropzonePrompt.classList.remove('hidden');
         fileListContainer.classList.add('hidden');
         return;
@@ -263,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * Phase 3 Enhancement: Polls the /job/:id endpoint until job is complete
+ * Race condition fix: Prevents concurrent polls and handles edge cases
  * @param {string} jobId - The job ID returned from /generate-chart
  * @param {HTMLElement} generateBtn - The generate button element to update with progress
  * @returns {Promise<Object>} The chart data when job is complete
@@ -272,8 +306,22 @@ async function pollForJobCompletion(jobId, generateBtn) {
   const POLL_INTERVAL = 1000; // Poll every 1 second
   const MAX_ATTEMPTS = 300; // 5 minutes maximum (300 seconds)
   let attempts = 0;
+  let isPolling = false; // Prevent concurrent polls
 
-  while (attempts < MAX_ATTEMPTS) {
+  // Recursive polling function with race condition protection
+  const poll = async () => {
+    // Prevent concurrent poll requests
+    if (isPolling) {
+      console.warn('Poll already in progress, skipping...');
+      return;
+    }
+
+    // Check timeout before attempting
+    if (attempts >= MAX_ATTEMPTS) {
+      throw new Error('Job timed out after 5 minutes. Please try again.');
+    }
+
+    isPolling = true;
     attempts++;
 
     try {
@@ -328,27 +376,43 @@ async function pollForJobCompletion(jobId, generateBtn) {
         console.log('========================================');
 
         return job.data; // Return the chart data
-      } else if (job.status === 'error') {
+      } else if (job.status === 'error' || job.status === 'failed') {
+        // Handle both 'error' and 'failed' statuses
         throw new Error(job.error || 'Job failed with unknown error');
+      } else if (job.status === 'processing' || job.status === 'pending') {
+        // Job still processing, schedule next poll
+        isPolling = false;
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        return await poll(); // Recursive call
+      } else {
+        // Unknown status - treat as error
+        console.error('Unknown job status:', job.status);
+        throw new Error(`Unknown job status: ${job.status}`);
       }
-
-      // Job still processing, wait before next poll
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
 
     } catch (error) {
+      isPolling = false;
+
       // If it's a network error, retry after a short delay
-      if (error.message.includes('fetch')) {
-        console.warn(`Poll attempt ${attempts} failed, retrying...`, error);
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue;
+      if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
+        console.warn(`Poll attempt ${attempts} failed (network error), retrying...`, error);
+
+        // Only retry if we haven't exceeded max attempts
+        if (attempts < MAX_ATTEMPTS) {
+          await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+          return await poll(); // Recursive call to retry
+        }
       }
+
       // For other errors (job errors), throw immediately
       throw error;
+    } finally {
+      isPolling = false;
     }
-  }
+  };
 
-  // If we get here, we've exceeded max attempts
-  throw new Error('Job timed out after 5 minutes. Please try again.');
+  // Start polling immediately
+  return await poll();
 }
 
 /**

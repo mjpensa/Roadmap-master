@@ -67,7 +67,12 @@ export class ExecutiveSummary {
 
     const title = document.createElement('h2');
     title.className = 'summary-title';
-    title.innerHTML = '<span class="icon">📊</span> Strategic Intelligence Brief';
+    // Use safe DOM methods instead of innerHTML
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '📊';
+    title.appendChild(icon);
+    title.appendChild(document.createTextNode(' Strategic Intelligence Brief'));
 
     const toggleBtn = document.createElement('button');
     toggleBtn.className = 'expand-toggle';
@@ -199,7 +204,11 @@ export class ExecutiveSummary {
     card.className = 'intel-card drivers';
 
     const header = document.createElement('h3');
-    header.innerHTML = '<span class="icon">🚀</span> Key Drivers';
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '🚀';
+    header.appendChild(icon);
+    header.appendChild(document.createTextNode(' Key Drivers'));
 
     const driversList = document.createElement('ul');
     driversList.className = 'driver-list';
@@ -251,7 +260,11 @@ export class ExecutiveSummary {
     card.className = 'intel-card dependencies';
 
     const header = document.createElement('h3');
-    header.innerHTML = '<span class="icon">🔗</span> Critical Dependencies';
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '🔗';
+    header.appendChild(icon);
+    header.appendChild(document.createTextNode(' Critical Dependencies'));
 
     const dependencyTimeline = document.createElement('div');
     dependencyTimeline.className = 'dependency-timeline';
@@ -304,7 +317,11 @@ export class ExecutiveSummary {
     card.className = 'intel-card risks';
 
     const header = document.createElement('h3');
-    header.innerHTML = '<span class="icon">⚠️</span> Strategic Risks';
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '⚠️';
+    header.appendChild(icon);
+    header.appendChild(document.createTextNode(' Strategic Risks'));
 
     const riskMatrix = document.createElement('div');
     riskMatrix.className = 'risk-matrix';
@@ -424,7 +441,11 @@ export class ExecutiveSummary {
     card.className = 'intel-card insights full-width';
 
     const header = document.createElement('h3');
-    header.innerHTML = '<span class="icon">💡</span> Expert Conversation Points';
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '💡';
+    header.appendChild(icon);
+    header.appendChild(document.createTextNode(' Expert Conversation Points'));
 
     const insightsCarousel = document.createElement('div');
     insightsCarousel.className = 'insights-carousel';
@@ -448,7 +469,11 @@ export class ExecutiveSummary {
       if (insight.talkingPoint) {
         const talkingPoint = document.createElement('p');
         talkingPoint.className = 'talking-point';
-        talkingPoint.innerHTML = `<strong>Use this when discussing:</strong> ${insight.talkingPoint}`;
+        // Use safe DOM methods to prevent XSS
+        const strong = document.createElement('strong');
+        strong.textContent = 'Use this when discussing:';
+        talkingPoint.appendChild(strong);
+        talkingPoint.appendChild(document.createTextNode(' ' + insight.talkingPoint));
         insightCard.appendChild(talkingPoint);
       }
 
