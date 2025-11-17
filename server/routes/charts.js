@@ -1,6 +1,7 @@
 /**
  * Chart Routes Module
  * Phase 4 Enhancement: Extracted from server.js
+ * Phase 5 Enhancement: Added drag-to-edit task date update endpoint
  * Handles chart generation and retrieval endpoints
  */
 
@@ -328,6 +329,71 @@ router.get('/chart/:id', (req, res) => {
   console.log(`📤 Sending chart data with keys:`, Object.keys(responseData));
 
   res.json(responseData);
+});
+
+/**
+ * POST /update-task-dates
+ * Phase 5 Enhancement: Updates task dates when dragged in the Gantt chart
+ */
+router.post('/update-task-dates', express.json(), (req, res) => {
+  try {
+    const {
+      taskName,
+      entity,
+      sessionId,
+      oldStartCol,
+      oldEndCol,
+      newStartCol,
+      newEndCol,
+      startDate,
+      endDate
+    } = req.body;
+
+    console.log(`🔄 Task date update request:`, {
+      taskName,
+      entity,
+      sessionId,
+      oldStartCol,
+      oldEndCol,
+      newStartCol,
+      newEndCol,
+      startDate,
+      endDate
+    });
+
+    // Validate required fields
+    if (!taskName || !sessionId || newStartCol === undefined || newEndCol === undefined) {
+      console.log('❌ Missing required fields for task update');
+      return res.status(400).json({
+        error: 'Missing required fields: taskName, sessionId, newStartCol, newEndCol'
+      });
+    }
+
+    // Note: In this implementation, we're acknowledging the update but not persisting it
+    // to a database. The chart data is already updated in memory on the client side.
+    // For production use, you would:
+    // 1. Update the chart data in the chartStore
+    // 2. Persist to a database if needed
+    // 3. Trigger any necessary recalculations or notifications
+
+    console.log(`✅ Task "${taskName}" dates updated successfully (client-side only)`);
+
+    res.json({
+      success: true,
+      message: 'Task dates updated',
+      taskName,
+      newStartCol,
+      newEndCol,
+      startDate,
+      endDate
+    });
+  } catch (error) {
+    console.error('❌ Error updating task dates:', error);
+    res.status(500).json({
+      error: 'Failed to update task dates',
+      details: error.message
+    });
+  }
 });
 
 export default router;

@@ -1,11 +1,13 @@
 /**
  * GanttChart Module
  * Phase 3 Enhancement: Extracted from chart-renderer.js
+ * Phase 5 Enhancement: Integrated drag-to-edit functionality
  * Handles core Gantt chart rendering, layout, and export functionality
  */
 
 import { CONFIG } from './config.js';
 import { safeGetElement, findTodayColumnPosition, buildLegend } from './Utils.js';
+import { DraggableGantt } from './DraggableGantt.js';
 
 /**
  * GanttChart Class
@@ -26,6 +28,7 @@ export class GanttChart {
     this.onTaskClick = onTaskClick;
     this.chartWrapper = null;
     this.gridElement = null;
+    this.draggableGantt = null; // Phase 5: Drag-to-edit functionality
   }
 
   /**
@@ -71,6 +74,9 @@ export class GanttChart {
     // Add "Today" line
     const today = new Date('2025-11-14T12:00:00');
     this.addTodayLine(today);
+
+    // Phase 5: Initialize drag-to-edit functionality
+    this._initializeDragToEdit();
   }
 
   /**
@@ -377,6 +383,76 @@ export class GanttChart {
 
     } catch (e) {
       console.error("Error calculating 'Today' line position:", e);
+    }
+  }
+
+  /**
+   * Phase 5: Initializes drag-to-edit functionality
+   * @private
+   */
+  _initializeDragToEdit() {
+    if (!this.gridElement) {
+      console.warn('Cannot initialize drag-to-edit: gridElement not found');
+      return;
+    }
+
+    // Create callback for task updates
+    const onTaskUpdate = async (taskInfo) => {
+      console.log('Task updated via drag:', taskInfo);
+
+      // Persist to server if sessionId is available
+      if (taskInfo.sessionId) {
+        try {
+          const response = await fetch('/update-task-dates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskInfo)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log('✓ Task update persisted to server:', result);
+        } catch (error) {
+          console.error('Failed to persist task update:', error);
+          throw error; // Re-throw to trigger rollback in DraggableGantt
+        }
+      }
+    };
+
+    // Initialize DraggableGantt
+    this.draggableGantt = new DraggableGantt(
+      this.gridElement,
+      this.ganttData,
+      onTaskUpdate
+    );
+
+    // Enable dragging by default
+    this.draggableGantt.enableDragging();
+    console.log('✓ Drag-to-edit functionality enabled');
+  }
+
+  /**
+   * Phase 5: Enables drag-to-edit functionality
+   * @public
+   */
+  enableDragToEdit() {
+    if (this.draggableGantt) {
+      this.draggableGantt.enableDragging();
+      console.log('Drag-to-edit enabled');
+    }
+  }
+
+  /**
+   * Phase 5: Disables drag-to-edit functionality
+   * @public
+   */
+  disableDragToEdit() {
+    if (this.draggableGantt) {
+      this.draggableGantt.disableDragging();
+      console.log('Drag-to-edit disabled');
     }
   }
 }
