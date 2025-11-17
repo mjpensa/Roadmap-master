@@ -59,14 +59,14 @@ export class GanttChart {
     // Build chart components
     this._addLogo();
     this._addTitle();
+    this._createGrid();
+    this._addLegend();
 
-    // Add Executive Summary (if available)
+    // Add Executive Summary (if available) - positioned below the chart
     if (this.ganttData.executiveSummary) {
       this._addExecutiveSummary();
     }
 
-    this._createGrid();
-    this._addLegend();
     this._addFooterSVG();
 
     // Add export and edit mode toggle buttons
