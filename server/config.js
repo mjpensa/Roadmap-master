@@ -60,8 +60,8 @@ export const CONFIG = {
   // File upload limits
   FILES: {
     MAX_SIZE_BYTES: 10 * 1024 * 1024, // 10MB per file
-    MAX_COUNT: 10,
-    MAX_FIELD_SIZE_BYTES: 50 * 1024 * 1024, // 50MB total
+    MAX_COUNT: 500, // Increased to support folder uploads with many files
+    MAX_FIELD_SIZE_BYTES: 200 * 1024 * 1024, // 200MB total - increased for folder uploads
     ALLOWED_MIMES: [
       'text/markdown',
       'text/plain',
@@ -138,8 +138,8 @@ export const CONFIG = {
     INVALID_JOB_ID: 'Invalid job ID format',
     JOB_NOT_FOUND: 'Job not found or expired. Jobs are available for 1 hour.',
     FILE_TOO_LARGE: 'File too large. Maximum size is 10MB per file.',
-    TOO_MANY_FILES: 'Too many files. Maximum is 10 files per upload.',
-    FIELD_TOO_LARGE: 'Field value too large. Maximum total size is 50MB.',
+    TOO_MANY_FILES: 'Too many files. Maximum is 500 files per upload.',
+    FIELD_TOO_LARGE: 'Field value too large. Maximum total size is 200MB.',
     RATE_LIMIT_EXCEEDED: 'Too many requests from this IP, please try again later.',
     STRICT_RATE_LIMIT_EXCEEDED: 'Too many chart generation requests. Please try again in 15 minutes.',
     INVALID_FILE_EXTENSION: (ext) => `Invalid file extension: .${ext}. Only .md, .txt, and .docx files are allowed.`,

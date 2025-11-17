@@ -43,24 +43,42 @@ async function processChartGeneration(jobId, reqBody, files) {
     // Update progress
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Processing uploaded files...'
+      progress: `Processing ${files?.length || 0} uploaded file(s)...`
     });
 
-    // Extract text from uploaded files (Sort for determinism)
-    if (files) {
+    // Extract text from uploaded files (Sort for determinism, process in parallel)
+    if (files && files.length > 0) {
       const sortedFiles = files.sort((a, b) => a.originalname.localeCompare(b.originalname));
-      for (const file of sortedFiles) {
-        researchTextCache += `\n\n--- Start of file: ${file.originalname} ---\n`;
-        researchFilesCache.push(file.originalname);
+
+      // Process files in parallel for better performance with large folders
+      const fileProcessingPromises = sortedFiles.map(async (file) => {
+        let content = '';
 
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
           const result = await mammoth.convertToHtml({ buffer: file.buffer });
-          researchTextCache += result.value;
+          content = result.value;
         } else {
-          researchTextCache += file.buffer.toString('utf8');
+          content = file.buffer.toString('utf8');
         }
-        researchTextCache += `\n--- End of file: ${file.originalname} ---\n`;
+
+        return {
+          name: file.originalname,
+          content: content
+        };
+      });
+
+      // Wait for all files to be processed
+      const processedFiles = await Promise.all(fileProcessingPromises);
+
+      // Combine all file contents in order
+      for (const processedFile of processedFiles) {
+        researchTextCache += `\n\n--- Start of file: ${processedFile.name} ---\n`;
+        researchFilesCache.push(processedFile.name);
+        researchTextCache += processedFile.content;
+        researchTextCache += `\n--- End of file: ${processedFile.name} ---\n`;
       }
+
+      console.log(`Job ${jobId}: Processed ${processedFiles.length} files (${researchTextCache.length} characters total)`);
     }
 
     // Update progress

@@ -18,9 +18,55 @@ function displayError(message) {
     errorMessage.style.display = 'block';
 }
 
+// Track current upload mode
+let uploadMode = 'files'; // 'files' or 'folder'
+
+// --- Helper to format file size ---
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// --- Helper to update folder statistics ---
+function updateFolderStats(files, validFiles) {
+    const folderStats = document.getElementById('folder-stats');
+    const totalFiles = document.getElementById('total-files');
+    const validFilesEl = document.getElementById('valid-files');
+    const totalSize = document.getElementById('total-size');
+    const fileTypes = document.getElementById('file-types');
+
+    // Calculate total size
+    let size = 0;
+    for (const file of validFiles) {
+        size += file.size;
+    }
+
+    // Get unique file types
+    const types = new Set();
+    for (const file of validFiles) {
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        types.add(ext);
+    }
+
+    totalFiles.textContent = files.length;
+    validFilesEl.textContent = validFiles.length;
+    totalSize.textContent = formatFileSize(size);
+    fileTypes.textContent = Array.from(types).join(', ') || 'None';
+
+    // Show stats only in folder mode
+    if (uploadMode === 'folder') {
+        folderStats.classList.remove('hidden');
+    } else {
+        folderStats.classList.add('hidden');
+    }
+}
+
 // --- Helper to trigger file processing logic using a FileList object ---
 function processFiles(files) {
-    const fileInput = document.getElementById('file-input');
+    const fileInput = document.getElementById('upload-input');
     const dropzonePrompt = document.getElementById('dropzone-prompt');
     const fileListContainer = document.getElementById('file-list-container');
     const fileList = document.getElementById('file-list');
@@ -52,34 +98,63 @@ function processFiles(files) {
         }
     }
 
-    // 2. Handle invalid files
+    // 2. Show warning for invalid files but continue with valid ones
     if (invalidFiles.length > 0) {
-        const errorMsg = `The following files are not supported: ${invalidFiles.join(', ')}. Please upload only ${SUPPORTED_FILES_STRING} files.`;
+        const warningMsg = `Skipping ${invalidFiles.length} unsupported file(s). Only ${SUPPORTED_FILES_STRING} files will be processed.`;
+        displayError(warningMsg);
+    }
+
+    // 3. Check if we have any valid files
+    if (validFiles.length === 0) {
+        const errorMsg = `No valid files found. Please upload ${SUPPORTED_FILES_STRING} files.`;
         displayError(errorMsg);
-        
-        // Reset the input field completely to prevent submission of bad files
+
+        // Reset the input field
         fileInput.value = '';
-        
+
         // Restore dropzone prompt
         dropzonePrompt.classList.remove('hidden');
         fileListContainer.classList.add('hidden');
         return;
     }
 
-    // 3. If files are valid, update the list display
+    // 4. Update folder statistics
+    updateFolderStats(filesArray, validFiles);
+
+    // 5. Update the file list display
     fileList.innerHTML = ''; // Clear previous list
-    
+
     // Create a new DataTransfer object to hold valid files
     const dataTransfer = new DataTransfer();
-    for (const file of validFiles) {
+
+    // Show first 50 files in the list, indicate if there are more
+    const displayLimit = 50;
+    const displayFiles = validFiles.slice(0, displayLimit);
+
+    for (const file of displayFiles) {
         const li = document.createElement('li');
-        li.className = 'truncate'; 
-        li.textContent = file.name;
-        li.title = file.name; // Show full name on hover
+        li.className = 'truncate';
+        // Show relative path if available (folder upload)
+        const displayName = file.webkitRelativePath || file.name;
+        li.textContent = displayName;
+        li.title = displayName; // Show full name on hover
         fileList.appendChild(li);
         dataTransfer.items.add(file); // Add valid file to the DataTransfer
     }
-    
+
+    // Add remaining valid files to DataTransfer without displaying
+    for (let i = displayLimit; i < validFiles.length; i++) {
+        dataTransfer.items.add(validFiles[i]);
+    }
+
+    // Show indicator if there are more files
+    if (validFiles.length > displayLimit) {
+        const li = document.createElement('li');
+        li.className = 'font-semibold text-custom-button';
+        li.textContent = `... and ${validFiles.length - displayLimit} more file(s)`;
+        fileList.appendChild(li);
+    }
+
     // Update the input field's files property with the clean list
     fileInput.files = dataTransfer.files;
 
@@ -88,21 +163,67 @@ function processFiles(files) {
 }
 
 
+// --- Function to set upload mode ---
+function setUploadMode(mode) {
+  uploadMode = mode;
+  const uploadInput = document.getElementById('upload-input');
+  const fileModeBtn = document.getElementById('file-mode-btn');
+  const folderModeBtn = document.getElementById('folder-mode-btn');
+  const dropzoneTitle = document.getElementById('dropzone-title');
+
+  // Reset selection
+  uploadInput.value = '';
+  document.getElementById('dropzone-prompt').classList.remove('hidden');
+  document.getElementById('file-list-container').classList.add('hidden');
+
+  if (mode === 'folder') {
+    // Enable folder upload
+    uploadInput.setAttribute('webkitdirectory', '');
+    uploadInput.setAttribute('directory', '');
+    uploadInput.removeAttribute('multiple');
+
+    // Update UI
+    dropzoneTitle.textContent = 'Drop folder here or click to browse';
+    folderModeBtn.classList.remove('bg-gray-700', 'text-gray-300');
+    folderModeBtn.classList.add('bg-custom-button', 'text-white');
+    fileModeBtn.classList.remove('bg-custom-button', 'text-white');
+    fileModeBtn.classList.add('bg-gray-700', 'text-gray-300');
+  } else {
+    // Enable file upload
+    uploadInput.removeAttribute('webkitdirectory');
+    uploadInput.removeAttribute('directory');
+    uploadInput.setAttribute('multiple', '');
+
+    // Update UI
+    dropzoneTitle.textContent = 'Drop files here or click to browse';
+    fileModeBtn.classList.remove('bg-gray-700', 'text-gray-300');
+    fileModeBtn.classList.add('bg-custom-button', 'text-white');
+    folderModeBtn.classList.remove('bg-custom-button', 'text-white');
+    folderModeBtn.classList.add('bg-gray-700', 'text-gray-300');
+  }
+}
+
 // --- Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
   const ganttForm = document.getElementById('gantt-form');
   ganttForm.addEventListener('submit', handleChartGenerate);
 
-  const fileInput = document.getElementById('file-input');
-  const dropzoneLabel = document.querySelector('.dropzone-container'); // The clickable label
+  const uploadInput = document.getElementById('upload-input');
+  const dropzoneLabel = document.querySelector('.dropzone-container');
+  const fileModeBtn = document.getElementById('file-mode-btn');
+  const folderModeBtn = document.getElementById('folder-mode-btn');
 
-  // MODIFICATION: Consolidated file selection logic into processFiles
-  fileInput.addEventListener('change', (e) => {
+  // Mode toggle handlers
+  fileModeBtn.addEventListener('click', () => setUploadMode('files'));
+  folderModeBtn.addEventListener('click', () => setUploadMode('folder'));
+
+  // File/folder selection handler
+  uploadInput.addEventListener('change', (e) => {
     processFiles(e.target.files);
   });
-  
+
   // -------------------------------------------------------------------
-  // --- NEW: DRAG AND DROP EVENT LISTENERS ---
+  // --- DRAG AND DROP EVENT LISTENERS ---
   // -------------------------------------------------------------------
 
   // 1. Prevent default behavior on dragover/dragenter (REQUIRED for drop to work)
@@ -112,14 +233,14 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
     }, false);
   });
-  
-  // 2. Handle file drop
+
+  // 2. Handle file/folder drop
   dropzoneLabel.addEventListener('drop', (e) => {
     const droppedFiles = e.dataTransfer.files;
     processFiles(droppedFiles);
   }, false);
 
-  // 3. (Optional) Visual feedback for drag
+  // 3. Visual feedback for drag
   dropzoneLabel.addEventListener('dragenter', () => {
     dropzoneLabel.classList.add('border-white');
     dropzoneLabel.classList.remove('border-custom-outline');
@@ -252,10 +373,10 @@ async function handleChartGenerate(event) {
   try {
     // 1. Get form data
     const promptInput = document.getElementById('prompt-input');
-    const fileInput = document.getElementById('file-input');
+    const uploadInput = document.getElementById('upload-input');
 
     // 2. Validate inputs
-    if (fileInput.files.length === 0) {
+    if (uploadInput.files.length === 0) {
       displayError('Error: Please upload at least one research document.');
       return; // Will re-enable button in finally block
     }
@@ -267,7 +388,7 @@ async function handleChartGenerate(event) {
 
     const formData = new FormData();
     formData.append('prompt', promptInput.value);
-    for (const file of fileInput.files) {
+    for (const file of uploadInput.files) {
       formData.append('researchFiles', file);
     }
 
