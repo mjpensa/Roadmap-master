@@ -65,7 +65,7 @@ function updateFolderStats(files, validFiles) {
 }
 
 // --- Helper to trigger file processing logic using a FileList object ---
-function processFiles(files) {
+async function processFiles(files) {
     const fileInput = document.getElementById('upload-input');
     const dropzonePrompt = document.getElementById('dropzone-prompt');
     const fileListContainer = document.getElementById('file-list-container');
@@ -80,6 +80,19 @@ function processFiles(files) {
         fileListContainer.classList.add('hidden');
         return;
     }
+
+    // Show loading indicator for large file sets
+    if (files.length > 100) {
+        dropzonePrompt.innerHTML = `
+            <div class="flex flex-col items-center justify-center">
+                <div class="spinner w-12 h-12 border-3 border-gray-200 border-t-custom-button rounded-full animate-spin mb-4"></div>
+                <p class="text-xl">Processing ${files.length} files...</p>
+            </div>
+        `;
+    }
+
+    // Use setTimeout to allow UI to update before processing
+    await new Promise(resolve => setTimeout(resolve, 10));
 
     const filesArray = Array.from(files);
     let validFiles = [];
@@ -113,6 +126,17 @@ function processFiles(files) {
         fileInput.value = '';
 
         // Restore dropzone prompt
+        dropzonePrompt.innerHTML = `
+            <svg class="w-20 h-20 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+            <p id="dropzone-title" class="text-2xl md:text-3xl font-medium mt-6">
+                ${uploadMode === 'folder' ? 'Drop folder here or click to browse' : 'Drop files here or click to browse'}
+            </p>
+            <p class="text-lg md:text-xl opacity-60 mt-3">
+                Supports .doc, .docx, .md, and .txt files
+            </p>
+        `;
         dropzonePrompt.classList.remove('hidden');
         fileListContainer.classList.add('hidden');
         return;
@@ -124,13 +148,11 @@ function processFiles(files) {
     // 5. Update the file list display
     fileList.innerHTML = ''; // Clear previous list
 
-    // Create a new DataTransfer object to hold valid files
-    const dataTransfer = new DataTransfer();
-
     // Show first 50 files in the list, indicate if there are more
     const displayLimit = 50;
     const displayFiles = validFiles.slice(0, displayLimit);
 
+    const fragment = document.createDocumentFragment();
     for (const file of displayFiles) {
         const li = document.createElement('li');
         li.className = 'truncate';
@@ -138,13 +160,7 @@ function processFiles(files) {
         const displayName = file.webkitRelativePath || file.name;
         li.textContent = displayName;
         li.title = displayName; // Show full name on hover
-        fileList.appendChild(li);
-        dataTransfer.items.add(file); // Add valid file to the DataTransfer
-    }
-
-    // Add remaining valid files to DataTransfer without displaying
-    for (let i = displayLimit; i < validFiles.length; i++) {
-        dataTransfer.items.add(validFiles[i]);
+        fragment.appendChild(li);
     }
 
     // Show indicator if there are more files
@@ -152,11 +168,14 @@ function processFiles(files) {
         const li = document.createElement('li');
         li.className = 'font-semibold text-custom-button';
         li.textContent = `... and ${validFiles.length - displayLimit} more file(s)`;
-        fileList.appendChild(li);
+        fragment.appendChild(li);
     }
 
-    // Update the input field's files property with the clean list
-    fileInput.files = dataTransfer.files;
+    fileList.appendChild(fragment);
+
+    // Note: We can't programmatically set files on an input element due to security restrictions
+    // The files are already in the input from the user's selection
+    // We just validate and display them
 
     dropzonePrompt.classList.add('hidden');
     fileListContainer.classList.remove('hidden');
@@ -223,27 +242,48 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // -------------------------------------------------------------------
-  // --- DRAG AND DROP EVENT LISTENERS ---
+  // --- PREVENT DEFAULT FILE OPENING BEHAVIOR ---
+  // --- This prevents the browser from opening dropped files in a new window/tab
   // -------------------------------------------------------------------
 
-  // 1. Prevent default behavior on dragover/dragenter (REQUIRED for drop to work)
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropzoneLabel.addEventListener(eventName, (e) => {
+  // Prevent default drag and drop behavior on the entire document
+  ['dragenter', 'dragover', 'drop'].forEach(eventName => {
+    document.addEventListener(eventName, (e) => {
       e.preventDefault();
       e.stopPropagation();
     }, false);
   });
 
-  // 2. Handle file/folder drop
+  // -------------------------------------------------------------------
+  // --- DRAG AND DROP EVENT LISTENERS ---
+  // -------------------------------------------------------------------
+
+  // 1. Handle file/folder drop on dropzone
   dropzoneLabel.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     const droppedFiles = e.dataTransfer.files;
-    processFiles(droppedFiles);
+    if (droppedFiles.length > 0) {
+      processFiles(droppedFiles);
+    }
+
+    // Reset visual state
+    dropzoneLabel.classList.remove('border-white');
+    dropzoneLabel.classList.add('border-custom-outline');
   }, false);
 
-  // 3. Visual feedback for drag
-  dropzoneLabel.addEventListener('dragenter', () => {
+  // 2. Visual feedback for drag
+  dropzoneLabel.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     dropzoneLabel.classList.add('border-white');
     dropzoneLabel.classList.remove('border-custom-outline');
+  });
+
+  dropzoneLabel.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   });
 
   dropzoneLabel.addEventListener('dragleave', (event) => {
@@ -252,12 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
         dropzoneLabel.classList.remove('border-white');
         dropzoneLabel.classList.add('border-custom-outline');
     }
-  });
-
-  dropzoneLabel.addEventListener('drop', () => {
-    // Reset visual state after drop
-    dropzoneLabel.classList.remove('border-white');
-    dropzoneLabel.classList.add('border-custom-outline');
   });
 
 });
@@ -386,18 +420,34 @@ async function handleChartGenerate(event) {
       return; // Will re-enable button in finally block
     }
 
+    // 3. Filter and validate files before submission
+    const validFiles = [];
+    for (const file of uploadInput.files) {
+      const isValidMime = SUPPORTED_FILE_MIMES.includes(file.type);
+      const isValidExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
+
+      if (isValidMime || isValidExtension) {
+        validFiles.push(file);
+      }
+    }
+
+    if (validFiles.length === 0) {
+      displayError(`Error: No valid files to process. Please upload ${SUPPORTED_FILES_STRING} files.`);
+      return; // Will re-enable button in finally block
+    }
+
     const formData = new FormData();
     formData.append('prompt', promptInput.value);
-    for (const file of uploadInput.files) {
+    for (const file of validFiles) {
       formData.append('researchFiles', file);
     }
 
-    // 3. Update UI to show loading
+    // 4. Update UI to show loading
     loadingIndicator.style.display = 'flex';
     errorMessage.style.display = 'none';
     chartOutput.innerHTML = ''; // Clear old chart
 
-    // 3. Phase 3 Enhancement: Call /generate-chart to start async job
+    // 5. Phase 3 Enhancement: Call /generate-chart to start async job
     const response = await fetch('/generate-chart', {
       method: 'POST',
       body: formData,
@@ -421,7 +471,7 @@ async function handleChartGenerate(event) {
       throw new Error(errorText);
     }
 
-    // 4. Get job ID from response
+    // 6. Get job ID from response
     const jobResponse = await response.json();
     const jobId = jobResponse.jobId;
 
@@ -431,7 +481,7 @@ async function handleChartGenerate(event) {
 
     console.log('Job started:', jobId);
 
-    // 5. Poll for job completion
+    // 7. Poll for job completion
     const ganttData = await pollForJobCompletion(jobId, generateBtn);
 
     // Debug: Log the received data structure
@@ -439,7 +489,7 @@ async function handleChartGenerate(event) {
     console.log('Has timeColumns:', !!ganttData?.timeColumns);
     console.log('Has data:', !!ganttData?.data);
 
-    // 6. Validate the data structure with detailed error reporting
+    // 8. Validate the data structure with detailed error reporting
     if (!ganttData || typeof ganttData !== 'object') {
       console.error('Invalid data structure - ganttData is not an object. Type:', typeof ganttData, 'Value:', ganttData);
       throw new Error('Invalid chart data structure: Expected object, received ' + typeof ganttData);
@@ -473,7 +523,7 @@ async function handleChartGenerate(event) {
       throw new Error('The AI was unable to find any tasks or time columns in the provided documents. Please check your files or try a different prompt.');
     }
 
-    // 7. Open in new tab
+    // 9. Open in new tab
     // Use URL-based sharing with chartId
     if (ganttData.chartId) {
       // Primary method: Open chart using URL parameter
@@ -495,7 +545,7 @@ async function handleChartGenerate(event) {
     errorMessage.textContent = `Error: ${error.message}`;
     errorMessage.style.display = 'block';
   } finally {
-    // 7. Restore UI (always re-enable button)
+    // 10. Restore UI (always re-enable button)
     generateBtn.disabled = false;
     generateBtn.textContent = originalBtnText;
     loadingIndicator.style.display = 'none';
