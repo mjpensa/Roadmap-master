@@ -491,10 +491,13 @@ Your task is to transform complex research into a compelling narrative presentat
 CRITICAL REQUIREMENTS:
 - ALL text must be concise and within character limits
 - NEVER repeat the same text or phrases multiple times
+- EVERY slide must have a UNIQUE title - no two slides should have the same or similar titles
 - Keep titles under 200 characters
 - Keep subtitles under 300 characters
 - Keep descriptions under 500 characters
 - If content exceeds limits, summarize rather than truncate mid-sentence
+- Do NOT concatenate or duplicate content within titles or subtitles
+- Each slide should present NEW information, not repeat previous content
 
 SLIDE STRUCTURE:
 
