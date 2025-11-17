@@ -255,9 +255,16 @@ ${researchTextCache}`;
       );
 
       // Extract the presentationSlides object from the response
+      console.log(`Job ${jobId}: Raw slidesResponse:`, JSON.stringify(slidesResponse).substring(0, 200));
       presentationSlides = slidesResponse.presentationSlides;
 
-      console.log(`Job ${jobId}: Presentation slides generated successfully`);
+      if (!presentationSlides) {
+        console.error(`Job ${jobId}: WARNING - presentationSlides is null/undefined in response. Full response:`, JSON.stringify(slidesResponse));
+      } else if (!presentationSlides.slides || presentationSlides.slides.length === 0) {
+        console.error(`Job ${jobId}: WARNING - presentationSlides has no slides. Slides count: ${presentationSlides.slides?.length || 0}`);
+      } else {
+        console.log(`Job ${jobId}: Presentation slides generated successfully with ${presentationSlides.slides.length} slides`);
+      }
     } catch (slidesError) {
       console.error(`Job ${jobId}: Failed to generate presentation slides:`, slidesError);
       // Don't fail the entire job if presentation slides fail - just log it
