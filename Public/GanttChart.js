@@ -12,6 +12,7 @@ import { ResizableGantt } from './ResizableGantt.js';
 import { ContextMenu } from './ContextMenu.js';
 import { ExecutiveSummary } from './ExecutiveSummary.js';
 import { PresentationSlides } from './PresentationSlides.js';
+import { HamburgerMenu } from './HamburgerMenu.js';
 
 /**
  * GanttChart Class
@@ -38,6 +39,7 @@ export class GanttChart {
     this.isEditMode = false; // Edit mode toggle - default is read-only
     this.titleElement = null; // Reference to the title element for edit mode
     this.legendElement = null; // Reference to the legend element for edit mode
+    this.hamburgerMenu = null; // Hamburger menu for section navigation
   }
 
   /**
@@ -112,6 +114,9 @@ export class GanttChart {
     // Append to container
     this.container.appendChild(this.chartWrapper);
     this.container.appendChild(exportContainer);
+
+    // Add hamburger menu for navigation
+    this._addHamburgerMenu();
 
     // Add listeners
     this._addEditModeToggleListener();
@@ -190,6 +195,25 @@ export class GanttChart {
     const presentationSlides = new PresentationSlides(this.ganttData.presentationSlides);
     const slidesElement = presentationSlides.render();
     this.chartWrapper.appendChild(slidesElement);
+  }
+
+  /**
+   * Adds the hamburger menu for navigation
+   * @private
+   */
+  _addHamburgerMenu() {
+    // Remove any existing hamburger menu first to prevent duplicates
+    const existingMenu = document.querySelector('.hamburger-menu-container');
+    if (existingMenu) {
+      existingMenu.remove();
+    }
+
+    // Create hamburger menu instance
+    this.hamburgerMenu = new HamburgerMenu();
+    const menuElement = this.hamburgerMenu.render();
+
+    // Append directly to the document body so it stays fixed on screen
+    document.body.appendChild(menuElement);
   }
 
   /**
