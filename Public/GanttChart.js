@@ -41,6 +41,7 @@ export class GanttChart {
     this.contextMenu = null; // Phase 5: Context menu for color changing
     this.isEditMode = false; // Edit mode toggle - default is read-only
     this.isExecutiveView = false; // EXECUTIVE-FIRST: Executive View toggle - shows only milestones/decisions/regulatory
+    this.isCriticalPathView = false; // ADVANCED GANTT: Critical Path View toggle - shows only critical path tasks
     this.titleElement = null; // Reference to the title element for edit mode
     this.legendElement = null; // Reference to the legend element for edit mode
     this.hamburgerMenu = null; // Hamburger menu for section navigation
@@ -105,6 +106,15 @@ export class GanttChart {
     executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
     exportContainer.appendChild(executiveViewBtn);
 
+    // ADVANCED GANTT: Critical Path View toggle button
+    const criticalPathBtn = document.createElement('button');
+    criticalPathBtn.id = 'critical-path-toggle-btn';
+    criticalPathBtn.className = 'critical-path-toggle-button';
+    criticalPathBtn.textContent = this.isCriticalPathView ? '🔴 Critical Path: ON' : '🔵 All Tasks: ON';
+    criticalPathBtn.title = 'Toggle Critical Path View (show only tasks on critical path)';
+    criticalPathBtn.style.backgroundColor = this.isCriticalPathView ? '#DC3545' : '#6C757D';
+    exportContainer.appendChild(criticalPathBtn);
+
     // Edit mode toggle button
     const editModeBtn = document.createElement('button');
     editModeBtn.id = 'edit-mode-toggle-btn';
@@ -138,6 +148,7 @@ export class GanttChart {
 
     // Add listeners
     this._addExecutiveViewToggleListener(); // EXECUTIVE-FIRST: Executive View toggle
+    this._addCriticalPathViewToggleListener(); // ADVANCED GANTT: Critical Path View toggle
     this._addEditModeToggleListener();
     this._addExportListener();
     this._addThemeToggleListener(); // BANKING ENHANCEMENT: Theme toggle
@@ -454,6 +465,12 @@ export class GanttChart {
       barEl.className = 'gantt-bar';
       barEl.setAttribute('data-color', bar.color || 'default');
       barEl.style.gridColumn = `${bar.startCol} / ${bar.endCol}`;
+
+      // ADVANCED GANTT: Add critical path styling
+      if (row.isCriticalPath) {
+        barEl.classList.add('critical-path');
+        barEl.setAttribute('data-critical-path', 'true');
+      }
 
       // BANKING ENHANCEMENT: Add regulatory icon if task has regulatory dependency
       if (row.regulatoryFlags && row.regulatoryFlags.hasRegulatoryDependency) {
@@ -847,6 +864,86 @@ export class GanttChart {
       } else {
         // Show all tasks in detail view
         row.style.display = '';
+      }
+    });
+  }
+
+  /**
+   * ADVANCED GANTT: Adds Critical Path View toggle functionality
+   * Filters chart to show only tasks on the critical path
+   * @private
+   */
+  _addCriticalPathViewToggleListener() {
+    const criticalPathBtn = document.getElementById('critical-path-toggle-btn');
+
+    if (!criticalPathBtn) {
+      console.warn('Critical Path View toggle button not found.');
+      return;
+    }
+
+    criticalPathBtn.addEventListener('click', () => {
+      this.isCriticalPathView = !this.isCriticalPathView;
+      criticalPathBtn.textContent = this.isCriticalPathView ? '🔴 Critical Path: ON' : '🔵 All Tasks: ON';
+      criticalPathBtn.style.backgroundColor = this.isCriticalPathView ? '#DC3545' : '#6C757D';
+
+      // Re-render the grid with filtered data
+      this._updateGridForCriticalPathView();
+
+      console.log(`✓ ${this.isCriticalPathView ? 'Critical Path View' : 'All Tasks View'} enabled`);
+    });
+  }
+
+  /**
+   * ADVANCED GANTT: Updates the grid to show/hide tasks based on Critical Path View
+   * Shows only tasks on the critical path when enabled
+   * @private
+   */
+  _updateGridForCriticalPathView() {
+    if (!this.gridElement) {
+      console.warn('Grid element not found for Critical Path View update');
+      return;
+    }
+
+    // Get all rows (both labels and bar areas)
+    // Each task has 2 elements: label (.gantt-row-label) and bar area (.gantt-bar-area)
+    // We need to show/hide both elements together
+    const allLabels = this.gridElement.querySelectorAll('.gantt-row-label');
+    const allBarAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
+
+    allLabels.forEach((label, index) => {
+      const dataItem = this.ganttData.data[index];
+
+      // Skip swimlanes - always show them
+      if (dataItem && dataItem.isSwimlane) {
+        label.style.display = '';
+        if (allBarAreas[index]) {
+          allBarAreas[index].style.display = '';
+        }
+        return;
+      }
+
+      // For tasks, check isCriticalPath
+      if (this.isCriticalPathView) {
+        // Show only critical path tasks
+        const isCriticalPath = dataItem?.isCriticalPath || false;
+
+        if (isCriticalPath) {
+          label.style.display = '';
+          if (allBarAreas[index]) {
+            allBarAreas[index].style.display = '';
+          }
+        } else {
+          label.style.display = 'none';
+          if (allBarAreas[index]) {
+            allBarAreas[index].style.display = 'none';
+          }
+        }
+      } else {
+        // Show all tasks
+        label.style.display = '';
+        if (allBarAreas[index]) {
+          allBarAreas[index].style.display = '';
+        }
       }
     });
   }

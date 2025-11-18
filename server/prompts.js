@@ -21,7 +21,13 @@ You MUST respond with *only* a valid JSON object matching the schema.
     - 1-3 years total: Use "Quarters" (e.g., ["Q1 2026", "Q2 2026"])
     - 3+ years total: You MUST use "Years" (e.g., ["2020", "2021", "2022"])
 3.  **CHART DATA:** Create the 'data' array.
-    - First, identify all logical swimlanes (e.g., "Regulatory Drivers", "JPMorgan Chase"). Add an object for each: \`{ "title": "Swimlane Name", "isSwimlane": true, "entity": "Swimlane Name" }\`
+    - First, identify all logical swimlanes. **ADVANCED GANTT - STAKEHOLDER SWIMLANES:** For banking/enterprise projects, PREFER organizing by stakeholder departments:
+      * IT/Technology (technical implementation, infrastructure, systems)
+      * Compliance/Regulatory (regulatory approvals, compliance checkpoints, audits)
+      * Legal (contracts, legal reviews, governance)
+      * Business/Operations (business processes, training, rollout, customer-facing activities)
+      * If other logical groupings are more appropriate (e.g., "Regulatory Drivers", "JPMorgan Chase"), use those instead.
+    - Add an object for each swimlane: \`{ "title": "Swimlane Name", "isSwimlane": true, "entity": "Swimlane Name" }\`
     - Immediately after each swimlane, add all tasks that belong to it: \`{ "title": "Task Name", "isSwimlane": false, "entity": "Swimlane Name", "bar": { ... } }\`
     - **DO NOT** create empty swimlanes.
 4.  **BAR LOGIC:**
@@ -72,7 +78,22 @@ You MUST respond with *only* a valid JSON object matching the schema.
       * If task title contains words like "Launch", "Complete", "Go Live", "Delivery", "Milestone" → taskType should be "milestone"
       * Otherwise → taskType should be "task"
     - **IMPORTANT:** Executive View will only show tasks where taskType is "milestone", "regulatory", or "decision"
-8.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
+8.  **CRITICAL PATH (ADVANCED GANTT ENHANCEMENT):** For each task, determine if it's on the critical path:
+    - Set 'isCriticalPath' to true if the task meets BOTH criteria:
+      * The task is time-sensitive (delays would push the final project deadline)
+      * The task has no schedule slack (no buffer time, must start/end on specific dates)
+    - Use this logic to identify critical path tasks:
+      * Tasks explicitly mentioned as "critical" or "blocking" in research
+      * Tasks with strict regulatory deadlines
+      * Tasks that other tasks depend on (predecessors to multiple tasks)
+      * Tasks on the longest sequence of dependent activities
+    - Set 'isCriticalPath' to false for tasks with:
+      * Schedule flexibility or slack time
+      * Can be delayed without affecting project completion
+      * Parallel tasks that aren't blocking
+    - If research mentions "critical path" explicitly, prioritize those tasks
+    - **IMPORTANT:** Typically 20-40% of tasks are on critical path (not all tasks!)
+9.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
 
 /**
  * Task Analysis System Prompt
@@ -456,9 +477,13 @@ export const GANTT_CHART_SCHEMA = {
             type: "string",
             enum: ["milestone", "regulatory", "decision", "task"],
             description: "Task classification for Executive View filtering"
+          },
+          isCriticalPath: {
+            type: "boolean",
+            description: "Whether this task is on the critical path (delays would push final deadline)"
           }
         },
-        required: ["title", "isSwimlane", "entity", "taskType"]
+        required: ["title", "isSwimlane", "entity", "taskType", "isCriticalPath"]
       }
     },
     legend: {
