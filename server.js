@@ -128,8 +128,8 @@ app.use(express.static(join(__dirname, 'Public')));
 app.use(configureTimeout);
 
 // --- Mount Routes ---
-// Apply upload middleware only to the chart generation endpoint
-app.use('/', uploadMiddleware.array('researchFiles'), chartRoutes);
+// Mount routes without global upload middleware (upload middleware is applied per-route where needed)
+app.use('/', chartRoutes);
 app.use('/', analysisRoutes);
 app.use('/', analyticsRoutes);
 // Research synthesis routes (with upload middleware for /api/research/upload)
