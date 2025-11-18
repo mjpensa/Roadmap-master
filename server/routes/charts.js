@@ -12,7 +12,7 @@ import { sanitizePrompt, isValidChartId, isValidJobId } from '../utils.js';
 import { createSession, storeChart, getChart, updateChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
 import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
-import { strictLimiter, apiLimiter } from '../middleware.js';
+import { strictLimiter, apiLimiter, uploadMiddleware } from '../middleware.js';
 import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
 
 const router = express.Router();
@@ -506,7 +506,7 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
  * POST /generate-chart
  * Starts an async chart generation job
  */
-router.post('/generate-chart', strictLimiter, async (req, res) => {
+router.post('/generate-chart', uploadMiddleware.array('researchFiles'), strictLimiter, async (req, res) => {
   // Generate unique job ID
   const jobId = createJob();
 
