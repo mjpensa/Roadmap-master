@@ -77,7 +77,17 @@ Implementing features #2-9 from the gap analysis and UX enhancement reports.
 
 ## 🚧 In Progress
 
-None - Feature #5 completed, ready to start Feature #6
+### Feature #6: Advanced Gantt Chart Features
+**Status:** 🚧 In Progress (v2.6.0)
+**Priority:** P2
+**Started:** November 18, 2025
+
+**Implementation Plan:**
+1. Add keyboard shortcuts (E/T/D/P for view switching)
+2. Add milestone markers (◆ regulatory, ★ decision, 💰 milestone, ⚠️ risk)
+3. Implement critical path highlighting
+4. Add critical path view toggle
+5. Enhance swim lanes by stakeholder type
 
 ---
 

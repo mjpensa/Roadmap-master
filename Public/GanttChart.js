@@ -141,6 +141,7 @@ export class GanttChart {
     this._addEditModeToggleListener();
     this._addExportListener();
     this._addThemeToggleListener(); // BANKING ENHANCEMENT: Theme toggle
+    this._addKeyboardShortcuts(); // ADVANCED GANTT: Keyboard navigation
 
     // Add "Today" line
     const today = new Date();
@@ -459,6 +460,11 @@ export class GanttChart {
         this._addRegulatoryIcon(barEl, row.regulatoryFlags);
       }
 
+      // ADVANCED GANTT: Add milestone marker based on task type
+      if (row.taskType) {
+        this._addMilestoneMarker(barEl, row.taskType, row.title);
+      }
+
       barAreaEl.appendChild(barEl);
     }
 
@@ -515,6 +521,53 @@ export class GanttChart {
 
     barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
     barEl.appendChild(icon);
+  }
+
+  /**
+   * ADVANCED GANTT: Adds milestone marker icon based on task type
+   * @param {HTMLElement} barEl - The bar element to add the marker to
+   * @param {string} taskType - The type of task (milestone, regulatory, decision, task)
+   * @param {string} title - The task title for tooltip
+   * @private
+   */
+  _addMilestoneMarker(barEl, taskType, title) {
+    // Only add markers for strategic task types (not regular tasks)
+    if (taskType === 'task') return;
+
+    const marker = document.createElement('span');
+    marker.className = `milestone-marker ${taskType}-marker`;
+
+    // Set icon and tooltip based on task type
+    switch (taskType) {
+      case 'milestone':
+        marker.textContent = '💰';
+        marker.title = `Milestone: ${title}`;
+        break;
+      case 'regulatory':
+        // Regulatory already has 🏛️ icon, use ◆ for additional marker
+        marker.textContent = '◆';
+        marker.title = `Regulatory Checkpoint: ${title}`;
+        break;
+      case 'decision':
+        marker.textContent = '★';
+        marker.title = `Decision Point: ${title}`;
+        break;
+      default:
+        return; // Unknown type, don't add marker
+    }
+
+    // Position marker at end of bar (right side)
+    marker.style.position = 'absolute';
+    marker.style.right = '4px';
+    marker.style.top = '50%';
+    marker.style.transform = 'translateY(-50%)';
+    marker.style.zIndex = '10';
+    marker.style.fontSize = '16px';
+    marker.style.lineHeight = '1';
+    marker.style.cursor = 'help';
+
+    barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
+    barEl.appendChild(marker);
   }
 
   /**
@@ -896,6 +949,82 @@ export class GanttChart {
         toggleBtn.querySelector('.theme-label').textContent = 'Light Mode';
       }
     });
+  }
+
+  /**
+   * ADVANCED GANTT: Adds keyboard shortcuts for quick navigation
+   * E = Executive View, T = Timeline (Roadmap), D = Detail View, P = Presentation
+   * @private
+   */
+  _addKeyboardShortcuts() {
+    // Add keyboard event listener to document
+    document.addEventListener('keydown', (e) => {
+      // Ignore if user is typing in an input field
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+      }
+
+      // Ignore if modifier keys are pressed (Ctrl, Alt, Meta)
+      if (e.ctrlKey || e.altKey || e.metaKey) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      switch (key) {
+        case 'e':
+          // E = Executive View (toggle ON)
+          if (!this.isExecutiveView) {
+            const executiveViewBtn = document.getElementById('executive-view-toggle-btn');
+            if (executiveViewBtn) {
+              executiveViewBtn.click();
+              console.log('⌨️ Keyboard shortcut: E (Executive View)');
+            }
+          }
+          break;
+
+        case 'd':
+          // D = Detail View (toggle Executive View OFF)
+          if (this.isExecutiveView) {
+            const executiveViewBtn = document.getElementById('executive-view-toggle-btn');
+            if (executiveViewBtn) {
+              executiveViewBtn.click();
+              console.log('⌨️ Keyboard shortcut: D (Detail View)');
+            }
+          }
+          break;
+
+        case 't':
+          // T = Timeline (navigate to roadmap view)
+          if (this.router) {
+            this.router.navigate('roadmap');
+            console.log('⌨️ Keyboard shortcut: T (Timeline/Roadmap)');
+          }
+          break;
+
+        case 'p':
+          // P = Presentation (navigate to presentation view)
+          if (this.router) {
+            this.router.navigate('presentation');
+            console.log('⌨️ Keyboard shortcut: P (Presentation)');
+          }
+          break;
+
+        case 's':
+          // S = Summary (navigate to executive summary view)
+          if (this.router) {
+            this.router.navigate('executive-summary');
+            console.log('⌨️ Keyboard shortcut: S (Summary)');
+          }
+          break;
+
+        default:
+          // No action for other keys
+          break;
+      }
+    });
+
+    console.log('⌨️ Keyboard shortcuts enabled: E=Executive, D=Detail, T=Timeline, P=Presentation, S=Summary');
   }
 
   /**
