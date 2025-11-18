@@ -103,6 +103,8 @@ export class GanttChart {
     executiveViewBtn.className = 'executive-view-toggle-button';
     executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
     executiveViewBtn.title = 'Toggle Executive View (show only milestones, decisions, and regulatory checkpoints)';
+    executiveViewBtn.setAttribute('aria-label', 'Toggle Executive View to show only strategic-level tasks');
+    executiveViewBtn.setAttribute('aria-pressed', this.isExecutiveView ? 'true' : 'false');
     executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
     exportContainer.appendChild(executiveViewBtn);
 
@@ -112,6 +114,8 @@ export class GanttChart {
     criticalPathBtn.className = 'critical-path-toggle-button';
     criticalPathBtn.textContent = this.isCriticalPathView ? '🔴 Critical Path: ON' : '🔵 All Tasks: ON';
     criticalPathBtn.title = 'Toggle Critical Path View (show only tasks on critical path)';
+    criticalPathBtn.setAttribute('aria-label', 'Toggle Critical Path View to show only time-sensitive tasks');
+    criticalPathBtn.setAttribute('aria-pressed', this.isCriticalPathView ? 'true' : 'false');
     criticalPathBtn.style.backgroundColor = this.isCriticalPathView ? '#DC3545' : '#6C757D';
     exportContainer.appendChild(criticalPathBtn);
 
@@ -121,6 +125,8 @@ export class GanttChart {
     editModeBtn.className = 'edit-mode-toggle-button';
     editModeBtn.textContent = this.isEditMode ? '🔓 Edit Mode: ON' : '🔒 Edit Mode: OFF';
     editModeBtn.title = 'Toggle edit mode to enable/disable chart customization';
+    editModeBtn.setAttribute('aria-label', 'Toggle edit mode to enable or disable chart customization');
+    editModeBtn.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
     editModeBtn.style.backgroundColor = this.isEditMode ? '#50AF7B' : '#BA3930';
     exportContainer.appendChild(editModeBtn);
 
@@ -129,6 +135,7 @@ export class GanttChart {
     exportBtn.id = 'export-png-btn';
     exportBtn.className = 'export-button';
     exportBtn.textContent = 'Export as PNG';
+    exportBtn.setAttribute('aria-label', 'Export Gantt chart as PNG image');
     exportContainer.appendChild(exportBtn);
 
     // BANKING ENHANCEMENT: Theme toggle button (for presentations)
@@ -136,6 +143,8 @@ export class GanttChart {
     themeToggleBtn.id = 'theme-toggle-btn';
     themeToggleBtn.className = 'theme-toggle-btn';
     themeToggleBtn.title = 'Toggle between dark and light theme';
+    themeToggleBtn.setAttribute('aria-label', 'Toggle between dark and light theme for presentations');
+    themeToggleBtn.setAttribute('aria-pressed', 'false');
     themeToggleBtn.innerHTML = '<span class="theme-icon">☀️</span><span class="theme-label">Light Mode</span>';
     exportContainer.appendChild(themeToggleBtn);
 
@@ -285,6 +294,10 @@ export class GanttChart {
   _createGrid() {
     this.gridElement = document.createElement('div');
     this.gridElement.className = 'gantt-grid';
+    // ACCESSIBILITY: Add ARIA role for grid
+    this.gridElement.setAttribute('role', 'grid');
+    this.gridElement.setAttribute('aria-label', 'Project timeline Gantt chart');
+    this.gridElement.setAttribute('aria-readonly', 'true'); // Will be updated when edit mode is toggled
 
     const numCols = this.ganttData.timeColumns.length;
     // Use max-content for first column to auto-expand and fit all text on single line
@@ -819,9 +832,13 @@ export class GanttChart {
       this.isExecutiveView = !this.isExecutiveView;
       executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
       executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
+      executiveViewBtn.setAttribute('aria-pressed', this.isExecutiveView ? 'true' : 'false');
 
       // Re-render the grid with filtered data
       this._updateGridForExecutiveView();
+
+      // ACCESSIBILITY: Announce view change to screen readers
+      this._announceToScreenReader(`${this.isExecutiveView ? 'Executive' : 'Detail'} view enabled`);
 
       console.log(`✓ ${this.isExecutiveView ? 'Executive View' : 'Detail View'} enabled`);
     });
@@ -885,9 +902,13 @@ export class GanttChart {
       this.isCriticalPathView = !this.isCriticalPathView;
       criticalPathBtn.textContent = this.isCriticalPathView ? '🔴 Critical Path: ON' : '🔵 All Tasks: ON';
       criticalPathBtn.style.backgroundColor = this.isCriticalPathView ? '#DC3545' : '#6C757D';
+      criticalPathBtn.setAttribute('aria-pressed', this.isCriticalPathView ? 'true' : 'false');
 
       // Re-render the grid with filtered data
       this._updateGridForCriticalPathView();
+
+      // ACCESSIBILITY: Announce view change to screen readers
+      this._announceToScreenReader(`${this.isCriticalPathView ? 'Critical path' : 'All tasks'} view enabled`);
 
       console.log(`✓ ${this.isCriticalPathView ? 'Critical Path View' : 'All Tasks View'} enabled`);
     });
@@ -965,12 +986,17 @@ export class GanttChart {
       editModeBtn.textContent = this.isEditMode ? '🔓 Edit Mode: ON' : '🔒 Edit Mode: OFF';
       // Change button color based on state (green when on, red when off)
       editModeBtn.style.backgroundColor = this.isEditMode ? '#50AF7B' : '#BA3930';
+      editModeBtn.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
 
       if (this.isEditMode) {
         this._enableAllEditFeatures();
+        // ACCESSIBILITY: Announce mode change to screen readers
+        this._announceToScreenReader('Edit mode enabled. You can now drag, resize, and customize chart elements.');
         console.log('✓ Edit mode enabled');
       } else {
         this._disableAllEditFeatures();
+        // ACCESSIBILITY: Announce mode change to screen readers
+        this._announceToScreenReader('Edit mode disabled. Chart is now read-only.');
         console.log('✓ Edit mode disabled');
       }
     });
@@ -1029,6 +1055,7 @@ export class GanttChart {
       this._applyLightTheme();
       toggleBtn.querySelector('.theme-icon').textContent = '🌙';
       toggleBtn.querySelector('.theme-label').textContent = 'Dark Mode';
+      toggleBtn.setAttribute('aria-pressed', 'true');
     }
 
     toggleBtn.addEventListener('click', () => {
@@ -1039,11 +1066,17 @@ export class GanttChart {
         localStorage.setItem('gantt-theme', 'light');
         toggleBtn.querySelector('.theme-icon').textContent = '🌙';
         toggleBtn.querySelector('.theme-label').textContent = 'Dark Mode';
+        toggleBtn.setAttribute('aria-pressed', 'true');
+        // ACCESSIBILITY: Announce theme change to screen readers
+        this._announceToScreenReader('Light theme enabled for presentations');
       } else {
         this._applyDarkTheme();
         localStorage.setItem('gantt-theme', 'dark');
         toggleBtn.querySelector('.theme-icon').textContent = '☀️';
         toggleBtn.querySelector('.theme-label').textContent = 'Light Mode';
+        toggleBtn.setAttribute('aria-pressed', 'false');
+        // ACCESSIBILITY: Announce theme change to screen readers
+        this._announceToScreenReader('Dark theme enabled');
       }
     });
   }
@@ -1144,6 +1177,35 @@ export class GanttChart {
     if (this.chartWrapper) {
       this.chartWrapper.classList.remove('light-theme');
     }
+  }
+
+  /**
+   * ACCESSIBILITY: Announces messages to screen readers via ARIA live region
+   * @param {string} message - The message to announce
+   * @private
+   */
+  _announceToScreenReader(message) {
+    // Create live region if it doesn't exist
+    let liveRegion = document.getElementById('gantt-live-region');
+    if (!liveRegion) {
+      liveRegion = document.createElement('div');
+      liveRegion.id = 'gantt-live-region';
+      liveRegion.className = 'sr-only'; // Screen reader only (visually hidden)
+      liveRegion.setAttribute('aria-live', 'polite');
+      liveRegion.setAttribute('aria-atomic', 'true');
+      liveRegion.setAttribute('role', 'status');
+      document.body.appendChild(liveRegion);
+    }
+
+    // Update the message (screen readers will announce it)
+    liveRegion.textContent = message;
+
+    // Clear after 5 seconds to avoid clutter
+    setTimeout(() => {
+      if (liveRegion) {
+        liveRegion.textContent = '';
+      }
+    }, 5000);
   }
 
   /**
@@ -1373,6 +1435,9 @@ export class GanttChart {
 
     // Add edit-mode class to grid, title, and legend to enable CSS-based features
     this.gridElement.classList.add('edit-mode-enabled');
+    // ACCESSIBILITY: Update aria-readonly to false when edit mode is enabled
+    this.gridElement.setAttribute('aria-readonly', 'false');
+
     if (this.titleElement) {
       this.titleElement.classList.add('edit-mode-enabled');
     }
@@ -1399,6 +1464,9 @@ export class GanttChart {
 
     // Remove edit-mode class from grid, title, and legend to disable CSS-based features
     this.gridElement.classList.remove('edit-mode-enabled');
+    // ACCESSIBILITY: Update aria-readonly to true when edit mode is disabled
+    this.gridElement.setAttribute('aria-readonly', 'true');
+
     if (this.titleElement) {
       this.titleElement.classList.remove('edit-mode-enabled');
     }
