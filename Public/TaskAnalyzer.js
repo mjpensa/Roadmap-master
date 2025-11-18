@@ -4,7 +4,7 @@
  * Handles task analysis modal functionality
  */
 
-import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext, buildProgressIndicators, buildAccelerators, buildFinancialImpact, buildStakeholderImpact } from './Utils.js';
+import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext, buildProgressIndicators, buildAccelerators, buildFinancialImpact, buildStakeholderImpact, buildDataMigrationStrategy } from './Utils.js';
 import { ChatInterface } from './ChatInterface.js';
 
 /**
@@ -157,10 +157,11 @@ export class TaskAnalyzer {
     const quickFactsHTML = this._buildQuickFacts(analysis);
 
     // Build main analysis content
-    // ORDER: Financial Impact, Stakeholder Impact (NEW - Banking Enhancements), Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
+    // ORDER: Financial Impact, Stakeholder Impact, Data Migration Strategy (Banking Enhancements), Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
     const mainContentHTML = `
       ${buildFinancialImpact(analysis.financialImpact)}
       ${buildStakeholderImpact(analysis.stakeholderImpact)}
+      ${buildDataMigrationStrategy(analysis.dataMigrationStrategy)}
       ${buildTimelineScenarios(analysis.timelineScenarios)}
       ${buildRiskAnalysis(analysis.risks)}
       ${buildImpactAnalysis(analysis.impact)}

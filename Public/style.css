@@ -1897,6 +1897,502 @@
   }
 }
 
+/* --- BANKING ENHANCEMENT: DATA MIGRATION & ANALYTICS STRATEGY --- */
+
+.data-migration-section {
+  background: linear-gradient(135deg, #1a3a52 0%, #1f2937 100%);
+  border-left: 4px solid #4A9D6F;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.data-subsection {
+  margin-top: 20px;
+}
+
+.data-subsection h5 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #4A9D6F;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(74, 157, 111, 0.2);
+  padding-bottom: 8px;
+}
+
+.data-subsection h6 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #CCCCCC;
+  font-weight: 600;
+}
+
+/* Migration Complexity */
+.migration-complexity-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.complexity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.complexity-badge {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.volume-estimate {
+  font-size: 14px;
+  color: #E0E0E0;
+  font-weight: 500;
+}
+
+.systems-involved {
+  margin-top: 14px;
+}
+
+.systems-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.system-chip {
+  padding: 6px 12px;
+  background: rgba(74, 157, 111, 0.2);
+  border: 1px solid rgba(74, 157, 111, 0.4);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #E0E0E0;
+}
+
+.migration-duration {
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  font-size: 13px;
+  color: #E0E0E0;
+}
+
+.technical-challenges {
+  margin-top: 12px;
+}
+
+.technical-challenges ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.technical-challenges li {
+  color: #E0E0E0;
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Data Quality */
+.data-quality-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quality-score-gauge {
+  margin-bottom: 20px;
+}
+
+.quality-issues {
+  margin-top: 16px;
+}
+
+.quality-issue {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-left: 3px solid #EE9E20;
+}
+
+.issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.issue-description {
+  flex: 1;
+  color: #E0E0E0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.severity-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.issue-remediation {
+  color: #CCCCCC;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cleansing-strategy,
+.validation-rules {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(74, 157, 111, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(74, 157, 111, 0.2);
+}
+
+.cleansing-strategy p,
+.validation-rules ul {
+  margin: 8px 0 0 0;
+  color: #E0E0E0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.validation-rules ul {
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.validation-rules li {
+  margin: 4px 0;
+}
+
+/* Analytics Roadmap */
+.analytics-roadmap-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maturity-progression {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(74, 157, 111, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(74, 157, 111, 0.2);
+}
+
+.maturity-labels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.maturity-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.maturity-label {
+  font-size: 12px;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.maturity-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.maturity-arrow {
+  font-size: 24px;
+  color: #4A9D6F;
+}
+
+.analytics-phases {
+  margin-top: 16px;
+}
+
+.analytics-phase {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-left: 3px solid #4A9D6F;
+}
+
+.phase-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.phase-number {
+  background: #4A9D6F;
+  color: #FFFFFF;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.phase-title-group {
+  flex: 1;
+}
+
+.phase-title-group h6 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  color: #FFFFFF;
+}
+
+.phase-timeline {
+  font-size: 12px;
+  color: #4A9D6F;
+  font-weight: 500;
+}
+
+.phase-capabilities,
+.phase-prerequisites {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #E0E0E0;
+}
+
+.phase-capabilities ul,
+.phase-prerequisites ul {
+  margin: 6px 0 0 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.phase-capabilities li,
+.phase-prerequisites li {
+  margin: 3px 0;
+  line-height: 1.5;
+}
+
+.phase-prerequisites {
+  color: #CCCCCC;
+}
+
+/* Data Governance */
+.data-governance-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ownership-model,
+.audit-requirements {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+
+.ownership-model p,
+.audit-requirements p {
+  margin: 8px 0 0 0;
+  color: #E0E0E0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.data-classification {
+  margin-bottom: 14px;
+}
+
+.classification-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.classification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.data-type {
+  flex: 1;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.classification-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.handling-requirements {
+  color: #CCCCCC;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.retention-policies ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.retention-policies li {
+  color: #E0E0E0;
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.quality-metrics {
+  margin-top: 14px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.metric-item {
+  padding: 8px 12px;
+  background: rgba(74, 157, 111, 0.2);
+  border: 1px solid rgba(74, 157, 111, 0.4);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #E0E0E0;
+  text-align: center;
+}
+
+/* Privacy & Security */
+.privacy-security-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.regulatory-requirements {
+  margin-bottom: 14px;
+}
+
+.requirements-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.requirement-chip {
+  padding: 6px 12px;
+  background: rgba(238, 158, 32, 0.2);
+  border: 1px solid rgba(238, 158, 32, 0.4);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #E0E0E0;
+}
+
+.encryption-strategy,
+.access-controls,
+.data-lineage,
+.incident-response {
+  margin-bottom: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  border-left: 2px solid #4A9D6F;
+}
+
+.encryption-strategy p,
+.access-controls p,
+.data-lineage p,
+.incident-response p {
+  margin: 8px 0 0 0;
+  color: #E0E0E0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Responsive adjustments for data migration section */
+@media (max-width: 768px) {
+  .complexity-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .systems-grid,
+  .requirements-grid {
+    flex-direction: column;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .maturity-labels {
+    flex-direction: column;
+  }
+
+  .maturity-arrow {
+    transform: rotate(90deg);
+  }
+
+  .issue-header,
+  .classification-header {
+    flex-direction: column;
+  }
+
+  .severity-badge,
+  .classification-badge {
+    align-self: flex-start;
+  }
+}
+
 /* --- BANKING ENHANCEMENT: REGULATORY ICONS & ALERTS --- */
 
 /* Regulatory Icon on Gantt Bars */
@@ -2328,6 +2824,136 @@ body.light-theme {
 }
 
 .light-theme .early-warnings li {
+  color: #333333;
+}
+
+/* Light theme: Data Migration & Analytics Strategy */
+.light-theme .data-migration-section {
+  background: linear-gradient(135deg, #E8F4F8 0%, #F0F7FA 100%);
+  border-left: 4px solid #0066CC;
+}
+
+.light-theme .data-subsection h5 {
+  color: #003366;
+  border-bottom-color: rgba(0, 102, 204, 0.2);
+}
+
+.light-theme .data-subsection h6 {
+  color: #333333;
+}
+
+.light-theme .migration-complexity-card,
+.light-theme .data-quality-card,
+.light-theme .analytics-roadmap-card,
+.light-theme .data-governance-card,
+.light-theme .privacy-security-card {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+}
+
+.light-theme .volume-estimate,
+.light-theme .migration-duration,
+.light-theme .issue-description,
+.light-theme .issue-remediation,
+.light-theme .data-type,
+.light-theme .handling-requirements {
+  color: #333333;
+}
+
+.light-theme .system-chip {
+  background: rgba(0, 102, 204, 0.1);
+  border-color: rgba(0, 102, 204, 0.3);
+  color: #003366;
+}
+
+.light-theme .technical-challenges li,
+.light-theme .validation-rules li,
+.light-theme .retention-policies li {
+  color: #333333;
+}
+
+.light-theme .quality-issue {
+  background: #FFF9E6;
+  border-left-color: #CC8800;
+}
+
+.light-theme .cleansing-strategy,
+.light-theme .validation-rules {
+  background: rgba(0, 102, 204, 0.05);
+  border-color: rgba(0, 102, 204, 0.2);
+}
+
+.light-theme .maturity-progression {
+  background: rgba(0, 102, 204, 0.05);
+  border-color: rgba(0, 102, 204, 0.2);
+}
+
+.light-theme .maturity-label {
+  color: #666666;
+}
+
+.light-theme .analytics-phase {
+  background: #F8F9FA;
+  border-left-color: #0066CC;
+}
+
+.light-theme .phase-number {
+  background: #0066CC;
+}
+
+.light-theme .phase-title-group h6 {
+  color: #1A1A1A;
+}
+
+.light-theme .phase-timeline {
+  color: #0066CC;
+}
+
+.light-theme .phase-capabilities,
+.light-theme .phase-prerequisites,
+.light-theme .phase-capabilities li,
+.light-theme .phase-prerequisites li {
+  color: #333333;
+}
+
+.light-theme .ownership-model,
+.light-theme .audit-requirements {
+  background: #F8F9FA;
+}
+
+.light-theme .ownership-model p,
+.light-theme .audit-requirements p {
+  color: #333333;
+}
+
+.light-theme .classification-item {
+  background: #F8F9FA;
+}
+
+.light-theme .metric-item {
+  background: rgba(0, 102, 204, 0.1);
+  border-color: rgba(0, 102, 204, 0.3);
+  color: #003366;
+}
+
+.light-theme .requirement-chip {
+  background: rgba(204, 136, 0, 0.1);
+  border-color: rgba(204, 136, 0, 0.3);
+  color: #996600;
+}
+
+.light-theme .encryption-strategy,
+.light-theme .access-controls,
+.light-theme .data-lineage,
+.light-theme .incident-response {
+  background: #F8F9FA;
+  border-left-color: #0066CC;
+}
+
+.light-theme .encryption-strategy p,
+.light-theme .access-controls p,
+.light-theme .data-lineage p,
+.light-theme .incident-response p {
   color: #333333;
 }
 
