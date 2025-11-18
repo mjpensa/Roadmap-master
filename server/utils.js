@@ -77,6 +77,15 @@ export function isValidJobId(jobId) {
 }
 
 /**
+ * Validates session ID format
+ * @param {string} sessionId - The session ID to validate
+ * @returns {boolean} True if valid, false otherwise
+ */
+export function isValidSessionId(sessionId) {
+  return CONFIG.SECURITY.PATTERNS.SESSION_ID.test(sessionId);
+}
+
+/**
  * Validates file extension
  * @param {string} filename - The filename to check
  * @returns {boolean} True if extension is allowed, false otherwise

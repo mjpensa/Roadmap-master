@@ -94,7 +94,7 @@ function createQuotaErrorMessage(errorData) {
  * @returns {Promise<any>} Result of the operation
  * @throws {Error} If all retry attempts fail
  */
-async function retryWithBackoff(operation, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null) {
+export async function retryWithBackoff(operation, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null) {
   let lastError = null;
 
   for (let attempt = 0; attempt < retryCount; attempt++) {
