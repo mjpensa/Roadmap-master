@@ -20,10 +20,11 @@ export default {
   coverageReporters: ['text', 'lcov', 'html'],
 
   // Coverage thresholds - realistic targets based on current implementation
+  // Note: Routes have 0% coverage pending proper HTTP integration tests
   coverageThreshold: {
     global: {
       branches: 5,    // Current: 4.61%, gradually increase
-      functions: 8,   // Current: 8.48%
+      functions: 10,  // Increased threshold
       lines: 5,       // Current: 5.48%
       statements: 5,  // Current: 5.43%
     },
@@ -33,6 +34,12 @@ export default {
       functions: 100,
       lines: 100,
       statements: 100,
+    },
+    './server/storage.js': {
+      branches: 40,
+      functions: 80,
+      lines: 40,
+      statements: 40,
     },
     './server/gemini.js': {
       branches: 40,
