@@ -209,11 +209,10 @@ router.post('/api/generate-semantic-gantt', semanticUploadMiddleware, strictLimi
   try {
     console.log('[Semantic API] Received semantic chart generation request');
 
-    // Create job immediately
-    const jobId = `SEMJOB-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    createJob(jobId);
+    // Create job immediately (createJob generates its own ID)
+    const jobId = createJob();
 
-    // Get files from multer (middleware should be mounted in server.js)
+    // Get files from multer
     const files = req.files || [];
     const reqBody = req.body;
 
