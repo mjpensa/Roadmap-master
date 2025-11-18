@@ -26,8 +26,8 @@ export class DeterministicGeminiClient {
     }
 
     this.apiKey = apiKey;
-    this.apiUrl = CONFIG.GEMINI.API_URL || 'https://generativelanguage.googleapis.com/v1beta';
-    this.modelName = CONFIG.GEMINI.MODEL || 'gemini-2.5-flash-preview';
+    this.apiUrl = CONFIG.SEMANTIC.GEMINI.API_URL || 'https://generativelanguage.googleapis.com/v1beta';
+    this.modelName = CONFIG.SEMANTIC.GEMINI.MODEL || 'gemini-2.5-flash-preview';
     this.seedValue = Date.now(); // Session-consistent seed for reproducibility
 
     // Cache for deterministic results
