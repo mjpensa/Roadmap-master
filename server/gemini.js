@@ -10,7 +10,84 @@ import { jsonrepair } from 'jsonrepair';
 const API_URL = getGeminiApiUrl();
 
 /**
+ * Parses a 429 rate limit error response to extract retry delay
+ * @param {Object} errorData - The parsed error response JSON
+ * @returns {number|null} Retry delay in milliseconds, or null if not found
+ */
+function parseRetryDelay(errorData) {
+  try {
+    if (!errorData || !errorData.error || !errorData.error.details) {
+      return null;
+    }
+
+    // Find RetryInfo in the details array
+    const retryInfo = errorData.error.details.find(
+      detail => detail['@type'] === 'type.googleapis.com/google.rpc.RetryInfo'
+    );
+
+    if (!retryInfo || !retryInfo.retryDelay) {
+      return null;
+    }
+
+    // Parse retry delay (format: "36s" or "36.397821569s")
+    const delay = retryInfo.retryDelay;
+    const seconds = parseFloat(delay.replace('s', ''));
+
+    if (isNaN(seconds)) {
+      return null;
+    }
+
+    return Math.ceil(seconds * 1000); // Convert to milliseconds and round up
+  } catch (e) {
+    console.error('Failed to parse retry delay:', e);
+    return null;
+  }
+}
+
+/**
+ * Checks if an error is a rate limit (429) error
+ * @param {Error} error - The error to check
+ * @returns {boolean} True if this is a 429 rate limit error
+ */
+function isRateLimitError(error) {
+  return error.message && error.message.includes('status: 429');
+}
+
+/**
+ * Creates a user-friendly error message for quota exhaustion
+ * @param {Object} errorData - The parsed error response JSON
+ * @returns {string} User-friendly error message
+ */
+function createQuotaErrorMessage(errorData) {
+  try {
+    if (errorData && errorData.error && errorData.error.message) {
+      const msg = errorData.error.message;
+
+      // Check if it's a quota exhaustion error
+      if (msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+        // Extract retry delay if available
+        const retryDelayMatch = msg.match(/retry in ([\d.]+)s/);
+        const retryTime = retryDelayMatch ? Math.ceil(parseFloat(retryDelayMatch[1])) : null;
+
+        if (retryTime && retryTime > 60) {
+          return `API quota exceeded. The free tier has limits on requests per minute. Please wait ${Math.ceil(retryTime / 60)} minute(s) and try again, or upgrade your API plan at https://ai.google.dev/pricing`;
+        } else if (retryTime) {
+          return `API quota exceeded. Please wait ${retryTime} seconds and try again, or upgrade your API plan at https://ai.google.dev/pricing`;
+        }
+
+        return 'API quota exceeded. You have reached the free tier limit. Please wait a few minutes and try again, or upgrade your API plan at https://ai.google.dev/pricing';
+      }
+    }
+  } catch (e) {
+    console.error('Failed to create quota error message:', e);
+  }
+
+  return 'API rate limit exceeded. Please try again in a few minutes.';
+}
+
+/**
  * Generic retry wrapper for async operations with exponential backoff
+ * Enhanced to handle 429 rate limit errors with proper retry delays
  * @param {Function} operation - The async operation to retry
  * @param {number} retryCount - Number of retry attempts
  * @param {Function} onRetry - Optional callback for retry events (attempt, error)
@@ -18,11 +95,28 @@ const API_URL = getGeminiApiUrl();
  * @throws {Error} If all retry attempts fail
  */
 async function retryWithBackoff(operation, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null) {
+  let lastError = null;
+
   for (let attempt = 0; attempt < retryCount; attempt++) {
     try {
       return await operation();
     } catch (error) {
+      lastError = error;
       console.log(`Attempt ${attempt + 1}/${retryCount} failed:`, error.message);
+
+      // Check if this is a rate limit error
+      const isRateLimit = isRateLimitError(error);
+
+      if (isRateLimit) {
+        console.warn('⚠️  Rate limit (429) error detected');
+
+        // For rate limit errors, don't retry if it's quota exhaustion
+        // (retrying won't help until quota resets)
+        if (error.message.includes('quota') || error.message.includes('RESOURCE_EXHAUSTED')) {
+          console.error('❌ Quota exhausted - cannot retry');
+          throw error; // Fail immediately for quota exhaustion
+        }
+      }
 
       if (attempt >= retryCount - 1) {
         throw error; // Throw the last error
@@ -33,12 +127,23 @@ async function retryWithBackoff(operation, retryCount = CONFIG.API.RETRY_COUNT, 
         onRetry(attempt + 1, error);
       }
 
-      const delayMs = CONFIG.API.RETRY_BASE_DELAY_MS * (attempt + 1);
+      // Calculate delay - use exponential backoff
+      // For rate limit errors, use longer delays
+      let delayMs;
+      if (isRateLimit) {
+        // For rate limits: 2s, 4s, 8s
+        delayMs = CONFIG.API.RETRY_BASE_DELAY_MS * Math.pow(2, attempt + 1);
+      } else {
+        // For other errors: 1s, 2s, 3s
+        delayMs = CONFIG.API.RETRY_BASE_DELAY_MS * (attempt + 1);
+      }
+
       console.log(`Retrying in ${delayMs}ms...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
-  throw new Error('All retry attempts failed.');
+
+  throw lastError || new Error('All retry attempts failed.');
 }
 
 /**
@@ -59,11 +164,26 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
 
     if (!response.ok) {
       let errorText = 'Unknown error';
+      let errorData = null;
+
       try {
         errorText = await response.text();
+        // Try to parse as JSON for better error messages
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (jsonError) {
+          // Not JSON, use raw text
+        }
       } catch (e) {
         console.error('Failed to read error response:', e);
       }
+
+      // For 429 errors, create user-friendly message
+      if (response.status === 429 && errorData) {
+        const friendlyMessage = createQuotaErrorMessage(errorData);
+        throw new Error(`API call failed with status: ${response.status} - ${friendlyMessage}`);
+      }
+
       throw new Error(`API call failed with status: ${response.status} - ${errorText}`);
     }
 
@@ -195,11 +315,26 @@ export async function callGeminiForText(payload, retryCount = CONFIG.API.RETRY_C
 
     if (!response.ok) {
       let errorText = 'Unknown error';
+      let errorData = null;
+
       try {
         errorText = await response.text();
+        // Try to parse as JSON for better error messages
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (jsonError) {
+          // Not JSON, use raw text
+        }
       } catch (e) {
         console.error('Failed to read error response:', e);
       }
+
+      // For 429 errors, create user-friendly message
+      if (response.status === 429 && errorData) {
+        const friendlyMessage = createQuotaErrorMessage(errorData);
+        throw new Error(`API call failed with status: ${response.status} - ${friendlyMessage}`);
+      }
+
       throw new Error(`API call failed with status: ${response.status} - ${errorText}`);
     }
 
