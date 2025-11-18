@@ -110,6 +110,17 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
 
     const geminiClient = getDeterministicClient(process.env.API_KEY);
 
+    // Truncate research content to avoid token limits
+    // Semantic generation uses more tokens due to two-pass system
+    // Use configured limit (default: 100,000 chars ≈ 25,000 tokens)
+    let truncatedResearch = researchTextCache;
+
+    if (researchTextCache.length > CONFIG.SEMANTIC.MAX_RESEARCH_CHARS) {
+      console.log(`[Semantic Job ${jobId}] Research content truncated from ${researchTextCache.length} to ${CONFIG.SEMANTIC.MAX_RESEARCH_CHARS} characters`);
+      truncatedResearch = researchTextCache.substring(0, CONFIG.SEMANTIC.MAX_RESEARCH_CHARS) +
+        '\n\n[... Content truncated due to length. Please reduce the amount of research files for complete analysis ...]';
+    }
+
     // Generate bimodal data (two-pass: facts → inferences)
     updateJob(jobId, {
       status: 'processing',
@@ -117,7 +128,7 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
     });
 
     const rawData = await geminiClient.generateStructuredGantt(
-      researchTextCache,
+      truncatedResearch,
       sanitizedPrompt,
       sessionId
     );
