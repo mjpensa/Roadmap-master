@@ -60,7 +60,7 @@ app.set('trust proxy', CONFIG.SERVER.TRUST_PROXY_HOPS);
 // --- Multer Configuration for Semantic Routes ---
 // Semantic routes need to accept both 'files' (file uploads) AND 'prompt' (text field)
 // Standard uploadMiddleware.array('files') only accepts files, causing "Unexpected field" errors
-const semanticUploadMiddleware = multer({
+const semanticUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: CONFIG.FILES.MAX_SIZE_BYTES,
@@ -89,10 +89,12 @@ const semanticUploadMiddleware = multer({
       cb(new Error(CONFIG.ERRORS.INVALID_FILE_TYPE(file.mimetype)));
     }
   }
-}).fields([
-  { name: 'files', maxCount: CONFIG.FILES.MAX_COUNT },
-  { name: 'prompt', maxCount: 1 }
-]);
+});
+
+// Create middleware that accepts any fields (files and text)
+// Note: .any() is less restrictive but allows us to accept both 'files' and 'prompt'
+// without field name restrictions. This is safe because we validate file types above.
+const semanticUploadMiddleware = semanticUpload.any();
 
 // --- Apply Middleware ---
 // Compression middleware (gzip/deflate)
