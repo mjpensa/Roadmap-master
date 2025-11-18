@@ -429,7 +429,38 @@ export class TaskAnalyzer {
     if (modalBody) {
       const errorDiv = document.createElement('div');
       errorDiv.className = 'modal-error';
-      errorDiv.textContent = `Failed to load analysis: ${errorMessage}`;
+
+      // Check if this is a quota/rate limit error
+      const isQuotaError = errorMessage.includes('quota') ||
+                          errorMessage.includes('rate limit') ||
+                          errorMessage.includes('429');
+
+      if (isQuotaError) {
+        // Create a more helpful error display for quota errors
+        errorDiv.innerHTML = `
+          <div style="text-align: left;">
+            <h3 style="color: #da291c; margin-top: 0;">⚠️ API Quota Exceeded</h3>
+            <p><strong>What happened?</strong></p>
+            <p>The Google Gemini API has rate limits to prevent abuse. You've reached the free tier limit.</p>
+
+            <p><strong>What can you do?</strong></p>
+            <ol style="margin: 10px 0; padding-left: 20px;">
+              <li><strong>Wait a few minutes</strong> and try again (the quota resets automatically)</li>
+              <li><strong>Upgrade your API plan</strong> at <a href="https://ai.google.dev/pricing" target="_blank" style="color: #0066cc;">https://ai.google.dev/pricing</a></li>
+              <li><strong>Check your usage</strong> at <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" style="color: #0066cc;">https://ai.dev/usage</a></li>
+            </ol>
+
+            <p style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-left: 3px solid #da291c; font-size: 0.9em;">
+              <strong>Technical details:</strong><br>
+              ${DOMPurify.sanitize(errorMessage)}
+            </p>
+          </div>
+        `;
+      } else {
+        // Regular error display
+        errorDiv.textContent = `Failed to load analysis: ${errorMessage}`;
+      }
+
       modalBody.innerHTML = '';
       modalBody.appendChild(errorDiv);
     }
