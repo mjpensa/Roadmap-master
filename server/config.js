@@ -102,6 +102,7 @@ export const CONFIG = {
     CACHE_DETERMINISTIC_RESULTS: process.env.CACHE_SEMANTIC !== 'false',
     MIN_ACCEPTABLE_CONFIDENCE: 0.5, // Below this, inferences are rejected
     FACT_CONFIDENCE: 1.0, // Explicit facts always 100%
+    MAX_RESEARCH_CHARS: 100000, // Maximum research content characters to avoid token limits (100k chars ≈ 25k tokens)
     // Gemini configuration for deterministic mode
     GEMINI: {
       MODEL: 'gemini-2.5-flash-preview-09-2025', // Must match API.GEMINI_MODEL

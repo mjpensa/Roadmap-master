@@ -1392,7 +1392,11 @@ npm run test:integration
 1. **JSON repair limitations**: Can't fix all malformed responses
 2. **No streaming**: Wait for full response before rendering
 3. **No fallback model**: If Gemini fails, no alternative
-4. **Token limits**: Very large research can exceed context window
+4. **Token limits**:
+   - **Regular charts**: Research content limited to 50,000 characters
+   - **Semantic charts**: Research content limited to 100,000 characters (configurable via `CONFIG.SEMANTIC.MAX_RESEARCH_CHARS`)
+   - Very large research files will be truncated with warning message
+   - **Workaround**: Split large documents or reduce file count
 
 ---
 

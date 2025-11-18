@@ -302,7 +302,7 @@ export class DeterministicGeminiClient {
       } else if (candidate.finishReason === 'RECITATION') {
         throw new Error(`Content was blocked due to recitation detection.`);
       } else if (candidate.finishReason === 'MAX_TOKENS') {
-        throw new Error(`Response exceeded maximum token limit. Try with less content.`);
+        throw new Error(`Response exceeded maximum token limit. Try with less content or reduce the number of uploaded files. Current limit: ${CONFIG.SEMANTIC.MAX_RESEARCH_CHARS.toLocaleString()} characters.`);
       } else {
         throw new Error(`Generation stopped with reason: ${candidate.finishReason}`);
       }
