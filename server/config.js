@@ -76,9 +76,22 @@ export const CONFIG = {
       'text/markdown',
       'text/plain',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/octet-stream' // Some browsers send .md files with this
+      'application/octet-stream', // Some browsers send .md files with this
+      'application/pdf' // PDF support for research synthesis
     ],
-    ALLOWED_EXTENSIONS: ['md', 'txt', 'docx']
+    ALLOWED_EXTENSIONS: ['md', 'txt', 'docx', 'pdf']
+  },
+
+  // Research Synthesis Feature Configuration
+  RESEARCH_SYNTHESIS: {
+    LLM_PROVIDERS: ['GEMINI', 'GPT', 'CLAUDE', 'GROK', 'OTHER'],
+    MAX_FILES_PER_PROVIDER: 10,
+    MAX_CLAIMS_PER_FILE: 500,
+    CONFIDENCE_THRESHOLD: 0.7,
+    CITATION_REGEX: /\[(\d+)\]/g,
+    MAX_PDF_PAGES: 100, // Limit PDF processing to 100 pages
+    PDF_TIMEOUT_MS: 30000, // 30 seconds timeout for PDF parsing
+    CLAIM_ID_LENGTH: 16 // Length of generated claim IDs
   },
 
   // Timeout settings
@@ -164,6 +177,7 @@ Object.freeze(CONFIG);
 Object.freeze(CONFIG.SERVER);
 Object.freeze(CONFIG.API);
 Object.freeze(CONFIG.FILES);
+Object.freeze(CONFIG.RESEARCH_SYNTHESIS);
 Object.freeze(CONFIG.TIMEOUTS);
 Object.freeze(CONFIG.RATE_LIMIT);
 Object.freeze(CONFIG.STORAGE);
