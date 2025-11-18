@@ -2,6 +2,20 @@
 
 ## Changelog
 
+### Version 2.2.0 (2025-11-18) - Research Synthesis & Persistence Edition
+- **MAJOR:** Cross-LLM Research Synthesis feature (8-step pipeline for multi-source analysis)
+- **MAJOR:** Database persistence with SQLite (better-sqlite3)
+- **Feature:** Research synthesis with claim extraction, contradiction detection, and provenance auditing
+- **Feature:** Analytics & usage tracking with dashboard
+- **Feature:** PDF file support for research uploads
+- **Backend:** New modules: database.js (730 lines), prompts-research.js (744 lines)
+- **Backend:** New routes: research.js (928 lines), analytics.js (157 lines)
+- **Frontend:** New component: ResearchSynthesizer.js (1,836 lines)
+- **Frontend:** New page: analytics.html for analytics dashboard
+- **Dependencies:** Added better-sqlite3 (database), pdf-parse (PDF processing), chart.js (visualizations)
+- **Architecture:** Hybrid storage (in-memory + SQLite for persistence)
+- **Updated:** Codebase size metrics (backend: 6,409 lines, frontend: 10,620 lines)
+
 ### Version 2.1.0 (2025-11-18) - Testing Infrastructure Edition
 - **MAJOR:** Comprehensive testing infrastructure implemented
 - **Testing:** Jest 30.2.0 framework with ES module support
@@ -46,21 +60,30 @@
 **AI Roadmap Generator** is a sophisticated web application that transforms unstructured research documents into interactive, AI-powered Gantt charts with executive summaries and presentation slides.
 
 ### Core Functionality
-1. **File Upload**: Users upload research files (.md, .txt, .docx) with project instructions
+1. **File Upload**: Users upload research files (.md, .txt, .docx, .pdf) with project instructions
 2. **AI Processing**: Google Gemini AI analyzes content and generates structured JSON
 3. **Interactive Visualization**: Dynamic Gantt chart with drag-to-edit, resize, and color customization
 4. **Strategic Intelligence**: Auto-generated executive summaries and presentation slides
 5. **Task Analysis**: Detailed analysis with Q&A chat for individual tasks
 
-### Banking Executive Edition (NEW - v2.0.0)
-6. **Financial Impact Dashboard**: ROI, payback period, NPV calculations with confidence levels
-7. **Regulatory Intelligence**: Visual alerts (🏛️) for compliance checkpoints (OCC, FDIC, Federal Reserve)
-8. **Competitive Intelligence**: Market positioning, competitor moves, competitive advantage analysis
-9. **Industry Benchmarks**: Time to market, investment level, and risk profile comparisons
-10. **Executive Light Mode**: Presentation-optimized theme for client meetings and board presentations
+### Research Synthesis Edition (NEW - v2.2.0)
+6. **Cross-LLM Research Synthesis**: 8-step pipeline for analyzing research from multiple AI sources (GEMINI, GPT, CLAUDE, GROK)
+   - **Claim Extraction**: Automatically extract atomic claims from each source
+   - **Contradiction Detection**: Identify conflicts in numerical data, polarity, definitions, and temporal information
+   - **Provenance Auditing**: Verify citations and detect hallucinations
+   - **Dashboard Analytics**: Visual breakdowns of consensus levels and citation quality
+7. **Database Persistence**: SQLite storage for charts, sessions, and analytics (30-day retention)
+8. **Usage Analytics**: Track exports, feature usage, and URL shares with dashboard visualization
+
+### Banking Executive Edition (v2.0.0)
+9. **Financial Impact Dashboard**: ROI, payback period, NPV calculations with confidence levels
+10. **Regulatory Intelligence**: Visual alerts (🏛️) for compliance checkpoints (OCC, FDIC, Federal Reserve)
+11. **Competitive Intelligence**: Market positioning, competitor moves, competitive advantage analysis
+12. **Industry Benchmarks**: Time to market, investment level, and risk profile comparisons
+13. **Executive Light Mode**: Presentation-optimized theme for client meetings and board presentations
 
 ### Key Innovation
-Uses Gemini AI's JSON schema validation for structured output, enabling complex project visualizations from unstructured research with minimal user intervention. **Now enhanced with banking-specific intelligence** for strategic decision-making.
+Uses Gemini AI's JSON schema validation for structured output, enabling complex project visualizations from unstructured research with minimal user intervention. **Now enhanced with cross-LLM research synthesis for rigorous, cited insights and banking-specific intelligence** for strategic decision-making.
 
 ---
 
@@ -68,24 +91,29 @@ Uses Gemini AI's JSON schema validation for structured output, enabling complex 
 
 ### Backend (Node.js + Express)
 
-**Modular Design** - Refactored from monolithic 959-line server.js to 134 lines with specialized modules:
+**Modular Design** - Refactored from monolithic 959-line server.js to 139 lines with specialized modules:
 
 ```
-server.js (entry point, 134 lines)
-├── server/config.js (configuration hub, 172 lines)
+server.js (entry point, 139 lines)
+├── server/config.js (configuration hub, 196 lines)
 ├── server/middleware.js (security, rate limiting, file uploads, 143 lines)
-├── server/storage.js (in-memory state management, 273 lines)
-├── server/gemini.js (AI API integration, 223 lines)
-├── server/prompts.js (AI instructions, 947 lines)
+├── server/storage.js (in-memory state management, 310 lines)
+├── server/database.js (SQLite persistence, 730 lines) [NEW v2.2.0]
+├── server/gemini.js (AI API integration, 358 lines)
+├── server/prompts.js (roadmap AI instructions, 1,671 lines)
+├── server/prompts-research.js (research synthesis prompts, 744 lines) [NEW v2.2.0]
 ├── server/utils.js (sanitization, validation, 96 lines)
 └── server/routes/
-    ├── charts.js (chart generation, updates, 756 lines)
-    └── analysis.js (task analysis, Q&A, 135 lines)
+    ├── charts.js (chart generation, updates, 783 lines)
+    ├── analysis.js (task analysis, Q&A, 154 lines)
+    ├── research.js (research synthesis pipeline, 928 lines) [NEW v2.2.0]
+    └── analytics.js (usage tracking, 157 lines) [NEW v2.2.0]
 ```
 
 **Key Architectural Decisions**:
-- **Async job processing**: Chart generation returns jobId immediately, processes in background
-- **In-memory storage**: Three Map stores (sessions, charts, jobs) with 1-hour expiration
+- **Async job processing**: Chart generation and research synthesis return jobId immediately, process in background
+- **Hybrid storage**: In-memory Maps for active sessions + SQLite for persistent storage (30-day retention)
+- **Database persistence**: Sessions, charts, jobs, and analytics stored in `roadmap.db` with WAL mode
 - **Stateless API**: No authentication, session-based for research context only
 - **ES6 modules**: `"type": "module"` in package.json, native import/export
 
@@ -94,7 +122,11 @@ server.js (entry point, 134 lines)
 **Component-Based Architecture** - No framework, pure ES6 classes:
 
 ```
-chart.html (entry point)
+index.html (upload + research synthesis)
+├── main.js (file upload)
+└── ResearchSynthesizer.js (8-step pipeline) [NEW v2.2.0]
+
+chart.html (roadmap visualization)
 └── chart-renderer.js (orchestrator)
     ├── GanttChart.js (main component)
     │   ├── DraggableGantt.js
@@ -108,6 +140,8 @@ chart.html (entry point)
     ├── Router.js
     ├── Utils.js
     └── config.js
+
+analytics.html (usage dashboard) [NEW v2.2.0]
 ```
 
 **Design Patterns**:
@@ -131,40 +165,47 @@ chart.html (entry point)
 ├── .env.test                    # Test environment variables
 │
 ├── server/                      # Backend modules
-│   ├── config.js               # Configuration hub (172 lines)
+│   ├── config.js               # Configuration hub (196 lines)
 │   ├── middleware.js           # Express middleware (143 lines)
-│   ├── storage.js              # In-memory state (273 lines)
-│   ├── gemini.js               # AI API client (223 lines)
-│   ├── prompts.js              # AI instructions (947 lines)
+│   ├── storage.js              # In-memory state (310 lines)
+│   ├── database.js             # SQLite persistence (730 lines) [NEW v2.2.0]
+│   ├── gemini.js               # AI API client (358 lines)
+│   ├── prompts.js              # Roadmap AI instructions (1,671 lines)
+│   ├── prompts-research.js     # Research synthesis prompts (744 lines) [NEW v2.2.0]
 │   ├── utils.js                # Sanitization utilities (96 lines) - 100% test coverage
 │   └── routes/
-│       ├── charts.js           # Chart endpoints (756 lines)
-│       └── analysis.js         # Task analysis endpoints (135 lines)
+│       ├── charts.js           # Chart endpoints (783 lines)
+│       ├── analysis.js         # Task analysis endpoints (154 lines)
+│       ├── research.js         # Research synthesis pipeline (928 lines) [NEW v2.2.0]
+│       └── analytics.js        # Usage tracking (157 lines) [NEW v2.2.0]
 │
 ├── Public/                      # Frontend assets (served statically)
-│   ├── index.html              # Upload interface (508 lines)
-│   ├── chart.html              # Chart viewer (47 lines)
-│   ├── presentation.html       # Standalone presentation (286 lines)
-│   ├── style.css               # Main styles (3,253 lines)
-│   ├── presentation.css        # Presentation styles (802 lines)
+│   ├── index.html              # Upload interface with research synthesis
+│   ├── chart.html              # Chart viewer
+│   ├── analytics.html          # Analytics dashboard [NEW v2.2.0]
+│   ├── presentation.html       # Standalone presentation
+│   ├── style.css               # Main styles
+│   ├── presentation.css        # Presentation styles
 │   │
-│   ├── main.js                 # Upload form logic (591 lines)
-│   ├── chart-renderer.js       # Chart orchestrator (246 lines)
-│   ├── GanttChart.js           # Main chart component (1,321 lines)
-│   ├── Utils.js                # Shared utilities (689 lines)
-│   ├── TaskAnalyzer.js         # Analysis modal (433 lines)
-│   ├── ExecutiveSummary.js     # Strategic brief (551 lines)
-│   ├── PresentationSlides.js   # Slide deck (589 lines)
+│   ├── main.js                 # Upload form logic (654 lines)
+│   ├── chart-renderer.js       # Chart orchestrator (259 lines)
+│   ├── ResearchSynthesizer.js  # Research synthesis (1,836 lines) [NEW v2.2.0]
+│   ├── GanttChart.js           # Main chart component (2,227 lines)
+│   ├── Utils.js                # Shared utilities (2,118 lines)
+│   ├── TaskAnalyzer.js         # Analysis modal (468 lines)
+│   ├── ExecutiveSummary.js     # Strategic brief (984 lines)
+│   ├── PresentationSlides.js   # Slide deck (553 lines)
 │   ├── DraggableGantt.js       # Drag-to-edit (266 lines)
 │   ├── ResizableGantt.js       # Bar resizing (232 lines)
 │   ├── ContextMenu.js          # Color picker (214 lines)
 │   ├── ChatInterface.js        # Q&A chat (202 lines)
-│   ├── Router.js               # Hash routing (224 lines)
-│   ├── HamburgerMenu.js        # Navigation (185 lines)
+│   ├── Router.js               # Hash routing (281 lines)
+│   ├── HamburgerMenu.js        # Navigation (191 lines)
 │   ├── config.js               # Client config (135 lines)
 │   ├── bip_logo.png
 │   ├── horizontal-stripe.svg
-│   └── vertical-stripe.svg
+│   ├── vertical-stripe.svg
+│   └── bip-slide-*.html        # 13 slide templates
 │
 ├── __tests__/                   # Jest test files (primary)
 │   ├── unit/
@@ -197,26 +238,32 @@ chart.html (entry point)
 ├── bip-slide-*.html            # Standalone slide templates (13 files)
 ├── *.png                       # Design mockups and assets
 │
+├── roadmap.db                  # SQLite database (generated) [NEW v2.2.0]
+│
 └── *.md                        # Development documentation (root level)
-    ├── CLAUDE.md                                        # This file - AI assistant guide
-    ├── readme.md                                        # User documentation
-    ├── COMPREHENSIVE_CODE_ANALYSIS.md                   # Detailed code analysis
-    ├── PHASE_1_IMPLEMENTATION_SUMMARY.md                # Phase 1 development
-    ├── PHASE_2_IMPLEMENTATION_SUMMARY.md                # Phase 2 development
-    ├── PHASE_3_IMPLEMENTATION_SUMMARY.md                # Phase 3 development
-    ├── PHASE_5_ENHANCEMENTS.md                          # Phase 5 enhancements
-    ├── TASK_ANALYSIS_ENHANCEMENT_RECOMMENDATIONS.md     # Task analysis improvements
-    ├── DEPLOYMENT_NOTES.md                              # Production deployment guide
-    ├── BIP_SLIDES_README.md                             # Presentation slide templates
-    ├── BANKING_ENHANCEMENTS_TEST_SUMMARY.md             # Banking features test plan
-    ├── TESTING.md                                       # Testing strategy guide
-    ├── TESTING_SUMMARY.md                               # Test infrastructure overview
-    ├── TESTING_IMPLEMENTATION.md                        # Implementation details
-    ├── TESTING_IMPLEMENTATION_PROGRESS.md               # Testing progress tracker
-    ├── TEST_RESULTS_AND_REMEDIATION_PLAN.md             # Test results and fixes
-    ├── Claude Update_UX_Banking_Enhancements_Report.md  # UX/Banking enhancements
-    ├── Claude update_Analysis_Gaps_Banking_Report.md    # Analysis gaps report
-    └── Claude update_Implementation_Guide_Quick_Wins.md # Quick wins guide
+    ├── CLAUDE.md                                           # This file - AI assistant guide
+    ├── readme.md                                           # User documentation
+    ├── COMPREHENSIVE_CODE_ANALYSIS.md                      # Detailed code analysis
+    ├── PHASE_1_IMPLEMENTATION_SUMMARY.md                   # Phase 1 development
+    ├── PHASE_2_IMPLEMENTATION_SUMMARY.md                   # Phase 2 development
+    ├── PHASE_3_IMPLEMENTATION_SUMMARY.md                   # Phase 3 development
+    ├── PHASE_5_ENHANCEMENTS.md                             # Phase 5 enhancements
+    ├── TASK_ANALYSIS_ENHANCEMENT_RECOMMENDATIONS.md        # Task analysis improvements
+    ├── DEPLOYMENT_NOTES.md                                 # Production deployment guide
+    ├── BIP_SLIDES_README.md                                # Presentation slide templates
+    ├── BANKING_ENHANCEMENTS_STATUS.md                      # Banking features status [NEW v2.2.0]
+    ├── BANKING_ENHANCEMENTS_TEST_SUMMARY.md                # Banking features test plan
+    ├── CROSS_LLM_RESEARCH_SYNTHESIS_IMPLEMENTATION_PLAN.md # Research synthesis plan [NEW v2.2.0]
+    ├── FINAL_IMPLEMENTATION_REVIEW.md                      # Final review [NEW v2.2.0]
+    ├── IMPLEMENTATION_PROGRESS.md                          # Progress tracker [NEW v2.2.0]
+    ├── TESTING.md                                          # Testing strategy guide
+    ├── TESTING_SUMMARY.md                                  # Test infrastructure overview
+    ├── TESTING_IMPLEMENTATION.md                           # Implementation details
+    ├── TESTING_IMPLEMENTATION_PROGRESS.md                  # Testing progress tracker
+    ├── TEST_RESULTS_AND_REMEDIATION_PLAN.md                # Test results and fixes
+    ├── Claude Update_UX_Banking_Enhancements_Report.md     # UX/Banking enhancements
+    ├── Claude update_Analysis_Gaps_Banking_Report.md       # Analysis gaps report
+    └── Claude update_Implementation_Guide_Quick_Wins.md    # Quick wins guide
 ```
 
 ---
@@ -226,8 +273,9 @@ chart.html (entry point)
 ### Backend
 - **Runtime**: Node.js (ES6 modules)
 - **Framework**: Express 4.19.2
+- **Database**: better-sqlite3 12.4.1 (SQLite with WAL mode) [NEW v2.2.0]
 - **Security**: Helmet, express-rate-limit, CORS
-- **File Processing**: Multer (multipart uploads), Mammoth (DOCX conversion)
+- **File Processing**: Multer (multipart uploads), Mammoth (DOCX conversion), pdf-parse 1.1.1 (PDF extraction) [NEW v2.2.0]
 - **AI Integration**: Google Gemini API (`gemini-2.5-flash-preview-09-2025`)
 - **Utilities**: dotenv, compression, jsonrepair
 - **Testing**: Jest 30.2.0 (ES module support), Supertest 7.1.4, node-mocks-http 1.17.2
@@ -236,6 +284,7 @@ chart.html (entry point)
 - **JavaScript**: Vanilla ES6 (no framework/bundler)
 - **Styling**: Tailwind CSS 3.x (CDN - **not production-ready**)
 - **Security**: DOMPurify 3.0.6 (XSS sanitization)
+- **Visualization**: Chart.js 4.4.1 (analytics charts) [NEW v2.2.0]
 - **Export**: html2canvas 1.4.1 (PNG export)
 - **Fonts**: Work Sans (Google Fonts)
 
@@ -430,6 +479,123 @@ renderSlide(slideIndex) {
 ```
 
 **Navigation**: Previous/next buttons, slide counter (e.g., "3 / 7")
+
+### 7. ResearchSynthesizer.js (Cross-LLM Research Analysis) [NEW v2.2.0]
+
+**Purpose**: 8-step pipeline for analyzing research from multiple LLM sources (GEMINI, GPT, CLAUDE, GROK)
+
+**Pipeline Steps**:
+1. **Upload Sources**: File upload with LLM provider attribution (.md, .txt, .docx, .pdf)
+2. **Extract Claims**: AI extracts atomic claims from each source (fact + confidence + source)
+3. **View Ledger**: Aggregated claim ledger with bar charts (by provider and topic)
+4. **Detect Contradictions**: Identify conflicts (numerical, polarity, definitional, temporal)
+5. **Synthesize Report**: Generate Markdown report with consensus/disagreement sections
+6. **Audit Provenance**: Verify citations, detect hallucinations and incorrect attributions
+7. **Verified Claims**: Separate high-consensus vs. disputed claims
+8. **Dashboard**: Visual analytics (pie charts for citation quality, consensus levels)
+
+**Data Flow**:
+```javascript
+// Step 1: Upload
+POST /upload-research-sources
+→ { jobId, sessionId }
+
+// Step 2: Extract Claims
+POST /extract-claims
+→ { claims: [{ text, source, provider, confidence, topic }] }
+
+// Step 3: Merge Ledger
+(Client-side aggregation)
+
+// Step 4: Detect Contradictions
+POST /detect-contradictions
+→ { contradictions: [{ type, sources, resolution }] }
+
+// Step 5: Synthesize Report
+POST /synthesize-report
+→ { report: markdown, metadata }
+
+// Step 6: Audit Provenance
+POST /audit-provenance
+→ { issues: [{ type, severity, location }] }
+
+// Step 7: Compile Verified Claims
+(Client-side filtering based on audit)
+
+// Step 8: Generate Dashboard
+POST /generate-dashboard
+→ { summary, charts }
+```
+
+**Key Features**:
+- **Inline Citations**: Every claim linked to source file and LLM provider
+- **Provenance Auditing**: Automated fact-checking against original sources
+- **Contradiction Detection**: 4 types (numerical, polarity, definitional, temporal)
+- **Visual Analytics**: Chart.js visualizations for consensus and citation quality
+
+### 8. Database Module (server/database.js) [NEW v2.2.0]
+
+**Purpose**: SQLite persistence for charts, sessions, jobs, and analytics
+
+**Schema**:
+```sql
+-- Sessions table
+CREATE TABLE sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sessionId TEXT UNIQUE NOT NULL,
+  research TEXT NOT NULL,
+  filenames TEXT NOT NULL,
+  createdAt INTEGER NOT NULL,
+  expiresAt INTEGER NOT NULL
+);
+
+-- Charts table
+CREATE TABLE charts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  chartId TEXT UNIQUE NOT NULL,
+  sessionId TEXT NOT NULL,
+  ganttData TEXT NOT NULL,
+  executiveSummary TEXT,
+  presentationSlides TEXT,
+  createdAt INTEGER NOT NULL,
+  expiresAt INTEGER NOT NULL
+);
+
+-- Jobs table
+CREATE TABLE jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  jobId TEXT UNIQUE NOT NULL,
+  status TEXT NOT NULL,
+  progress TEXT,
+  chartId TEXT,
+  error TEXT,
+  createdAt INTEGER NOT NULL,
+  expiresAt INTEGER NOT NULL
+);
+
+-- Analytics events table
+CREATE TABLE analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  eventType TEXT NOT NULL,
+  eventData TEXT,
+  chartId TEXT,
+  sessionId TEXT,
+  createdAt INTEGER NOT NULL
+);
+```
+
+**Key Functions**:
+- `createSession()`, `getSession()`, `getAllSessions()`
+- `createChart()`, `getChart()`, `getAllCharts()`
+- `createJob()`, `updateJob()`, `completeJob()`, `failJob()`, `getJob()`
+- `trackEvent()`, `getAnalyticsSummary()`, `getAnalyticsEvents()`
+- `cleanupExpiredRecords()` - Runs on initialization and can be scheduled
+
+**Configuration**:
+- Database path: `./roadmap.db`
+- WAL mode for better concurrency
+- Default expiration: 30 days
+- Automatic cleanup on initialization
 
 ---
 
@@ -799,6 +965,7 @@ npm test -- --coverage
 - `text/markdown` (.md)
 - `text/plain` (.txt)
 - `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (.docx)
+- `application/pdf` (.pdf) [NEW v2.2.0]
 
 **Edge Case**: Some browsers send `.md` as `application/octet-stream`
 - **Solution**: Extension fallback in file validation (middleware.js)
@@ -819,15 +986,15 @@ npm test -- --coverage
 
 ```javascript
 // 1. Client validation (main.js)
-if (!file.name.match(/\.(md|txt|docx)$/i)) {
+if (!file.name.match(/\.(md|txt|docx|pdf)$/i)) {
   alert('Invalid file type');
   return;
 }
 
 // 2. Server validation (middleware.js)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['text/markdown', 'text/plain', ...];
-  const allowedExtensions = ['.md', '.txt', '.docx'];
+  const allowedTypes = ['text/markdown', 'text/plain', 'application/pdf', ...];
+  const allowedExtensions = ['.md', '.txt', '.docx', '.pdf'];
 
   if (allowedTypes.includes(file.mimetype) ||
       allowedExtensions.some(ext => file.originalname.toLowerCase().endsWith(ext))) {
@@ -837,11 +1004,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// 3. Parallel processing (charts.js)
+// 3. Parallel processing (charts.js, research.js)
 const processFile = async (file) => {
   if (file.originalname.endsWith('.docx')) {
     const result = await mammoth.extractRawText({ buffer: file.buffer });
     return result.value;
+  } else if (file.originalname.endsWith('.pdf')) {
+    const data = await pdf(file.buffer);
+    return data.text;
   } else {
     return file.buffer.toString('utf-8');
   }
@@ -866,9 +1036,9 @@ ${fileContents[idx]}
 
 ## State Management
 
-### In-Memory Storage (server/storage.js)
+### Hybrid Storage Architecture [UPDATED v2.2.0]
 
-**Three Map stores**:
+**In-Memory Storage (server/storage.js)** - For active sessions and rapid access:
 
 1. **sessionStore**: Research context for task analysis
 ```javascript
@@ -909,11 +1079,30 @@ ${fileContents[idx]}
 
 **Cleanup**: Runs every 5 minutes, removes entries older than 1 hour
 
+**Database Persistence (server/database.js)** [NEW v2.2.0] - For long-term storage:
+
+**SQLite Database** (`roadmap.db`):
+- **Sessions**: 30-day retention for research context
+- **Charts**: 30-day retention for generated roadmaps
+- **Jobs**: 30-day retention for job history
+- **Analytics**: Permanent storage for usage events
+
+**Dual-Write Strategy**:
+- Charts/sessions written to both in-memory and database
+- In-memory for fast access (active sessions)
+- Database for persistence across restarts
+- Automatic cleanup of expired records on startup
+
+**Benefits**:
+- ✅ Survives server restarts
+- ✅ Enables sharing via URL (persistent chart IDs)
+- ✅ Analytics tracking across sessions
+- ✅ 30-day data retention
+
 **Limitations**:
-- Not scalable (single process)
-- Lost on restart
-- No persistence
-- **Production**: Replace with Redis or database
+- Single SQLite file (not distributed)
+- No authentication/authorization
+- **Production**: Consider PostgreSQL or MySQL for multi-server deployments
 
 ### Frontend State
 
@@ -1174,10 +1363,12 @@ npm run test:integration
 ## Known Limitations
 
 ### Architectural
-1. **In-memory storage**: Not scalable, lost on restart
+1. **SQLite storage**: Single-file database, not suitable for distributed deployments [IMPROVED v2.2.0]
+   - ✅ Now persists across restarts (previously in-memory only)
+   - ⚠️ Still single-process, consider PostgreSQL for multi-server
 2. **No authentication**: Open API, vulnerable to abuse
-3. **Single process**: Can't scale horizontally without external state
-4. **No logging**: Difficult to debug production issues
+3. **Single process**: Can't scale horizontally without shared database
+4. **No logging**: Difficult to debug production issues (consider Winston/Pino)
 
 ### Security
 1. **Tailwind CDN**: Disabled CSP, potential supply chain risk
@@ -1309,7 +1500,11 @@ npm run test:integration
 - `TASK_ANALYSIS_ENHANCEMENT_RECOMMENDATIONS.md`: Task analysis improvements
 - `DEPLOYMENT_NOTES.md`: Production deployment guide
 - `BIP_SLIDES_README.md`: Presentation slide templates
+- `BANKING_ENHANCEMENTS_STATUS.md`: Banking features status [NEW v2.2.0]
 - `BANKING_ENHANCEMENTS_TEST_SUMMARY.md`: Banking features test plan
+- `CROSS_LLM_RESEARCH_SYNTHESIS_IMPLEMENTATION_PLAN.md`: Research synthesis architecture [NEW v2.2.0]
+- `FINAL_IMPLEMENTATION_REVIEW.md`: Final implementation review [NEW v2.2.0]
+- `IMPLEMENTATION_PROGRESS.md`: Feature implementation tracker [NEW v2.2.0]
 - `TESTING.md`: Testing strategy and guide
 - `TESTING_SUMMARY.md`: Test infrastructure overview (comprehensive)
 - `TESTING_IMPLEMENTATION.md`: Implementation details
@@ -1416,9 +1611,11 @@ npm update
 ---
 
 **Last Updated**: 2025-11-18
-**Version**: 2.1.0 - Testing Infrastructure Edition
-**Codebase Size**: ~14,966 lines (backend: 3,043 lines, frontend: 11,923 lines)
+**Version**: 2.2.0 - Research Synthesis & Persistence Edition
+**Codebase Size**: ~17,029 lines (backend: 6,409 lines, frontend: 10,620 lines)
+**Major Features**: Cross-LLM Research Synthesis (8-step pipeline), SQLite Persistence, Analytics Dashboard
 **Test Coverage**: 124 tests (69 passing), 100% coverage on critical security module
+**Database**: SQLite with 30-day retention and WAL mode
 
 ## Banking Enhancements Quick Reference
 
@@ -1479,3 +1676,172 @@ industryBenchmarks: {
 }
 ```
 **Usage:** Appears after Competitive Intelligence. Green gradient card.
+
+---
+
+## Research Synthesis Quick Reference [NEW v2.2.0]
+
+### 8-Step Pipeline Overview
+
+**Access**: Click "Research Checker" in hamburger menu on index.html or click "Use Existing Research" when launching from chart view.
+
+**Step 1: Upload Sources** (`Public/ResearchSynthesizer.js`)
+```javascript
+// Upload files with LLM provider attribution
+POST /upload-research-sources
+Files: .md, .txt, .docx, .pdf
+Metadata: { filename, provider: 'GEMINI|GPT|CLAUDE|GROK|OTHER' }
+```
+
+**Step 2: Extract Claims** (`server/routes/research.js`)
+```javascript
+// AI extracts atomic claims
+POST /extract-claims
+Response: {
+  claims: [{
+    text: "Claim statement",
+    source: "filename.md",
+    provider: "GEMINI",
+    confidence: "high|medium|low",
+    topic: "Security|Performance|..."
+  }]
+}
+```
+
+**Step 3: View Ledger** (Client-side aggregation)
+```javascript
+// Bar charts showing claim distribution
+- By LLM Provider (GEMINI: 45, GPT: 32, CLAUDE: 28)
+- By Topic (Security: 18, Performance: 12, ...)
+```
+
+**Step 4: Detect Contradictions** (`server/prompts-research.js`)
+```javascript
+// AI identifies conflicts
+POST /detect-contradictions
+Response: {
+  contradictions: [{
+    type: "numerical|polarity|definitional|temporal",
+    sources: ["GEMINI: 99.9% uptime", "GPT: 99.5% uptime"],
+    resolution: "GEMINI source is more recent (2025 vs 2024)"
+  }]
+}
+```
+
+**Step 5: Synthesize Report** (`server/prompts-research.js`)
+```markdown
+# Research Synthesis Report
+
+## Executive Summary
+[AI-generated overview]
+
+## Findings by Topic
+
+### Security
+**Consensus**: [High-agreement claims]
+**Disagreement**: [Conflicting claims with sources]
+
+## Evidence Gaps
+- Claims without citations
+
+## Sources
+1. GEMINI - research_gemini.md
+2. GPT - research_gpt.md
+```
+
+**Step 6: Audit Provenance** (`server/prompts-research.js`)
+```javascript
+// Verify all citations
+POST /audit-provenance
+Response: {
+  issues: [{
+    type: "hallucination|incorrect_attribution|missing_citation",
+    severity: "critical|warning|info",
+    location: "Section 3, Paragraph 2",
+    description: "Claim not found in any source"
+  }]
+}
+```
+
+**Step 7: Verified Claims** (Client-side filtering)
+```javascript
+// Separate by consensus level
+highConsensus: claims with 3+ sources agreeing
+disputed: claims with contradictions
+uncited: claims without provenance
+```
+
+**Step 8: Dashboard** (`Chart.js` visualizations)
+```javascript
+// Pie charts
+- Citation Quality (95% cited, 5% uncited)
+- Consensus Level (80% high, 15% medium, 5% disputed)
+- Source Distribution by provider
+```
+
+### Key API Endpoints
+
+```javascript
+// Research Synthesis Routes (server/routes/research.js)
+POST /upload-research-sources     // Step 1
+POST /extract-claims              // Step 2
+POST /detect-contradictions       // Step 4
+POST /synthesize-report           // Step 5
+POST /audit-provenance            // Step 6
+POST /generate-dashboard          // Step 8
+
+// Analytics Routes (server/routes/analytics.js)
+POST /track-event                 // Track user actions
+GET /analytics/summary            // Get usage summary
+GET /analytics/events             // Get event history
+```
+
+### Database Schema
+
+```sql
+-- Analytics tracking
+CREATE TABLE analytics_events (
+  id INTEGER PRIMARY KEY,
+  eventType TEXT,              -- 'export_png', 'feature_executive_view', etc.
+  eventData TEXT,              -- JSON metadata
+  chartId TEXT,
+  sessionId TEXT,
+  createdAt INTEGER
+);
+
+-- Persistent storage
+CREATE TABLE sessions (sessionId, research, filenames, createdAt, expiresAt);
+CREATE TABLE charts (chartId, sessionId, ganttData, executiveSummary, ...);
+CREATE TABLE jobs (jobId, status, progress, chartId, error, ...);
+```
+
+### Usage Patterns
+
+**From Chart View**:
+```javascript
+// Auto-populate with existing research
+1. View generated roadmap
+2. Click hamburger menu → "Research Checker"
+3. Click "Use Existing Research from Current Roadmap"
+4. Skips Step 1 (upload), goes directly to Step 2 (extract claims)
+```
+
+**From Scratch**:
+```javascript
+1. Navigate to index.html
+2. Click hamburger menu → "Research Checker"
+3. Upload files from multiple LLM sessions
+4. Assign provider to each file (GEMINI, GPT, CLAUDE, GROK)
+5. Run through all 8 steps
+```
+
+### Prompts Location
+
+All research synthesis prompts in `server/prompts-research.js`:
+- `CLAIM_EXTRACTION_SYSTEM_PROMPT` + `CLAIM_EXTRACTION_SCHEMA`
+- `CONTRADICTION_DETECTION_SYSTEM_PROMPT` + `CONTRADICTION_DETECTION_SCHEMA`
+- `REPORT_SYNTHESIS_SYSTEM_PROMPT` + `REPORT_SYNTHESIS_SCHEMA`
+- `PROVENANCE_AUDIT_SYSTEM_PROMPT` + `PROVENANCE_AUDIT_SCHEMA`
+- `EXECUTIVE_SUMMARY_SYSTEM_PROMPT` + `EXECUTIVE_SUMMARY_SCHEMA`
+
+All prompts use **temperature=0** for deterministic, structured outputs.
