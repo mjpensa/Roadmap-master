@@ -17,7 +17,7 @@ import { sanitizePrompt, isValidChartId, isValidJobId, isValidSessionId } from '
 import { createSession, storeChart, getChart, createJob, updateJob, completeJob, failJob, getJob } from '../storage.js';
 import { getDeterministicClient } from '../gemini-deterministic.js';
 import { semanticValidator } from '../validation/semantic-repair.js';
-import { strictLimiter, apiLimiter } from '../middleware.js';
+import { strictLimiter, apiLimiter, semanticUploadMiddleware } from '../middleware.js';
 import { trackEvent, createSemanticChart, getSemanticChart } from '../database.js';
 
 const router = express.Router();
@@ -205,7 +205,7 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
  * - jobId: Job identifier for polling
  * - sessionId: Session identifier for context
  */
-router.post('/api/generate-semantic-gantt', strictLimiter, (req, res) => {
+router.post('/api/generate-semantic-gantt', semanticUploadMiddleware, strictLimiter, (req, res) => {
   try {
     console.log('[Semantic API] Received semantic chart generation request');
 
