@@ -1,105 +1,41 @@
 /**
  * Storage Management Module
  * Phase 4 Enhancement: Extracted from server.js
- * Manages session, chart, and job storage with automatic cleanup
+ * Feature #8: Migrated to SQLite database for persistent storage
+ *
+ * This module now acts as an adapter between the existing API
+ * and the new database storage layer, maintaining backward compatibility.
  */
 
 import crypto from 'crypto';
 import { CONFIG } from './config.js';
-
-// In-memory storage maps
-const sessionStore = new Map();
-const chartStore = new Map();
-const jobStore = new Map();
+import * as db from './database.js';
 
 /**
  * Starts the cleanup interval for expired sessions, charts, and jobs
- * Enhanced with orphan detection and memory leak prevention
+ * Enhanced with database cleanup
  */
 export function startCleanupInterval() {
   setInterval(() => {
-    const now = Date.now();
-    const expirationMs = CONFIG.STORAGE.EXPIRATION_MS;
+    const stats = db.cleanupExpired();
+    const dbStats = db.getStats();
 
-    // Track cleanup statistics
-    let expiredSessions = 0;
-    let expiredCharts = 0;
-    let orphanedCharts = 0;
-    let expiredJobs = 0;
-    let completedJobs = 0;
-
-    // Set to track active sessions
-    const activeSessions = new Set();
-    const orphanedChartIds = new Set();
-
-    // Step 1: Clean up expired sessions and track active ones
-    for (const [sessionId, session] of sessionStore.entries()) {
-      if (now - session.createdAt > expirationMs) {
-        sessionStore.delete(sessionId);
-        expiredSessions++;
-        console.log(`🗑️  Cleaned up expired session: ${sessionId}`);
-      } else {
-        activeSessions.add(sessionId);
-      }
-    }
-
-    // Step 2: Clean up expired AND orphaned charts
-    for (const [chartId, chart] of chartStore.entries()) {
-      const isExpired = now - chart.created > expirationMs;
-      const isOrphaned = chart.sessionId && !activeSessions.has(chart.sessionId);
-
-      if (isExpired) {
-        chartStore.delete(chartId);
-        expiredCharts++;
-        console.log(`🗑️  Cleaned up expired chart: ${chartId}`);
-      } else if (isOrphaned) {
-        chartStore.delete(chartId);
-        orphanedCharts++;
-        orphanedChartIds.add(chartId);
-        console.log(`🗑️  Cleaned up orphaned chart: ${chartId} (session ${chart.sessionId} no longer exists)`);
-      }
-    }
-
-    // Step 3: Clean up old jobs (both expired and completed/failed)
-    // Completed/failed jobs should be cleaned up faster than active jobs
-    const jobRetentionMs = 10 * 60 * 1000; // 10 minutes for completed/failed jobs
-
-    for (const [jobId, job] of jobStore.entries()) {
-      const age = now - job.createdAt;
-      const isExpired = age > expirationMs;
-      const isCompleted = (job.status === 'complete' || job.status === 'error' || job.status === 'failed');
-      const isStaleCompleted = isCompleted && age > jobRetentionMs;
-
-      if (isExpired) {
-        jobStore.delete(jobId);
-        expiredJobs++;
-        console.log(`🗑️  Cleaned up expired job: ${jobId}`);
-      } else if (isStaleCompleted) {
-        jobStore.delete(jobId);
-        completedJobs++;
-        console.log(`🗑️  Cleaned up stale ${job.status} job: ${jobId}`);
-      }
-    }
-
-    // Step 4: Log cleanup statistics
-    const totalCleaned = expiredSessions + expiredCharts + orphanedCharts + expiredJobs + completedJobs;
-
-    if (totalCleaned > 0) {
+    // Log cleanup results
+    if (stats.chartsDeleted > 0 || stats.sessionsDeleted > 0 || stats.jobsDeleted > 0) {
       console.log('\n📊 Cleanup Summary:');
-      console.log(`  - Expired sessions: ${expiredSessions}`);
-      console.log(`  - Expired charts: ${expiredCharts}`);
-      console.log(`  - Orphaned charts: ${orphanedCharts}`);
-      console.log(`  - Expired jobs: ${expiredJobs}`);
-      console.log(`  - Stale completed jobs: ${completedJobs}`);
-      console.log(`  - Total items cleaned: ${totalCleaned}`);
+      console.log(`  - Expired sessions: ${stats.sessionsDeleted}`);
+      console.log(`  - Expired charts: ${stats.chartsDeleted}`);
+      console.log(`  - Expired jobs: ${stats.jobsDeleted}`);
+      console.log(`  - Total items cleaned: ${stats.chartsDeleted + stats.sessionsDeleted + stats.jobsDeleted}`);
     }
 
     // Log current storage state
     console.log('\n💾 Storage State:');
-    console.log(`  - Active sessions: ${sessionStore.size}`);
-    console.log(`  - Active charts: ${chartStore.size}`);
-    console.log(`  - Active jobs: ${jobStore.size}`);
-    console.log(`  - Memory health: ${totalCleaned === 0 ? '✅ Good' : '⚠️  Cleaned up'}\n`);
+    console.log(`  - Active sessions: ${dbStats.sessions}`);
+    console.log(`  - Active charts: ${dbStats.charts}`);
+    console.log(`  - Active jobs: ${dbStats.jobs}`);
+    console.log(`  - Database size: ${dbStats.dbSizeKB} KB`);
+    console.log(`  - Storage health: ✅ Good\n`);
 
   }, CONFIG.STORAGE.CLEANUP_INTERVAL_MS);
 
@@ -118,11 +54,14 @@ export function startCleanupInterval() {
  */
 export function createSession(researchText, researchFiles) {
   const sessionId = crypto.randomBytes(16).toString('hex');
-  sessionStore.set(sessionId, {
-    researchText,
-    researchFiles,
-    createdAt: Date.now()
-  });
+
+  // Convert expiration from CONFIG (1 hour) to days for database
+  const expirationDays = CONFIG.STORAGE.EXPIRATION_MS / (24 * 60 * 60 * 1000);
+
+  db.createSession(sessionId, researchText, researchFiles, expirationDays);
+
+  console.log(`✅ Session ${sessionId} created in database`);
+
   return sessionId;
 }
 
@@ -132,11 +71,18 @@ export function createSession(researchText, researchFiles) {
  * @returns {Object|null} The session data or null if not found
  */
 export function getSession(sessionId) {
-  const session = sessionStore.get(sessionId);
+  const session = db.getSession(sessionId);
+
   if (!session) {
     return null;
   }
-  return session;
+
+  // Transform database format to match original interface
+  return {
+    researchText: session.research,
+    researchFiles: session.filenames,
+    createdAt: session.createdAt.getTime()
+  };
 }
 
 /**
@@ -145,7 +91,7 @@ export function getSession(sessionId) {
 
 /**
  * Stores a chart with a unique ID
- * @param {Object} ganttData - The chart data
+ * @param {Object} ganttData - The chart data (includes ganttData, executiveSummary, presentationSlides)
  * @param {string} sessionId - Associated session ID
  * @returns {string} The chart ID
  */
@@ -154,16 +100,20 @@ export function storeChart(ganttData, sessionId) {
 
   console.log(`💾 Storing chart with ID: ${chartId}`);
   console.log(`📊 Chart data keys:`, Object.keys(ganttData || {}));
-  console.log(`📊 TimeColumns count:`, ganttData?.timeColumns?.length || 0);
-  console.log(`📊 Tasks count:`, ganttData?.data?.length || 0);
+  console.log(`📊 TimeColumns count:`, ganttData?.ganttData?.timeColumns?.length || 0);
+  console.log(`📊 Tasks count:`, ganttData?.ganttData?.data?.length || 0);
 
-  chartStore.set(chartId, {
-    data: ganttData,
-    sessionId: sessionId,
-    created: Date.now()
-  });
+  // Extract components from the chart data
+  const gantt = ganttData.ganttData || ganttData;
+  const executiveSummary = ganttData.executiveSummary || null;
+  const presentationSlides = ganttData.presentationSlides || null;
 
-  console.log(`✅ Chart ${chartId} stored successfully. Total charts in storage: ${chartStore.size}`);
+  // Convert expiration from CONFIG (1 hour) to days for database
+  const expirationDays = CONFIG.STORAGE.EXPIRATION_MS / (24 * 60 * 60 * 1000);
+
+  db.saveChart(chartId, sessionId, gantt, executiveSummary, presentationSlides, expirationDays);
+
+  console.log(`✅ Chart ${chartId} stored successfully in database`);
 
   return chartId;
 }
@@ -174,7 +124,22 @@ export function storeChart(ganttData, sessionId) {
  * @returns {Object|null} The chart data or null if not found
  */
 export function getChart(chartId) {
-  return chartStore.get(chartId) || null;
+  const chart = db.getChart(chartId);
+
+  if (!chart) {
+    return null;
+  }
+
+  // Transform database format to match original interface
+  return {
+    data: {
+      ganttData: chart.ganttData,
+      executiveSummary: chart.executiveSummary,
+      presentationSlides: chart.presentationSlides
+    },
+    sessionId: chart.sessionId,
+    created: chart.createdAt.getTime()
+  };
 }
 
 /**
@@ -184,19 +149,26 @@ export function getChart(chartId) {
  * @returns {boolean} True if successful, false if chart not found
  */
 export function updateChart(chartId, updatedData) {
-  const existing = chartStore.get(chartId);
+  const existing = db.getChart(chartId);
+
   if (!existing) {
     console.warn(`Attempted to update non-existent chart: ${chartId}`);
     return false;
   }
 
-  chartStore.set(chartId, {
-    ...existing,
-    data: updatedData,
-    lastModified: Date.now()
-  });
+  // Extract components from updated data
+  const gantt = updatedData.ganttData || updatedData;
+  const executiveSummary = updatedData.executiveSummary || existing.executiveSummary;
+  const presentationSlides = updatedData.presentationSlides || existing.presentationSlides;
 
-  console.log(`✅ Chart ${chartId} updated successfully`);
+  // Calculate remaining expiration time
+  const expiresAt = existing.expiresAt || new Date(Date.now() + CONFIG.STORAGE.EXPIRATION_MS);
+  const expirationDays = (expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000);
+
+  // Save updated chart (INSERT OR REPLACE)
+  db.saveChart(chartId, existing.sessionId, gantt, executiveSummary, presentationSlides, Math.max(expirationDays, 0.01));
+
+  console.log(`✅ Chart ${chartId} updated successfully in database`);
   return true;
 }
 
@@ -210,11 +182,7 @@ export function updateChart(chartId, updatedData) {
  */
 export function createJob() {
   const jobId = crypto.randomBytes(16).toString('hex');
-  jobStore.set(jobId, {
-    status: 'queued',
-    progress: 'Request received, starting processing...',
-    createdAt: Date.now()
-  });
+  db.createJob(jobId, 'queued', 'Request received, starting processing...');
   return jobId;
 }
 
@@ -224,16 +192,31 @@ export function createJob() {
  * @param {Object} updates - Object with status, progress, data, or error fields
  */
 export function updateJob(jobId, updates) {
-  const existingJob = jobStore.get(jobId);
+  const existingJob = db.getJob(jobId);
+
   if (!existingJob) {
     console.warn(`Attempted to update non-existent job: ${jobId}`);
     return;
   }
 
-  jobStore.set(jobId, {
-    ...existingJob,
-    ...updates
-  });
+  // Transform updates to database format
+  const dbUpdates = {};
+
+  if (updates.status !== undefined) {
+    dbUpdates.status = updates.status;
+  }
+  if (updates.progress !== undefined) {
+    dbUpdates.progress = updates.progress;
+  }
+  if (updates.error !== undefined) {
+    dbUpdates.error = updates.error;
+  }
+  // Note: 'data' field is now stored as chartId
+  if (updates.data !== undefined && updates.data.chartId) {
+    dbUpdates.chartId = updates.data.chartId;
+  }
+
+  db.updateJob(jobId, dbUpdates);
 }
 
 /**
@@ -242,7 +225,27 @@ export function updateJob(jobId, updates) {
  * @returns {Object|null} The job data or null if not found
  */
 export function getJob(jobId) {
-  return jobStore.get(jobId) || null;
+  const job = db.getJob(jobId);
+
+  if (!job) {
+    return null;
+  }
+
+  // Transform database format to match original interface
+  const result = {
+    status: job.status,
+    progress: job.progress,
+    createdAt: job.createdAt.getTime()
+  };
+
+  if (job.chartId) {
+    result.data = { chartId: job.chartId };
+  }
+  if (job.error) {
+    result.error = job.error;
+  }
+
+  return result;
 }
 
 /**
@@ -264,10 +267,25 @@ export function completeJob(jobId, data) {
  * @param {string} errorMessage - The error message
  */
 export function failJob(jobId, errorMessage) {
-  const existingJob = jobStore.get(jobId);
   updateJob(jobId, {
     status: 'error',
-    error: errorMessage || 'Unknown error occurred',
-    createdAt: existingJob?.createdAt || Date.now()
+    error: errorMessage || 'Unknown error occurred'
   });
+}
+
+/**
+ * Gets charts by session ID (NEW for Feature #8)
+ * @param {string} sessionId - The session ID
+ * @returns {Array} Array of chart metadata
+ */
+export function getChartsBySession(sessionId) {
+  return db.getChartsBySession(sessionId);
+}
+
+/**
+ * Gets database statistics (NEW for Feature #8)
+ * @returns {Object} Database statistics
+ */
+export function getStorageStats() {
+  return db.getStats();
 }
