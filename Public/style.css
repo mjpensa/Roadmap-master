@@ -1609,6 +1609,44 @@ body.light-theme {
   border-bottom: 2px solid #0066CC;
 }
 
+/* Light theme: Make Gantt bars vibrant and presentation-ready */
+.light-theme .gantt-bar.priority-red {
+  background-color: #FF5252; /* Bright red for visibility */
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.light-theme .gantt-bar.medium-red {
+  background-color: #FF7043; /* Bright orange-red */
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.light-theme .gantt-bar.mid-grey {
+  background-color: #78909C; /* Medium blue-grey */
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.light-theme .gantt-bar.light-grey {
+  background-color: #B0BEC5; /* Light blue-grey */
+  color: #1A1A1A;
+  font-weight: 600;
+}
+
+.light-theme .gantt-bar.white {
+  background-color: #ECEFF1; /* Very light grey (not pure white) */
+  color: #1A1A1A;
+  border: 2px solid #90A4AE;
+  font-weight: 600;
+}
+
+.light-theme .gantt-bar.dark-blue {
+  background-color: #1976D2; /* Bright blue for presentations */
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
 /* Light theme for analysis sections */
 .light-theme .analysis-section {
   background: #F8F9FA;
@@ -1706,6 +1744,56 @@ body.light-theme {
 
 .light-theme .stat-value {
   color: #1A1A1A;
+}
+
+/* Light theme: Legend styling */
+.light-theme .gantt-legend {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.light-theme .gantt-legend h3 {
+  color: #1A1A1A;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.light-theme .legend-label {
+  color: #333333;
+}
+
+/* Light theme: Today line */
+.light-theme .today-line {
+  background-color: #1976D2; /* Bright blue instead of red */
+  opacity: 0.8;
+}
+
+.light-theme .today-label {
+  background-color: #1976D2;
+  color: #FFFFFF;
+}
+
+/* Light theme: Edit mode and export buttons */
+.light-theme .edit-mode-toggle-button {
+  background-color: #F44336; /* Bright red for visibility */
+  color: #FFFFFF;
+  border: 2px solid #D32F2F;
+}
+
+.light-theme .edit-mode-toggle-button.edit-mode-on {
+  background-color: #4CAF50; /* Bright green when enabled */
+  border-color: #388E3C;
+}
+
+.light-theme .export-button {
+  background-color: #1976D2; /* Professional blue */
+  color: #FFFFFF;
+  border: none;
+}
+
+.light-theme .export-button:hover {
+  background-color: #1565C0;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 
 /* Update toggle button in light mode */
