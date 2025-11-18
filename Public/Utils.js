@@ -1044,6 +1044,412 @@ export function buildStakeholderImpact(stakeholderImpact) {
 }
 
 /**
+ * BANKING ENHANCEMENT - Data Migration & Analytics Strategy
+ * Builds the Data Migration Strategy section
+ * Shows migration complexity, data quality, analytics roadmap, governance, and privacy/security
+ * @param {Object} dataMigrationStrategy - Data migration analysis from AI
+ * @returns {string} HTML string for the data migration section
+ */
+export function buildDataMigrationStrategy(dataMigrationStrategy) {
+  if (!dataMigrationStrategy) return '';
+
+  const migration = dataMigrationStrategy.migrationComplexity || {};
+  const quality = dataMigrationStrategy.dataQuality || {};
+  const analytics = dataMigrationStrategy.analyticsRoadmap || {};
+  const governance = dataMigrationStrategy.dataGovernance || {};
+  const privacy = dataMigrationStrategy.privacySecurity || {};
+
+  // Helper function to build migration complexity visualization
+  const buildMigrationComplexity = () => {
+    if (!migration.complexityLevel) return '<p class="no-data">No migration complexity data available</p>';
+
+    const complexityColors = {
+      low: '#50AF7B',
+      medium: '#EE9E20',
+      high: '#BA3930',
+      critical: '#DA291C'
+    };
+    const complexityColor = complexityColors[migration.complexityLevel] || '#666666';
+
+    return `
+      <div class="migration-complexity-card">
+        <div class="complexity-header">
+          <span class="complexity-badge" style="background-color: ${complexityColor};">
+            ${DOMPurify.sanitize(migration.complexityLevel || 'unknown').toUpperCase()} COMPLEXITY
+          </span>
+          ${migration.volumeEstimate ? `
+            <span class="volume-estimate">${DOMPurify.sanitize(migration.volumeEstimate)}</span>
+          ` : ''}
+        </div>
+
+        ${migration.systemsInvolved && migration.systemsInvolved.length ? `
+          <div class="systems-involved">
+            <h6>Systems Involved</h6>
+            <div class="systems-grid">
+              ${migration.systemsInvolved.map(sys => `
+                <div class="system-chip">${DOMPurify.sanitize(sys)}</div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${migration.estimatedDuration ? `
+          <div class="migration-duration">
+            <strong>Estimated Duration:</strong> ${DOMPurify.sanitize(migration.estimatedDuration)}
+          </div>
+        ` : ''}
+
+        ${migration.technicalChallenges && migration.technicalChallenges.length ? `
+          <div class="technical-challenges">
+            <h6>Technical Challenges</h6>
+            <ul>
+              ${migration.technicalChallenges.map(challenge => `
+                <li>${DOMPurify.sanitize(challenge)}</li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Helper function to build data quality assessment
+  const buildDataQuality = () => {
+    if (quality.currentQualityScore === undefined && !quality.qualityIssues?.length) {
+      return '<p class="no-data">No data quality assessment available</p>';
+    }
+
+    const score = quality.currentQualityScore || 0;
+    const scoreColor = score >= 80 ? '#50AF7B' : score >= 60 ? '#EE9E20' : '#BA3930';
+    const scoreLabel = score >= 80 ? 'Good Quality' : score >= 60 ? 'Needs Improvement' : 'Poor Quality';
+
+    return `
+      <div class="data-quality-card">
+        ${score !== undefined ? `
+          <div class="quality-score-gauge">
+            <div class="gauge-container">
+              <div class="gauge-bar" style="width: ${score}%; background-color: ${scoreColor};"></div>
+            </div>
+            <div class="gauge-label">
+              <span class="score-value">${score}/100</span>
+              <span class="score-label">${scoreLabel}</span>
+            </div>
+          </div>
+        ` : ''}
+
+        ${quality.qualityIssues && quality.qualityIssues.length ? `
+          <div class="quality-issues">
+            <h6>Quality Issues</h6>
+            ${quality.qualityIssues.map(issue => {
+              const severityColors = {
+                critical: '#DA291C',
+                high: '#BA3930',
+                medium: '#EE9E20',
+                low: '#50AF7B'
+              };
+              const severityColor = severityColors[issue.severity] || '#666666';
+
+              return `
+                <div class="quality-issue">
+                  <div class="issue-header">
+                    <span class="issue-description">${DOMPurify.sanitize(issue.issue)}</span>
+                    <span class="severity-badge" style="background-color: ${severityColor};">
+                      ${DOMPurify.sanitize(issue.severity || 'medium').toUpperCase()}
+                    </span>
+                  </div>
+                  ${issue.remediation ? `
+                    <div class="issue-remediation">
+                      <strong>Remediation:</strong> ${DOMPurify.sanitize(issue.remediation)}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
+
+        ${quality.cleansingStrategy ? `
+          <div class="cleansing-strategy">
+            <h6>Cleansing Strategy</h6>
+            <p>${DOMPurify.sanitize(quality.cleansingStrategy)}</p>
+          </div>
+        ` : ''}
+
+        ${quality.validationRules && quality.validationRules.length ? `
+          <div class="validation-rules">
+            <h6>Validation Rules</h6>
+            <ul>
+              ${quality.validationRules.map(rule => `
+                <li>${DOMPurify.sanitize(rule)}</li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Helper function to build analytics roadmap
+  const buildAnalyticsRoadmap = () => {
+    if (!analytics.currentMaturity && !analytics.phases?.length) {
+      return '<p class="no-data">No analytics roadmap available</p>';
+    }
+
+    const maturityLevels = {
+      descriptive: { order: 1, label: 'Descriptive', color: '#6B7280' },
+      diagnostic: { order: 2, label: 'Diagnostic', color: '#4A9D6F' },
+      predictive: { order: 3, label: 'Predictive', color: '#50AF7B' },
+      prescriptive: { order: 4, label: 'Prescriptive', color: '#2D6A4F' }
+    };
+
+    const currentLevel = maturityLevels[analytics.currentMaturity] || {};
+    const targetLevel = maturityLevels[analytics.targetMaturity] || {};
+
+    return `
+      <div class="analytics-roadmap-card">
+        ${analytics.currentMaturity || analytics.targetMaturity ? `
+          <div class="maturity-progression">
+            <div class="maturity-labels">
+              <div class="maturity-item">
+                <span class="maturity-label">Current:</span>
+                <span class="maturity-value" style="color: ${currentLevel.color};">
+                  ${DOMPurify.sanitize(currentLevel.label || 'Unknown')}
+                </span>
+              </div>
+              ${analytics.targetMaturity ? `
+                <div class="maturity-arrow">→</div>
+                <div class="maturity-item">
+                  <span class="maturity-label">Target:</span>
+                  <span class="maturity-value" style="color: ${targetLevel.color};">
+                    ${DOMPurify.sanitize(targetLevel.label || 'Unknown')}
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${analytics.phases && analytics.phases.length ? `
+          <div class="analytics-phases">
+            <h6>Implementation Phases</h6>
+            ${analytics.phases.map((phase, idx) => `
+              <div class="analytics-phase">
+                <div class="phase-header">
+                  <span class="phase-number">${idx + 1}</span>
+                  <div class="phase-title-group">
+                    <h6>${DOMPurify.sanitize(phase.phase)}</h6>
+                    ${phase.timeline ? `
+                      <span class="phase-timeline">${DOMPurify.sanitize(phase.timeline)}</span>
+                    ` : ''}
+                  </div>
+                </div>
+
+                ${phase.capabilities && phase.capabilities.length ? `
+                  <div class="phase-capabilities">
+                    <strong>Capabilities:</strong>
+                    <ul>
+                      ${phase.capabilities.map(cap => `
+                        <li>${DOMPurify.sanitize(cap)}</li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
+                ${phase.prerequisites && phase.prerequisites.length ? `
+                  <div class="phase-prerequisites">
+                    <strong>Prerequisites:</strong>
+                    <ul>
+                      ${phase.prerequisites.map(prereq => `
+                        <li>${DOMPurify.sanitize(prereq)}</li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Helper function to build data governance framework
+  const buildDataGovernance = () => {
+    if (!governance.ownershipModel && !governance.dataClassification?.length) {
+      return '<p class="no-data">No data governance framework available</p>';
+    }
+
+    return `
+      <div class="data-governance-card">
+        ${governance.ownershipModel ? `
+          <div class="ownership-model">
+            <h6>Ownership Model</h6>
+            <p>${DOMPurify.sanitize(governance.ownershipModel)}</p>
+          </div>
+        ` : ''}
+
+        ${governance.dataClassification && governance.dataClassification.length ? `
+          <div class="data-classification">
+            <h6>Data Classification</h6>
+            ${governance.dataClassification.map(item => {
+              const classColors = {
+                public: '#50AF7B',
+                internal: '#4A9D6F',
+                confidential: '#EE9E20',
+                restricted: '#DA291C'
+              };
+              const classColor = classColors[item.classification] || '#666666';
+
+              return `
+                <div class="classification-item">
+                  <div class="classification-header">
+                    <span class="data-type">${DOMPurify.sanitize(item.dataType)}</span>
+                    <span class="classification-badge" style="background-color: ${classColor};">
+                      ${DOMPurify.sanitize(item.classification || 'unknown').toUpperCase()}
+                    </span>
+                  </div>
+                  ${item.handlingRequirements ? `
+                    <div class="handling-requirements">
+                      ${DOMPurify.sanitize(item.handlingRequirements)}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
+
+        ${governance.retentionPolicies && governance.retentionPolicies.length ? `
+          <div class="retention-policies">
+            <h6>Retention Policies</h6>
+            <ul>
+              ${governance.retentionPolicies.map(policy => `
+                <li>${DOMPurify.sanitize(policy)}</li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${governance.qualityMetrics && governance.qualityMetrics.length ? `
+          <div class="quality-metrics">
+            <h6>Quality Metrics</h6>
+            <div class="metrics-grid">
+              ${governance.qualityMetrics.map(metric => `
+                <div class="metric-item">${DOMPurify.sanitize(metric)}</div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${governance.auditRequirements ? `
+          <div class="audit-requirements">
+            <h6>Audit Requirements</h6>
+            <p>${DOMPurify.sanitize(governance.auditRequirements)}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Helper function to build privacy & security controls
+  const buildPrivacySecurity = () => {
+    if (!privacy.regulatoryRequirements?.length && !privacy.encryptionStrategy) {
+      return '<p class="no-data">No privacy & security controls available</p>';
+    }
+
+    return `
+      <div class="privacy-security-card">
+        ${privacy.regulatoryRequirements && privacy.regulatoryRequirements.length ? `
+          <div class="regulatory-requirements">
+            <h6>Regulatory Requirements</h6>
+            <div class="requirements-grid">
+              ${privacy.regulatoryRequirements.map(req => `
+                <div class="requirement-chip">${DOMPurify.sanitize(req)}</div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${privacy.encryptionStrategy ? `
+          <div class="encryption-strategy">
+            <h6>Encryption Strategy</h6>
+            <p>${DOMPurify.sanitize(privacy.encryptionStrategy)}</p>
+          </div>
+        ` : ''}
+
+        ${privacy.accessControls ? `
+          <div class="access-controls">
+            <h6>Access Controls</h6>
+            <p>${DOMPurify.sanitize(privacy.accessControls)}</p>
+          </div>
+        ` : ''}
+
+        ${privacy.dataLineage ? `
+          <div class="data-lineage">
+            <h6>Data Lineage & Tracking</h6>
+            <p>${DOMPurify.sanitize(privacy.dataLineage)}</p>
+          </div>
+        ` : ''}
+
+        ${privacy.incidentResponse ? `
+          <div class="incident-response">
+            <h6>Incident Response</h6>
+            <p>${DOMPurify.sanitize(privacy.incidentResponse)}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Main section HTML
+  return `
+    <div class="analysis-section data-migration-section">
+      <h4>💾 Data Migration & Analytics Strategy</h4>
+
+      <!-- Migration Complexity -->
+      ${migration.complexityLevel || migration.volumeEstimate ? `
+        <div class="data-subsection migration-complexity">
+          <h5>🔄 Migration Complexity Assessment</h5>
+          ${buildMigrationComplexity()}
+        </div>
+      ` : ''}
+
+      <!-- Data Quality -->
+      ${quality.currentQualityScore !== undefined || quality.qualityIssues?.length ? `
+        <div class="data-subsection data-quality">
+          <h5>📊 Data Quality Analysis</h5>
+          ${buildDataQuality()}
+        </div>
+      ` : ''}
+
+      <!-- Analytics Roadmap -->
+      ${analytics.currentMaturity || analytics.phases?.length ? `
+        <div class="data-subsection analytics-roadmap">
+          <h5>📈 Analytics Maturity Roadmap</h5>
+          ${buildAnalyticsRoadmap()}
+        </div>
+      ` : ''}
+
+      <!-- Data Governance -->
+      ${governance.ownershipModel || governance.dataClassification?.length ? `
+        <div class="data-subsection data-governance">
+          <h5>⚖️ Data Governance Framework</h5>
+          ${buildDataGovernance()}
+        </div>
+      ` : ''}
+
+      <!-- Privacy & Security -->
+      ${privacy.regulatoryRequirements?.length || privacy.encryptionStrategy ? `
+        <div class="data-subsection privacy-security">
+          <h5>🔒 Privacy & Security Controls</h5>
+          ${buildPrivacySecurity()}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+/**
  * Builds the HTML legend element for the Gantt chart.
  * Creates a visual legend showing color-coded categories and their meanings.
  * @param {Array<Object>} legendData - Array of legend items

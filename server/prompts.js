@@ -234,6 +234,76 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
       Focus on banking-specific concerns (regulatory risk, customer trust, employee skill gaps, technology debt).
       Executives need this to anticipate resistance and plan proactive interventions.
 
+  **BANKING ENHANCEMENT - DATA MIGRATION & ANALYTICS STRATEGY:**
+    Generate a comprehensive data migration and analytics strategy in the "dataMigrationStrategy" field. This is CRITICAL for banking executives to understand data complexity and analytics maturity progression.
+
+    - **migrationComplexity**: Assess the data migration challenge
+      * complexityLevel: "low" (single system, <100K records), "medium" (2-3 systems, 100K-1M records), "high" (4-6 systems, 1M-10M records), "critical" (7+ systems, >10M records, legacy mainframes)
+      * volumeEstimate: Specific numbers (e.g., "2.4M customer records, 15M transactions, 450GB total")
+      * systemsInvolved: Array of source systems (e.g., ["Core Banking (Fiserv)", "CRM (Salesforce)", "Loan Origination (Encompass)", "Legacy Mainframe (COBOL)"])
+      * estimatedDuration: Realistic timeline (e.g., "6-9 months including parallel run")
+      * technicalChallenges: 3-5 specific issues (e.g., "COBOL mainframe data extraction", "Real-time sync during cutover", "Customer SSN encryption migration", "Deduplication of 15% duplicate records")
+
+    - **dataQuality**: Current state and improvement plan
+      * currentQualityScore: 0-100 scale (banking typical: 55-75)
+      * qualityIssues: Array of 3-6 specific issues with severity and remediation
+        - Issue examples: "Address standardization (23% non-standard formats)", "Missing email addresses (42% of customers)", "Duplicate customer records (15% duplication rate)"
+        - Severity: "critical" (blocks launch), "high" (major risk), "medium" (acceptable workaround), "low" (post-launch cleanup)
+        - Remediation: Specific action (e.g., "Implement USPS address validation API", "Email collection campaign with incentives")
+      * cleansingStrategy: Overall approach (e.g., "3-phase cleansing: automated deduplication (80% cases) → manual review (15%) → business rule exceptions (5%)")
+      * validationRules: 4-6 rules (e.g., "SSN format validation", "Account balance reconciliation", "Transaction date logical consistency")
+
+    - **analyticsRoadmap**: Maturity progression (4 phases)
+      * currentMaturity: "descriptive" (reports), "diagnostic" (root cause), "predictive" (forecasts), "prescriptive" (recommendations)
+      * targetMaturity: Same options - banking typical: descriptive → predictive
+      * phases: Array of 3-4 phases showing progression
+        - Phase 1 - Operational Analytics (Months 1-6):
+          * Capabilities: ["Real-time transaction monitoring", "Daily reconciliation dashboards", "Branch performance reports", "Customer service metrics"]
+          * Timeline: "Months 1-6"
+          * Prerequisites: ["Data warehouse setup", "ETL pipelines for core systems", "BI tool implementation (Tableau/Power BI)"]
+        - Phase 2 - Management Analytics (Months 7-12):
+          * Capabilities: ["Customer segmentation analysis", "Product profitability analysis", "Risk exposure dashboards", "Compliance reporting automation"]
+          * Prerequisites: ["Phase 1 complete", "Historical data cleaned (2+ years)", "Business glossary defined"]
+        - Phase 3 - Predictive Analytics (Months 13-18):
+          * Capabilities: ["Loan default prediction", "Customer churn models", "Cross-sell propensity scoring", "Fraud detection ML models"]
+          * Prerequisites: ["Data science team hired", "MLOps infrastructure", "Model governance framework"]
+        - Phase 4 - Prescriptive Analytics (Months 19-24+):
+          * Capabilities: ["Personalized product recommendations", "Dynamic pricing optimization", "Automated lending decisions", "Real-time risk adjustments"]
+          * Prerequisites: ["Phase 3 models validated", "A/B testing infrastructure", "Regulatory approval for AI decisions"]
+
+    - **dataGovernance**: Framework for data management
+      * ownershipModel: Who owns data (e.g., "Federated model: Business units own data, IT owns infrastructure, CDO owns standards")
+      * dataClassification: Array of 3-5 data types with classification
+        - Examples:
+          * { dataType: "Customer PII (SSN, DOB)", classification: "restricted", handlingRequirements: "Encryption at rest/transit, access logging, annual recertification" }
+          * { dataType: "Transaction history", classification: "confidential", handlingRequirements: "Encrypted storage, role-based access, 7-year retention" }
+          * { dataType: "Marketing preferences", classification: "internal", handlingRequirements: "Standard access controls, opt-out honored" }
+      * retentionPolicies: Array of 3-5 policies (e.g., "Transaction records: 7 years (regulatory)", "Customer communications: 3 years", "Marketing data: Until opt-out")
+      * qualityMetrics: Array of 4-6 KPIs (e.g., "Completeness: >95%", "Accuracy: >98%", "Timeliness: <24hr latency", "Consistency: <2% cross-system variance")
+      * auditRequirements: Specific needs (e.g., "SOC 2 Type II annual audit, OCC data quality reviews, quarterly data lineage documentation")
+
+    - **privacySecurity**: Compliance and protection measures
+      * regulatoryRequirements: Array of applicable regulations (e.g., ["GLBA (Gramm-Leach-Bliley Act)", "FCRA (Fair Credit Reporting Act)", "State data breach laws", "GDPR (for EU customers)", "CCPA (California customers)"])
+      * encryptionStrategy: Specific approach (e.g., "AES-256 for data at rest, TLS 1.3 for transit, tokenization for SSN/account numbers, hardware security modules (HSM) for key management")
+      * accessControls: Detailed controls (e.g., "Role-based access (RBAC) with least privilege, MFA for all users, privileged access management (PAM) for admins, 90-day access recertification")
+      * dataLineage: Tracking approach (e.g., "Automated lineage tracking via Collibra, source-to-report traceability, impact analysis for schema changes")
+      * incidentResponse: Plan summary (e.g., "24-hour breach notification protocol, incident response team on call, customer notification templates pre-approved by legal, cyber insurance coverage")
+
+    - **ESTIMATION GUIDELINES for data migration & analytics**:
+      * Banking data complexity is typically HIGH due to:
+        - Multiple legacy systems (core banking, loans, deposits, cards)
+        - Regulatory data retention requirements (7+ years)
+        - Customer privacy sensitivities
+        - Real-time processing needs
+      * Typical banking data quality scores: 55-75/100 (lower than most industries)
+      * Analytics maturity progression: 6-24 months per phase
+      * Always include regulatory requirements - banking is heavily regulated
+      * Common data issues: duplicates, address quality, missing emails, account reconciliation
+
+    - **CRITICAL**: Data migration and analytics strategy should be realistic and banking-specific. Avoid generic IT platitudes.
+      Focus on banking-specific challenges (regulatory compliance, real-time processing, customer privacy, legacy mainframe integration).
+      Executives need this to understand technical complexity and set realistic expectations for analytics maturity.
+
 **IMPORTANT NOTES:**
 - If research data is insufficient for Phase 1, 2, or 3 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
 - All Phase 1, 2, and 3 fields should be populated when possible - they provide critical decision-making insights.
@@ -571,6 +641,100 @@ export const TASK_ANALYSIS_SCHEMA = {
               mitigation: { type: "string" },
               earlyWarningSignal: { type: "string" }
             }
+          }
+        }
+      }
+    },
+
+    // BANKING ENHANCEMENT - Data Migration & Analytics Strategy
+    dataMigrationStrategy: {
+      type: "object",
+      properties: {
+        // Migration Complexity Assessment
+        migrationComplexity: {
+          type: "object",
+          properties: {
+            complexityLevel: { type: "string", enum: ["low", "medium", "high", "critical"] },
+            volumeEstimate: { type: "string" },
+            systemsInvolved: { type: "array", items: { type: "string" } },
+            estimatedDuration: { type: "string" },
+            technicalChallenges: { type: "array", items: { type: "string" } }
+          }
+        },
+
+        // Data Quality Analysis
+        dataQuality: {
+          type: "object",
+          properties: {
+            currentQualityScore: { type: "number" },
+            qualityIssues: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  issue: { type: "string" },
+                  severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
+                  remediation: { type: "string" }
+                }
+              }
+            },
+            cleansingStrategy: { type: "string" },
+            validationRules: { type: "array", items: { type: "string" } }
+          }
+        },
+
+        // Analytics Roadmap (Maturity Progression)
+        analyticsRoadmap: {
+          type: "object",
+          properties: {
+            currentMaturity: { type: "string", enum: ["descriptive", "diagnostic", "predictive", "prescriptive"] },
+            targetMaturity: { type: "string", enum: ["descriptive", "diagnostic", "predictive", "prescriptive"] },
+            phases: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  phase: { type: "string" },
+                  capabilities: { type: "array", items: { type: "string" } },
+                  timeline: { type: "string" },
+                  prerequisites: { type: "array", items: { type: "string" } }
+                }
+              }
+            }
+          }
+        },
+
+        // Data Governance Framework
+        dataGovernance: {
+          type: "object",
+          properties: {
+            ownershipModel: { type: "string" },
+            dataClassification: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  dataType: { type: "string" },
+                  classification: { type: "string", enum: ["public", "internal", "confidential", "restricted"] },
+                  handlingRequirements: { type: "string" }
+                }
+              }
+            },
+            retentionPolicies: { type: "array", items: { type: "string" } },
+            qualityMetrics: { type: "array", items: { type: "string" } },
+            auditRequirements: { type: "string" }
+          }
+        },
+
+        // Privacy & Security Controls
+        privacySecurity: {
+          type: "object",
+          properties: {
+            regulatoryRequirements: { type: "array", items: { type: "string" } },
+            encryptionStrategy: { type: "string" },
+            accessControls: { type: "string" },
+            dataLineage: { type: "string" },
+            incidentResponse: { type: "string" }
           }
         }
       }
