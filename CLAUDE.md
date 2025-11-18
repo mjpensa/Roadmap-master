@@ -2,6 +2,18 @@
 
 ## Changelog
 
+### Version 2.0.0 (2025-11-18) - Banking Executive Edition
+- **MAJOR:** Implemented 5 banking-specific enhancements (1,306 lines of new code)
+- **Feature:** Financial Impact Dashboard with ROI, payback period, NPV calculations
+- **Feature:** Regulatory Alert Icons (🏛️) on Gantt chart with summary box
+- **Feature:** Executive Light Mode Theme for presentations (200+ CSS overrides)
+- **Feature:** Competitive Intelligence section in Executive Summary
+- **Feature:** Industry Benchmarks comparison (Time to Market, Investment Level, Risk Profile)
+- **Enhancement:** Updated AI prompts for banking industry context
+- **Enhancement:** Added localStorage persistence for theme preferences
+- **Documentation:** Created BANKING_ENHANCEMENTS_TEST_SUMMARY.md (comprehensive test plan)
+- **Updated:** Codebase size metrics (backend: 2,952 lines, frontend: 11,926 lines)
+
 ### Version 1.1.0 (2025-11-18)
 - Updated all file line counts to reflect current codebase state
 - Corrected directory structure (documentation files are in root, not Documentation/ folder)
@@ -26,8 +38,15 @@
 4. **Strategic Intelligence**: Auto-generated executive summaries and presentation slides
 5. **Task Analysis**: Detailed analysis with Q&A chat for individual tasks
 
+### Banking Executive Edition (NEW - v2.0.0)
+6. **Financial Impact Dashboard**: ROI, payback period, NPV calculations with confidence levels
+7. **Regulatory Intelligence**: Visual alerts (🏛️) for compliance checkpoints (OCC, FDIC, Federal Reserve)
+8. **Competitive Intelligence**: Market positioning, competitor moves, competitive advantage analysis
+9. **Industry Benchmarks**: Time to market, investment level, and risk profile comparisons
+10. **Executive Light Mode**: Presentation-optimized theme for client meetings and board presentations
+
 ### Key Innovation
-Uses Gemini AI's JSON schema validation for structured output, enabling complex project visualizations from unstructured research with minimal user intervention.
+Uses Gemini AI's JSON schema validation for structured output, enabling complex project visualizations from unstructured research with minimal user intervention. **Now enhanced with banking-specific intelligence** for strategic decision-making.
 
 ---
 
@@ -1121,5 +1140,65 @@ npm update
 ---
 
 **Last Updated**: 2025-11-18
-**Version**: 1.1.0
-**Codebase Size**: ~13,500 lines (backend: 2,879 lines, frontend: 10,620 lines)
+**Version**: 2.0.0 - Banking Executive Edition
+**Codebase Size**: ~14,878 lines (backend: 2,952 lines, frontend: 11,926 lines)
+
+## Banking Enhancements Quick Reference
+
+### Financial Impact Dashboard (`Public/Utils.js:628-740`)
+```javascript
+// Automatically generated for each task analysis
+{
+  costs: { laborCosts, technologyCosts, vendorCosts, totalCost },
+  benefits: { revenueIncrease, costSavings, riskReduction, totalAnnualBenefit },
+  roiMetrics: { paybackPeriod, firstYearROI, threeYearNPV, confidenceLevel }
+}
+```
+**Usage:** Opens automatically in task analysis modal, displays first for immediate visibility.
+
+### Regulatory Alert Icons (`Public/GanttChart.js:471-554`)
+```javascript
+// Visual indicators on Gantt chart
+regulatoryFlags: {
+  hasRegulatoryDependency: true,
+  regulatorName: "OCC",
+  approvalType: "Pre-approval required",
+  deadline: "Q2 2026",
+  criticalityLevel: "high" // high = pulsing animation
+}
+```
+**Usage:** 🏛️ icons appear on bars, hover for tooltip. Summary box shows totals.
+
+### Light Mode Theme (`Public/GanttChart.js:790-844`)
+```javascript
+// Toggle button in export controls
+_addThemeToggleListener() // Switches dark ↔ light
+localStorage.setItem('gantt-theme', 'light') // Persists preference
+```
+**Usage:** Click "☀️ Light Mode" button. Optimized for projectors/presentations.
+
+### Competitive Intelligence (`Public/ExecutiveSummary.js:503-597`)
+```javascript
+competitiveIntelligence: {
+  marketTiming: "First mover advantage - only 23% adoption",
+  competitorMoves: ["JPMorgan deployed Q1 2025", "Wells Fargo piloting"],
+  competitiveAdvantage: "18-month lead before table stakes",
+  marketWindow: "Limited window - act by Q3 2026"
+}
+```
+**Usage:** Appears in Executive Summary after Key Insights. Blue gradient card.
+
+### Industry Benchmarks (`Public/ExecutiveSummary.js:599-717`)
+```javascript
+industryBenchmarks: {
+  timeToMarket: {
+    yourPlan: "9 months",
+    industryAverage: "14 months",
+    variance: "37% faster",
+    insight: "Significant competitive advantage"
+  },
+  investmentLevel: { /* similar structure */ },
+  riskProfile: { /* qualitative assessment */ }
+}
+```
+**Usage:** Appears after Competitive Intelligence. Green gradient card.

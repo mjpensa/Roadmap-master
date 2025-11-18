@@ -73,6 +73,7 @@ export class GanttChart {
     this._addLogo(); // Logo added after title so we can calculate proper alignment
     this._createGrid();
     this._addLegend();
+    this._addRegulatorySummary(); // BANKING ENHANCEMENT: Add regulatory milestones summary
 
     // Add Executive Summary - Always create component, it will handle missing data gracefully
     this._addExecutiveSummary();
@@ -110,6 +111,14 @@ export class GanttChart {
     exportBtn.textContent = 'Export as PNG';
     exportContainer.appendChild(exportBtn);
 
+    // BANKING ENHANCEMENT: Theme toggle button (for presentations)
+    const themeToggleBtn = document.createElement('button');
+    themeToggleBtn.id = 'theme-toggle-btn';
+    themeToggleBtn.className = 'theme-toggle-btn';
+    themeToggleBtn.title = 'Toggle between dark and light theme';
+    themeToggleBtn.innerHTML = '<span class="theme-icon">☀️</span><span class="theme-label">Light Mode</span>';
+    exportContainer.appendChild(themeToggleBtn);
+
     // Append to container
     this.container.appendChild(this.chartWrapper);
     this.container.appendChild(exportContainer);
@@ -120,6 +129,7 @@ export class GanttChart {
     // Add listeners
     this._addEditModeToggleListener();
     this._addExportListener();
+    this._addThemeToggleListener(); // BANKING ENHANCEMENT: Theme toggle
 
     // Add "Today" line
     const today = new Date();
@@ -433,6 +443,11 @@ export class GanttChart {
       barEl.setAttribute('data-color', bar.color || 'default');
       barEl.style.gridColumn = `${bar.startCol} / ${bar.endCol}`;
 
+      // BANKING ENHANCEMENT: Add regulatory icon if task has regulatory dependency
+      if (row.regulatoryFlags && row.regulatoryFlags.hasRegulatoryDependency) {
+        this._addRegulatoryIcon(barEl, row.regulatoryFlags);
+      }
+
       barAreaEl.appendChild(barEl);
     }
 
@@ -461,6 +476,91 @@ export class GanttChart {
     barAreaEl.addEventListener('mouseleave', () => {
       barAreaEl.classList.remove('row-hover');
     });
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Adds regulatory icon to Gantt bar
+   * @param {HTMLElement} barEl - The bar element to add icon to
+   * @param {Object} regulatoryFlags - Regulatory information
+   * @private
+   */
+  _addRegulatoryIcon(barEl, regulatoryFlags) {
+    const icon = document.createElement('span');
+    icon.className = 'regulatory-icon';
+    icon.textContent = '🏛️';
+    icon.title = `Regulatory: ${regulatoryFlags.regulatorName || 'Approval Required'}${regulatoryFlags.approvalType ? ' - ' + regulatoryFlags.approvalType : ''}`;
+
+    // Add criticality class for high-priority regulatory items
+    if (regulatoryFlags.criticalityLevel === 'high') {
+      icon.classList.add('critical');
+    }
+
+    // Position icon at start of bar
+    icon.style.position = 'absolute';
+    icon.style.left = '4px';
+    icon.style.top = '50%';
+    icon.style.transform = 'translateY(-50%)';
+    icon.style.zIndex = '10';
+
+    barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
+    barEl.appendChild(icon);
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Adds regulatory milestones summary box
+   * @private
+   */
+  _addRegulatorySummary() {
+    // Count regulatory tasks
+    const regulatoryTasks = this.ganttData.data.filter(task =>
+      task.regulatoryFlags && task.regulatoryFlags.hasRegulatoryDependency && !task.isSwimlane
+    );
+
+    if (regulatoryTasks.length === 0) return; // No regulatory tasks, skip
+
+    const summaryBox = document.createElement('div');
+    summaryBox.className = 'regulatory-summary-box';
+
+    // Count by criticality
+    const highCritical = regulatoryTasks.filter(t => t.regulatoryFlags.criticalityLevel === 'high').length;
+    const mediumCritical = regulatoryTasks.filter(t => t.regulatoryFlags.criticalityLevel === 'medium').length;
+
+    summaryBox.innerHTML = `
+      <h4>🏛️ Regulatory Milestones</h4>
+      <div class="regulatory-stats">
+        <span class="stat-item">
+          <span class="stat-label">Total:</span>
+          <span class="stat-value">${regulatoryTasks.length} checkpoint${regulatoryTasks.length !== 1 ? 's' : ''}</span>
+        </span>
+        ${highCritical > 0 ? `
+          <span class="stat-item critical">
+            <span class="stat-label">High Priority:</span>
+            <span class="stat-value">${highCritical} critical</span>
+          </span>
+        ` : ''}
+        ${mediumCritical > 0 ? `
+          <span class="stat-item medium">
+            <span class="stat-label">Medium Priority:</span>
+            <span class="stat-value">${mediumCritical} items</span>
+          </span>
+        ` : ''}
+      </div>
+      <p class="regulatory-note">Tasks marked with 🏛️ require regulatory approval or review</p>
+    `;
+
+    // Insert before legend (if it exists) or at start of chart wrapper
+    const legendElement = this.chartWrapper.querySelector('.gantt-legend');
+    if (legendElement) {
+      this.chartWrapper.insertBefore(summaryBox, legendElement);
+    } else {
+      // Insert after grid but before executive summary
+      const gridElement = this.chartWrapper.querySelector('.gantt-grid');
+      if (gridElement && gridElement.nextSibling) {
+        this.chartWrapper.insertBefore(summaryBox, gridElement.nextSibling);
+      } else {
+        this.chartWrapper.appendChild(summaryBox);
+      }
+    }
   }
 
   /**
@@ -685,6 +785,62 @@ export class GanttChart {
         alert('Error exporting chart. See console for details.');
       });
     });
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Adds theme toggle button event listener
+   * Switches between dark (developer) and light (executive/presentation) themes
+   * @private
+   */
+  _addThemeToggleListener() {
+    const toggleBtn = document.getElementById('theme-toggle-btn');
+    if (!toggleBtn) return;
+
+    // Check for saved preference (persist across page loads)
+    const savedTheme = localStorage.getItem('gantt-theme') || 'dark';
+    if (savedTheme === 'light') {
+      this._applyLightTheme();
+      toggleBtn.querySelector('.theme-icon').textContent = '🌙';
+      toggleBtn.querySelector('.theme-label').textContent = 'Dark Mode';
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+
+      if (currentTheme === 'dark') {
+        this._applyLightTheme();
+        localStorage.setItem('gantt-theme', 'light');
+        toggleBtn.querySelector('.theme-icon').textContent = '🌙';
+        toggleBtn.querySelector('.theme-label').textContent = 'Dark Mode';
+      } else {
+        this._applyDarkTheme();
+        localStorage.setItem('gantt-theme', 'dark');
+        toggleBtn.querySelector('.theme-icon').textContent = '☀️';
+        toggleBtn.querySelector('.theme-label').textContent = 'Light Mode';
+      }
+    });
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Applies light theme for executive presentations
+   * @private
+   */
+  _applyLightTheme() {
+    document.body.classList.add('light-theme');
+    if (this.chartWrapper) {
+      this.chartWrapper.classList.add('light-theme');
+    }
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Applies dark theme (default developer mode)
+   * @private
+   */
+  _applyDarkTheme() {
+    document.body.classList.remove('light-theme');
+    if (this.chartWrapper) {
+      this.chartWrapper.classList.remove('light-theme');
+    }
   }
 
   /**
