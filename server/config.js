@@ -109,8 +109,8 @@ export const CONFIG = {
       TEMPERATURE: 0.0, // CRITICAL: Zero randomness
       TOP_K: 1, // CRITICAL: Only most likely token
       TOP_P: 0.0, // CRITICAL: No nucleus sampling
-      MAX_OUTPUT_TOKENS_FACTS: 8192, // Pass 1: Fact extraction
-      MAX_OUTPUT_TOKENS_INFERENCES: 16384 // Pass 2: Full structure
+      MAX_OUTPUT_TOKENS_FACTS: 16384, // Pass 1: Fact extraction (increased from 8192)
+      MAX_OUTPUT_TOKENS_INFERENCES: 65536 // Pass 2: Full structure (increased from 16384 to support complex research)
     }
   },
 
