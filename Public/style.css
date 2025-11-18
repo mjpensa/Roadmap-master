@@ -23,17 +23,20 @@
   position: relative; /* Added for vertical SVG border */
 }
 
-/* 7. Chart Title */
+/* 7. Chart Title Container (holds title text and logo) */
+.gantt-title-container {
+  /* Flexbox properties are set inline in JavaScript for dynamic alignment */
+  transition: all 0.2s;
+}
+
+/* Chart Title */
 .gantt-title {
   text-align: center;
   font-size: 40px; /* Increased from 36px for better readability */
   font-weight: 700; /* Increased from 600 for better readability */
-  padding: 29px; /* Increased by 30% from 22px for thicker title cell */
-  border-bottom: 1px solid #0D0D0D; /* Only bottom border to separate from grid */
   color: #FFFFFF; /* Text Color */
-  background-color: #0c2340; /* CHANGED to new color */
   transition: all 0.2s;
-  border-radius: 8px 8px 0 0; /* Rounded corners at top */
+  /* Note: padding, border, background, and border-radius are now on .gantt-title-container */
 }
 
 /* Show outline on title hover when in edit mode */

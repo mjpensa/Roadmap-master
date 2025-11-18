@@ -145,33 +145,14 @@ export class GanttChart {
     logoImg.src = '/bip_logo.png';
     logoImg.alt = 'BIP Logo';
     logoImg.className = 'gantt-logo';
-
-    // Apply inline styles for positioning
-    logoImg.style.position = 'absolute';
-    logoImg.style.right = '32px';
     logoImg.style.height = `${CONFIG.SIZES.LOGO_HEIGHT}px`;
     logoImg.style.width = 'auto';
-    logoImg.style.zIndex = '10';
+    logoImg.style.flexShrink = '0'; // Prevent logo from shrinking
 
-    // Calculate vertical center position based on title element
-    // This ensures the logo is always perfectly aligned with the title text
-    if (this.titleElement) {
-      // Use requestAnimationFrame to ensure the title element is fully rendered
-      requestAnimationFrame(() => {
-        const titleRect = this.titleElement.getBoundingClientRect();
-        const titleHeight = this.titleElement.offsetHeight;
-        const logoHeight = CONFIG.SIZES.LOGO_HEIGHT;
-
-        // Calculate the top position to center the logo vertically with the title
-        const topPosition = (titleHeight - logoHeight) / 2;
-        logoImg.style.top = `${topPosition}px`;
-      });
-    } else {
-      // Fallback to old position if title doesn't exist (shouldn't happen)
-      logoImg.style.top = '31px';
+    // Add logo to the title container (if it exists)
+    if (this.titleContainer) {
+      this.titleContainer.appendChild(logoImg);
     }
-
-    this.chartWrapper.appendChild(logoImg);
   }
 
   /**
@@ -179,9 +160,29 @@ export class GanttChart {
    * @private
    */
   _addTitle() {
+    // Create a container for the title row that will hold both title and logo
+    this.titleContainer = document.createElement('div');
+    this.titleContainer.className = 'gantt-title-container';
+
+    // Use flexbox to align title and logo
+    this.titleContainer.style.display = 'flex';
+    this.titleContainer.style.justifyContent = 'space-between';
+    this.titleContainer.style.alignItems = 'center'; // Vertically center logo with title
+    this.titleContainer.style.gap = '32px'; // Space between title and logo
+    this.titleContainer.style.padding = '29px'; // Match original title padding
+    this.titleContainer.style.borderBottom = '1px solid #0D0D0D';
+    this.titleContainer.style.backgroundColor = '#0c2340';
+    this.titleContainer.style.borderRadius = '8px 8px 0 0';
+
+    // Create the title text element
     this.titleElement = document.createElement('div');
     this.titleElement.className = 'gantt-title';
     this.titleElement.textContent = this.ganttData.title;
+    this.titleElement.style.flex = '1'; // Allow title to grow and wrap if needed
+    this.titleElement.style.padding = '0'; // Remove padding since container has it
+    this.titleElement.style.border = 'none'; // Remove border since container has it
+    this.titleElement.style.background = 'none'; // Remove background since container has it
+    this.titleElement.style.borderRadius = '0'; // Remove border radius since container has it
 
     // Add double-click to edit title (only in edit mode)
     this.titleElement.addEventListener('dblclick', (e) => {
@@ -191,7 +192,8 @@ export class GanttChart {
       }
     });
 
-    this.chartWrapper.appendChild(this.titleElement);
+    this.titleContainer.appendChild(this.titleElement);
+    this.chartWrapper.appendChild(this.titleContainer);
   }
 
   /**
