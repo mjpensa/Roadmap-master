@@ -39,9 +39,6 @@ export class ExecutiveSummary {
       return this.container;
     }
 
-    // Add header SVG stripe
-    this._addHeaderSVG();
-
     // Build header
     const header = this._buildHeader();
     this.container.appendChild(header);
@@ -49,9 +46,6 @@ export class ExecutiveSummary {
     // Build content
     const content = this._buildContent();
     this.container.appendChild(content);
-
-    // Add footer SVG stripe
-    this._addFooterSVG();
 
     return this.container;
   }
