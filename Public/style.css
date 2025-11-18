@@ -354,6 +354,26 @@
   transform: none; /* No lift when disabled */
 }
 
+/* Executive View Toggle Button (EXECUTIVE-FIRST ENHANCEMENT) */
+.executive-view-toggle-button {
+  font-family: 'Work Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #555555; /* Gray for detail view */
+  border: none;
+  border-radius: 8px;
+  padding: 16px 48px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+.executive-view-toggle-button:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
 /* Edit Mode Toggle Button */
 .edit-mode-toggle-button {
   font-family: 'Work Sans', sans-serif;
@@ -3901,6 +3921,7 @@ body.light-theme {
 
 /* Light theme for buttons */
 .light-theme .export-button,
+.light-theme .executive-view-toggle-button,
 .light-theme .edit-mode-toggle-button {
   background: rgba(0, 0, 0, 0.05);
   color: #1A1A1A;
@@ -3908,6 +3929,7 @@ body.light-theme {
 }
 
 .light-theme .export-button:hover,
+.light-theme .executive-view-toggle-button:hover,
 .light-theme .edit-mode-toggle-button:hover {
   background: rgba(0, 0, 0, 0.1);
 }

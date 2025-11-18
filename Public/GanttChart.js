@@ -40,6 +40,7 @@ export class GanttChart {
     this.resizableGantt = null; // Phase 2: Bar resizing functionality
     this.contextMenu = null; // Phase 5: Context menu for color changing
     this.isEditMode = false; // Edit mode toggle - default is read-only
+    this.isExecutiveView = false; // EXECUTIVE-FIRST: Executive View toggle - shows only milestones/decisions/regulatory
     this.titleElement = null; // Reference to the title element for edit mode
     this.legendElement = null; // Reference to the legend element for edit mode
     this.hamburgerMenu = null; // Hamburger menu for section navigation
@@ -95,6 +96,15 @@ export class GanttChart {
     const exportContainer = document.createElement('div');
     exportContainer.className = 'export-container';
 
+    // EXECUTIVE-FIRST: Executive View toggle button
+    const executiveViewBtn = document.createElement('button');
+    executiveViewBtn.id = 'executive-view-toggle-btn';
+    executiveViewBtn.className = 'executive-view-toggle-button';
+    executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
+    executiveViewBtn.title = 'Toggle Executive View (show only milestones, decisions, and regulatory checkpoints)';
+    executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
+    exportContainer.appendChild(executiveViewBtn);
+
     // Edit mode toggle button
     const editModeBtn = document.createElement('button');
     editModeBtn.id = 'edit-mode-toggle-btn';
@@ -127,6 +137,7 @@ export class GanttChart {
     this._addHamburgerMenu();
 
     // Add listeners
+    this._addExecutiveViewToggleListener(); // EXECUTIVE-FIRST: Executive View toggle
     this._addEditModeToggleListener();
     this._addExportListener();
     this._addThemeToggleListener(); // BANKING ENHANCEMENT: Theme toggle
@@ -719,6 +730,72 @@ export class GanttChart {
     footerSvgEl.style.backgroundSize = 'auto 30px';
 
     this.chartWrapper.appendChild(footerSvgEl);
+  }
+
+  /**
+   * EXECUTIVE-FIRST: Adds Executive View toggle functionality
+   * Filters chart to show only milestones, decisions, and regulatory checkpoints
+   * @private
+   */
+  _addExecutiveViewToggleListener() {
+    const executiveViewBtn = document.getElementById('executive-view-toggle-btn');
+
+    if (!executiveViewBtn) {
+      console.warn('Executive view toggle button not found.');
+      return;
+    }
+
+    executiveViewBtn.addEventListener('click', () => {
+      this.isExecutiveView = !this.isExecutiveView;
+      executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
+      executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
+
+      // Re-render the grid with filtered data
+      this._updateGridForExecutiveView();
+
+      console.log(`✓ ${this.isExecutiveView ? 'Executive View' : 'Detail View'} enabled`);
+    });
+  }
+
+  /**
+   * EXECUTIVE-FIRST: Updates the grid to show/hide tasks based on Executive View
+   * Shows only milestones, decisions, and regulatory checkpoints when enabled
+   * @private
+   */
+  _updateGridForExecutiveView() {
+    if (!this.gridElement) {
+      console.warn('Grid element not found for Executive View update');
+      return;
+    }
+
+    // Get all task rows (not swimlane rows)
+    const allRows = this.gridElement.querySelectorAll('.gantt-row');
+
+    allRows.forEach((row, index) => {
+      const dataItem = this.ganttData.data[index];
+
+      // Skip swimlanes - always show them
+      if (dataItem && dataItem.isSwimlane) {
+        row.style.display = '';
+        return;
+      }
+
+      // For tasks, check taskType
+      if (this.isExecutiveView) {
+        // Show only milestone, regulatory, and decision tasks
+        const taskType = dataItem?.taskType || 'task';
+        const isExecutiveTask = ['milestone', 'regulatory', 'decision'].includes(taskType);
+
+        if (isExecutiveTask) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else {
+        // Show all tasks in detail view
+        row.style.display = '';
+      }
+    });
   }
 
   /**

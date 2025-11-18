@@ -60,7 +60,19 @@ You MUST respond with *only* a valid JSON object matching the schema.
       * "medium" if regulatory review is required but some flexibility exists
       * "low" if regulatory involvement is routine oversight
     - If task has no regulatory dependency, you may omit the entire 'regulatoryFlags' object or set 'hasRegulatoryDependency' to false
-7.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
+7.  **TASK TYPE (EXECUTIVE-FIRST ENHANCEMENT):** For each task, classify its type to enable Executive View filtering:
+    - Set 'taskType' to one of these values:
+      * "milestone": Key deliverable, phase completion, major launch, significant achievement (e.g., "Go Live", "Phase 1 Complete", "Product Launch")
+      * "regulatory": Regulatory approval, compliance checkpoint, examination, filing deadline (e.g., "OCC Approval", "FDIC Review", "Compliance Audit")
+      * "decision": Executive decision point, budget approval, go/no-go gate, steering committee review (e.g., "Executive Approval", "Budget Gate", "Go/No-Go Decision")
+      * "task": Regular implementation work, development, testing, documentation (default for most tasks)
+    - Use this logic:
+      * If task has hasRegulatoryDependency=true → taskType should be "regulatory"
+      * If task title contains words like "Approval", "Decision", "Gate", "Review" (executive context) → taskType should be "decision"
+      * If task title contains words like "Launch", "Complete", "Go Live", "Delivery", "Milestone" → taskType should be "milestone"
+      * Otherwise → taskType should be "task"
+    - **IMPORTANT:** Executive View will only show tasks where taskType is "milestone", "regulatory", or "decision"
+8.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
 
 /**
  * Task Analysis System Prompt
@@ -439,9 +451,14 @@ export const GANTT_CHART_SCHEMA = {
               deadline: { type: "string" },
               criticalityLevel: { type: "string", enum: ["high", "medium", "low"] }
             }
+          },
+          taskType: {
+            type: "string",
+            enum: ["milestone", "regulatory", "decision", "task"],
+            description: "Task classification for Executive View filtering"
           }
         },
-        required: ["title", "isSwimlane", "entity"]
+        required: ["title", "isSwimlane", "entity", "taskType"]
       }
     },
     legend: {
