@@ -82,6 +82,12 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
       }
     }
 
+    // Validate that parts array exists and has content
+    if (!result.candidates[0].content.parts || !Array.isArray(result.candidates[0].content.parts) || result.candidates[0].content.parts.length === 0) {
+      console.error('No content parts in Gemini response:', JSON.stringify(result));
+      throw new Error('No content parts in Gemini response');
+    }
+
     let extractedJsonText = result.candidates[0].content.parts[0].text;
 
     // Clean up the JSON text before parsing
@@ -216,6 +222,12 @@ export async function callGeminiForText(payload, retryCount = CONFIG.API.RETRY_C
       if (blockedRating) {
         throw new Error(`API call blocked due to safety rating: ${blockedRating.category}`);
       }
+    }
+
+    // Validate that parts array exists and has content
+    if (!result.candidates[0].content.parts || !Array.isArray(result.candidates[0].content.parts) || result.candidates[0].content.parts.length === 0) {
+      console.error('No content parts in Gemini response:', JSON.stringify(result));
+      throw new Error('No content parts in Gemini response');
     }
 
     return result.candidates[0].content.parts[0].text; // Return raw text
