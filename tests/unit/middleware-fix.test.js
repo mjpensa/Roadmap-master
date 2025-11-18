@@ -2,7 +2,7 @@
  * Fixed tests for upload error handling
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, jest } from '@jest/globals';
 import { handleUploadErrors } from '../../server/middleware.js';
 import { CONFIG } from '../../server/config.js';
 import httpMocks from 'node-mocks-http';

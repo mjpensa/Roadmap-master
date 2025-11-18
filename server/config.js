@@ -48,7 +48,7 @@ validateEnvironment();
 export const CONFIG = {
   // Server settings
   SERVER: {
-    PORT: process.env.PORT || 3000,
+    PORT: parseInt(process.env.PORT, 10) || 3000,
     TRUST_PROXY_HOPS: 1 // Railway uses single proxy layer
   },
 

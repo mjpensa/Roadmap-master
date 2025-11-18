@@ -15,6 +15,7 @@ import {
 } from '../../server/middleware.js';
 import { CONFIG } from '../../server/config.js';
 import httpMocks from 'node-mocks-http';
+import multer from 'multer';
 
 describe('Middleware - Helmet Configuration', () => {
   test('should configure helmet with CSP disabled', () => {
@@ -242,8 +243,7 @@ describe('Middleware - File Upload', () => {
 
 describe('Middleware - Upload Error Handling', () => {
   test('should handle LIMIT_FILE_SIZE error', () => {
-    const error = new Error('File too large');
-    error.code = 'LIMIT_FILE_SIZE';
+    const error = new multer.MulterError('LIMIT_FILE_SIZE');
 
     const req = httpMocks.createRequest();
     const res = httpMocks.createResponse();
@@ -258,8 +258,7 @@ describe('Middleware - Upload Error Handling', () => {
   });
 
   test('should handle LIMIT_FILE_COUNT error', () => {
-    const error = new Error('Too many files');
-    error.code = 'LIMIT_FILE_COUNT';
+    const error = new multer.MulterError('LIMIT_FILE_COUNT');
 
     const req = httpMocks.createRequest();
     const res = httpMocks.createResponse();
@@ -274,8 +273,7 @@ describe('Middleware - Upload Error Handling', () => {
   });
 
   test('should handle LIMIT_FIELD_VALUE error', () => {
-    const error = new Error('Field too large');
-    error.code = 'LIMIT_FIELD_VALUE';
+    const error = new multer.MulterError('LIMIT_FIELD_VALUE');
 
     const req = httpMocks.createRequest();
     const res = httpMocks.createResponse();
@@ -290,8 +288,7 @@ describe('Middleware - Upload Error Handling', () => {
   });
 
   test('should handle generic upload errors', () => {
-    const error = new Error('Upload failed');
-    error.code = 'UNKNOWN_ERROR';
+    const error = new multer.MulterError('UNKNOWN_ERROR');
 
     const req = httpMocks.createRequest();
     const res = httpMocks.createResponse();
