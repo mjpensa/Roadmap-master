@@ -13,12 +13,14 @@
 export class ResearchSynthesizer {
   /**
    * @param {string} containerId - ID of container element
+   * @param {string|null} sessionId - Optional existing session ID with research data
    */
-  constructor(containerId) {
+  constructor(containerId, sessionId = null) {
     this.containerId = containerId;
-    this.sessionId = null;
+    this.sessionId = sessionId;
     this.currentStep = 0; // 0-7 (8 steps total)
     this.uploadedFiles = []; // Array of { file, provider }
+    this.hasExistingResearch = !!sessionId; // Flag to indicate if we have existing research
 
     // Step definitions
     this.steps = [
@@ -55,12 +57,28 @@ export class ResearchSynthesizer {
       return;
     }
 
+    // If we have existing research, show option to use it
+    const existingResearchBanner = this.hasExistingResearch && this.currentStep === 0 ? `
+      <div class="existing-research-banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">✨ Research Already Available</h3>
+        <p style="margin: 0 0 1rem 0; font-size: 0.9rem;">Your uploaded research files from the roadmap are available for synthesis.</p>
+        <button id="btn-use-existing-research" class="btn-primary" style="background: white; color: #667eea; margin-right: 0.5rem;">
+          Use Existing Research →
+        </button>
+        <button id="btn-upload-new-research" class="btn-secondary" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white;">
+          Upload New Files Instead
+        </button>
+      </div>
+    ` : '';
+
     container.innerHTML = `
       <div class="research-synthesis-container">
         <div class="research-header">
           <h2>🔬 Cross-LLM Research Synthesis</h2>
           <p>Transform multi-source research into verified, cited insights</p>
         </div>
+
+        ${existingResearchBanner}
 
         <div class="pipeline-steps" id="pipeline-steps">
           ${this._renderSteps()}
@@ -954,6 +972,17 @@ export class ResearchSynthesizer {
    * @private
    */
   _attachEventListeners() {
+    // Existing research banner buttons
+    const btnUseExisting = document.getElementById('btn-use-existing-research');
+    if (btnUseExisting) {
+      btnUseExisting.addEventListener('click', () => this._useExistingResearch());
+    }
+
+    const btnUploadNew = document.getElementById('btn-upload-new-research');
+    if (btnUploadNew) {
+      btnUploadNew.addEventListener('click', () => this._startFreshUpload());
+    }
+
     // Provider buttons
     document.querySelectorAll('.provider-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1149,6 +1178,68 @@ export class ResearchSynthesizer {
   }
 
   /**
+   * Uses existing research from the roadmap session
+   * @private
+   */
+  async _useExistingResearch() {
+    if (!this.sessionId) {
+      alert('No existing research session found.');
+      return;
+    }
+
+    try {
+      console.log('✅ Using existing research from session:', this.sessionId);
+
+      // Skip directly to extraction step
+      this.advanceToNextStep();
+
+      // Start extraction using existing session
+      const extractResponse = await fetch('/api/research/extract-claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: this.sessionId })
+      });
+
+      if (!extractResponse.ok) {
+        throw new Error(`Extraction failed: ${extractResponse.statusText}`);
+      }
+
+      const extractData = await extractResponse.json();
+      const jobId = extractData.jobId;
+
+      // Poll for completion
+      await this.pollJob(jobId, (job) => {
+        const statusEl = document.getElementById('extraction-status');
+        if (statusEl) {
+          statusEl.textContent = job.progress || 'Processing...';
+        }
+      });
+
+      // Job complete - store claims data
+      const job = await this._getJob(jobId);
+      this.data.claims = job.data;
+
+      this.render();
+
+    } catch (error) {
+      console.error('Error using existing research:', error);
+      alert(`Error: ${error.message}`);
+      this.steps[this.currentStep].status = 'error';
+      this.render();
+    }
+  }
+
+  /**
+   * Starts fresh with new file uploads
+   * @private
+   */
+  _startFreshUpload() {
+    this.hasExistingResearch = false;
+    this.sessionId = null;
+    this.render();
+  }
+
+  /**
    * Resets the entire synthesis
    */
   reset() {
@@ -1159,6 +1250,7 @@ export class ResearchSynthesizer {
     this.sessionId = null;
     this.currentStep = 0;
     this.uploadedFiles = [];
+    this.hasExistingResearch = false;
     this.data = {
       claims: null,
       ledger: null,
