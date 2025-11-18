@@ -506,7 +506,7 @@
 }
 
 .analysis-section h4 {
-  font-size: 14px;
+  font-size: 20px; /* Increased from 14px for better readability */
   font-weight: 600;
   color: #FFFFFF;
   margin-top: 0;
@@ -516,7 +516,7 @@
 }
 
 .analysis-section p {
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #CCCCCC; /* Lighter text for body */
   line-height: 1.6;
   margin: 0;
@@ -524,8 +524,8 @@
 
 .status-pill {
   display: inline-block;
-  padding: 3px 10px;
-  font-size: 12px;
+  padding: 4px 12px; /* Increased padding for larger text */
+  font-size: 16px; /* Increased from 12px for better readability */
   font-weight: 600;
   border-radius: 999px;
   text-transform: capitalize;
@@ -563,11 +563,11 @@
 }
 .analysis-list li p {
   margin: 0;
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #CCCCCC;
 }
 .analysis-list li .source {
-  font-size: 12px;
+  font-size: 16px; /* Increased from 12px for better readability */
   color: #888888;
   font-style: italic;
 }
@@ -594,7 +594,7 @@
 }
 
 .chat-title {
-  font-size: 14px;
+  font-size: 20px; /* Increased from 14px for better readability */
   font-weight: 600;
   color: #FFFFFF;
   margin-top: 0;
@@ -613,9 +613,9 @@
 }
 
 .chat-message {
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   line-height: 1.6;
-  padding: 8px 12px;
+  padding: 10px 14px; /* Increased padding for larger text */
   border-radius: 8px;
   margin-bottom: 8px;
   max-width: 85%;
@@ -656,17 +656,17 @@
 .chat-input {
   flex-grow: 1;
   font-family: 'Work Sans', sans-serif; /* CHANGED */
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   border: 1px solid #383838;
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 10px 14px; /* Increased padding for larger text */
   color: #FFFFFF;
   background-color: #0c2340;
 }
 
 .chat-send-btn {
   font-family: 'Work Sans', sans-serif; /* CHANGED */
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   font-weight: 600;
   color: #ffffff;
   background-color: #2E7BB1; /* Dark Blue send button */
@@ -708,7 +708,7 @@
 }
 
 .collapse-toggle {
-  font-size: 12px;
+  font-size: 16px; /* Increased from 12px for better readability */
   transition: transform 0.3s ease;
   margin-left: 8px;
 }
@@ -757,21 +757,21 @@
 
 .scenario-label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #FFFFFF;
-  min-width: 90px;
+  min-width: 110px; /* Increased to accommodate larger text */
 }
 
 .scenario-date {
   font-weight: 500;
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #CCCCCC;
 }
 
 .confidence-badge {
-  font-size: 11px;
+  font-size: 14px; /* Increased from 11px for better readability */
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 4px 10px; /* Increased padding for larger text */
   border-radius: 12px;
   text-transform: uppercase;
 }
@@ -815,7 +815,7 @@
 }
 
 .scenario-detail {
-  font-size: 13px;
+  font-size: 17px; /* Increased from 13px for better readability */
   color: #AAAAAA;
   font-style: italic;
   margin: 4px 0 0 0;
@@ -829,7 +829,7 @@
 }
 
 .delay-factors h5 {
-  font-size: 13px;
+  font-size: 18px; /* Increased from 13px for better readability */
   font-weight: 600;
   color: #FFFFFF;
   margin: 0 0 8px 0;
@@ -842,7 +842,7 @@
 }
 
 .delay-factors li {
-  font-size: 13px;
+  font-size: 17px; /* Increased from 13px for better readability */
   color: #CCCCCC;
   padding: 4px 0 4px 20px;
   position: relative;
@@ -900,7 +900,7 @@
 }
 
 .risk-severity-badge {
-  font-size: 11px;
+  font-size: 14px; /* Increased from 11px for better readability */
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 4px;
@@ -924,13 +924,13 @@
 }
 
 .risk-likelihood {
-  font-size: 12px;
+  font-size: 16px; /* Increased from 12px for better readability */
   color: #AAAAAA;
   font-style: italic;
 }
 
 .risk-name {
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   font-weight: 600;
   color: #FFFFFF;
   flex-grow: 1;
@@ -938,7 +938,7 @@
 
 .risk-impact,
 .risk-mitigation {
-  font-size: 13px;
+  font-size: 17px; /* Increased from 13px for better readability */
   color: #CCCCCC;
   line-height: 1.5;
   margin: 6px 0;
@@ -964,7 +964,7 @@
 }
 
 .impact-item {
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #CCCCCC;
   line-height: 1.6;
   margin: 8px 0;
@@ -996,7 +996,7 @@
 }
 
 .scheduling-item {
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #CCCCCC;
   line-height: 1.6;
   margin: 12px 0;
@@ -1016,7 +1016,7 @@
 }
 
 .dependency-list li {
-  font-size: 13px;
+  font-size: 17px; /* Increased from 13px for better readability */
   color: #CCCCCC;
   padding: 4px 0 4px 20px;
   position: relative;
@@ -1301,15 +1301,15 @@
 
 .roi-header h5 {
   margin: 0;
-  font-size: 16px;
+  font-size: 20px; /* Increased from 16px for better readability */
   color: #50AF7B;
   font-weight: 600;
 }
 
 .confidence-badge {
-  padding: 4px 12px;
+  padding: 6px 14px; /* Increased padding for larger text */
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 14px; /* Increased from 11px for better readability */
   font-weight: 600;
   color: #FFFFFF;
   text-transform: uppercase;
@@ -1336,7 +1336,7 @@
 
 .roi-metric .metric-label {
   display: block;
-  font-size: 12px;
+  font-size: 16px; /* Increased from 12px for better readability */
   color: #999999;
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -1404,13 +1404,13 @@
 }
 
 .financial-item .item-label {
-  font-size: 13px;
+  font-size: 18px; /* Increased from 13px for better readability */
   color: #CCCCCC;
   flex: 1;
 }
 
 .financial-item .item-value {
-  font-size: 14px;
+  font-size: 20px; /* Increased from 14px for better readability */
   font-weight: 600;
   color: #FFFFFF;
   text-align: right;
@@ -1449,7 +1449,7 @@
 
 /* Regulatory Icon on Gantt Bars */
 .regulatory-icon {
-  font-size: 16px;
+  font-size: 20px; /* Increased from 16px for better visibility */
   pointer-events: none;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   line-height: 1;
@@ -1482,7 +1482,7 @@
 
 .regulatory-summary-box h4 {
   margin: 0 0 12px 0;
-  font-size: 16px;
+  font-size: 20px; /* Increased from 16px for better readability */
   color: #EE9E20;
   font-weight: 600;
 }
@@ -1501,12 +1501,12 @@
 }
 
 .stat-item .stat-label {
-  font-size: 13px;
+  font-size: 16px; /* Increased from 13px for better readability */
   color: #999999;
 }
 
 .stat-item .stat-value {
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   font-weight: 600;
   color: #FFFFFF;
 }
@@ -2589,7 +2589,7 @@ body.dragging {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.125rem; /* Increased from 0.9rem (18px) for better readability */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #E8E8E8;
@@ -2646,7 +2646,7 @@ body.dragging {
 }
 
 .risk-description {
-  font-size: 0.85rem;
+  font-size: 1.0625rem; /* Increased from 0.85rem (17px) for better readability */
   font-weight: 500;
   color: #FFFFFF;
   margin: 0;
@@ -2664,7 +2664,7 @@ body.dragging {
   bottom: -40px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.9rem;
+  font-size: 1.125rem; /* Increased from 0.9rem (18px) for better readability */
 }
 
 .axis-label.y-axis {
@@ -2672,7 +2672,7 @@ body.dragging {
   top: 50%;
   transform: rotate(-90deg) translateX(-50%);
   transform-origin: left center;
-  font-size: 0.9rem;
+  font-size: 1.125rem; /* Increased from 0.9rem (18px) for better readability */
 }
 
 .early-warnings {
@@ -3089,7 +3089,7 @@ body.dragging {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  font-size: 14px;
+  font-size: 18px; /* Increased from 14px for better readability */
   color: #B0B0B0;
   font-weight: 500;
   letter-spacing: 0.5px;
@@ -3166,14 +3166,14 @@ body.dragging {
 
 .narrative-content p {
   margin-bottom: 25px;
-  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+  font-size: clamp(1.4rem, 2.2vw, 1.625rem); /* Increased from 1.1-1.3rem to 1.4-1.625rem (26px max) */
   line-height: 1.9;
   color: var(--text-secondary, #E8E8E8);
   text-align: justify;
 }
 
 .narrative-content p:first-child {
-  font-size: clamp(1.2rem, 2vw, 1.4rem);
+  font-size: clamp(1.5rem, 2.4vw, 1.75rem); /* Increased from 1.2-1.4rem to 1.5-1.75rem (28px max) */
   font-weight: 500;
   color: var(--text-primary, #FFFFFF);
 }
@@ -3251,14 +3251,14 @@ body.dragging {
 }
 
 .driver-title {
-  font-size: clamp(1.2rem, 2vw, 1.4rem);
+  font-size: clamp(1.5rem, 2.4vw, 1.75rem); /* Increased from 1.2-1.4rem to 1.5-1.75rem (28px max) */
   font-weight: 600;
   color: var(--text-primary, #FFFFFF);
   margin-bottom: 8px;
 }
 
 .driver-description {
-  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  font-size: clamp(1.4rem, 2.2vw, 1.625rem); /* Increased from 1-1.1rem to 1.4-1.625rem (26px max) */
   color: var(--text-secondary, #E8E8E8);
   line-height: 1.6;
 }
@@ -3330,7 +3330,7 @@ body.dragging {
 }
 
 .dependency-name {
-  font-size: clamp(1.2rem, 2vw, 1.4rem);
+  font-size: clamp(1.5rem, 2.4vw, 1.75rem); /* Increased from 1.2-1.4rem to 1.5-1.75rem (28px max) */
   font-weight: 600;
   color: var(--text-primary, #FFFFFF);
   margin-bottom: 15px;
@@ -3340,7 +3340,7 @@ body.dragging {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 1.0625rem; /* Increased from 0.85rem (17px) for better readability */
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3363,7 +3363,7 @@ body.dragging {
 }
 
 .dependency-impact {
-  font-size: clamp(0.9rem, 1.5vw, 1rem);
+  font-size: clamp(1.4rem, 2.2vw, 1.625rem); /* Increased from 0.9-1rem to 1.4-1.625rem (26px max) */
   color: var(--text-secondary, #E8E8E8);
   line-height: 1.5;
 }
@@ -3412,7 +3412,7 @@ body.dragging {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.125rem; /* Increased from 0.9rem (18px) for better readability */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary, #E8E8E8);
@@ -3469,7 +3469,7 @@ body.dragging {
 }
 
 .risk-description {
-  font-size: 0.85rem;
+  font-size: 1.0625rem; /* Increased from 0.85rem (17px) for better readability */
   font-weight: 500;
   color: var(--text-primary, #FFFFFF);
 }
@@ -3486,7 +3486,7 @@ body.dragging {
   bottom: -40px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.9rem;
+  font-size: 1.125rem; /* Increased from 0.9rem (18px) for better readability */
 }
 
 .axis-label.y-axis {
@@ -3494,7 +3494,7 @@ body.dragging {
   top: 50%;
   transform: rotate(-90deg) translateX(-50%);
   transform-origin: left center;
-  font-size: 0.9rem;
+  font-size: 1.125rem; /* Increased from 0.9rem (18px) for better readability */
 }
 
 /* ========================================
@@ -3556,7 +3556,7 @@ body.dragging {
   color: white;
   padding: 5px 15px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 1.0625rem; /* Increased from 0.85rem (17px) for better readability */
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3573,7 +3573,7 @@ body.dragging {
 }
 
 .insight-text {
-  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  font-size: clamp(1.4rem, 2.2vw, 1.625rem); /* Increased from 1-1.1rem to 1.4-1.625rem (26px max) */
   color: var(--text-secondary, #E8E8E8);
   line-height: 1.6;
 }
@@ -3611,7 +3611,7 @@ body.dragging {
 }
 
 .simple-text {
-  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+  font-size: clamp(1.4rem, 2.2vw, 1.625rem); /* Increased from 1.1-1.3rem to 1.4-1.625rem (26px max) */
   color: var(--text-secondary, #E8E8E8);
   line-height: 1.8;
   text-align: justify;
