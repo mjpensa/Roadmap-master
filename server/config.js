@@ -104,7 +104,7 @@ export const CONFIG = {
     FACT_CONFIDENCE: 1.0, // Explicit facts always 100%
     // Gemini configuration for deterministic mode
     GEMINI: {
-      MODEL: 'gemini-2.5-flash-preview',
+      MODEL: 'gemini-2.5-flash-preview-09-2025', // Must match API.GEMINI_MODEL
       API_URL: 'https://generativelanguage.googleapis.com/v1beta',
       TEMPERATURE: 0.0, // CRITICAL: Zero randomness
       TOP_K: 1, // CRITICAL: Only most likely token
