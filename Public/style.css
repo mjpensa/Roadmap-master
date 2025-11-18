@@ -254,9 +254,10 @@
 }
 
 /* Phase 2: Resize handles using pseudo-elements */
+/* By default, handles have no content (completely hidden) */
 .gantt-bar::before,
 .gantt-bar::after {
-  content: '⋮⋮'; /* Add vertical dots symbol for better visibility */
+  content: none; /* No content by default - prevents any visibility */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -287,11 +288,12 @@
   border-radius: 0 4px 4px 0;
 }
 
-/* Only show resize handles in edit mode */
+/* Only show resize handles in edit mode - add content AND make visible */
 .gantt-grid.edit-mode-enabled .gantt-bar:hover::before,
 .gantt-grid.edit-mode-enabled .gantt-bar:hover::after,
 .gantt-bar.resizing::before,
 .gantt-bar.resizing::after {
+  content: '⋮⋮'; /* Add vertical dots symbol for visibility */
   opacity: 1;
 }
 
