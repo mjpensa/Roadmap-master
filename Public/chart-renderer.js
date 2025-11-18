@@ -11,6 +11,7 @@ import { CONFIG } from './config.js';
 import { safeGetElement, loadFooterSVG } from './Utils.js';
 import { GanttChart } from './GanttChart.js';
 import { TaskAnalyzer } from './TaskAnalyzer.js';
+import { ResearchSynthesizer } from './ResearchSynthesizer.js';
 
 // Global variable to store ganttData (including sessionId)
 let ganttData = null;
@@ -19,6 +20,12 @@ let errorDisplayed = false; // Track if an error message has already been shown
 
 // Create TaskAnalyzer instance (shared across all task clicks)
 const taskAnalyzer = new TaskAnalyzer();
+
+// Create ResearchSynthesizer instance
+const researchSynthesizer = new ResearchSynthesizer('researchSynthesis');
+
+// Make researchSynthesizer globally accessible for inline event handlers
+window.researchSynthesizer = researchSynthesizer;
 
 // Router instance (will be initialized after chart is rendered)
 let router = null;
@@ -201,7 +208,8 @@ function renderChart() {
     container,
     ganttData,
     footerSVG,
-    handleTaskClick
+    handleTaskClick,
+    researchSynthesizer
   );
   chart.render();
 }

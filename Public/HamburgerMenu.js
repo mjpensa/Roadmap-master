@@ -20,7 +20,7 @@ export class HamburgerMenu {
     this.isOpen = false;
     this.menuElement = null;
     this.router = router;
-    this.currentSection = 'roadmap'; // Track current section: 'roadmap', 'executive-summary', 'presentation'
+    this.currentSection = 'roadmap'; // Track current section: 'roadmap', 'executive-summary', 'presentation', 'research-synthesis'
   }
 
   /**
@@ -65,6 +65,12 @@ export class HamburgerMenu {
           <a href="#presentation" class="hamburger-nav-item" data-section="presentation">
             <span class="nav-icon">🎯</span>
             <span class="nav-text">Presentation</span>
+          </a>
+        </li>
+        <li>
+          <a href="#research-synthesis" class="hamburger-nav-item" data-section="research-synthesis">
+            <span class="nav-icon">🔬</span>
+            <span class="nav-text">Research Synthesis</span>
           </a>
         </li>
       </ul>
