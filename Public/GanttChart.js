@@ -6,7 +6,7 @@
  */
 
 import { CONFIG } from './config.js';
-import { safeGetElement, findTodayColumnPosition, buildLegend } from './Utils.js';
+import { safeGetElement, findTodayColumnPosition, buildLegend, PerformanceTimer } from './Utils.js';
 import { DraggableGantt } from './DraggableGantt.js';
 import { ResizableGantt } from './ResizableGantt.js';
 import { ContextMenu } from './ContextMenu.js';
@@ -55,6 +55,9 @@ export class GanttChart {
    * @returns {void}
    */
   render() {
+    // PERFORMANCE: Start timing chart render
+    const renderTimer = new PerformanceTimer('Gantt Chart Render');
+
     if (!this.container) {
       console.error('Could not find chart container!');
       return;
@@ -67,13 +70,21 @@ export class GanttChart {
     this.chartWrapper = document.createElement('div');
     this.chartWrapper.id = 'gantt-chart-container';
 
+    renderTimer.mark('Container setup complete');
+
     // Build chart components
     // Add stripe above Gantt chart
     this._addHeaderSVG();
 
     this._addTitle();
     this._addLogo(); // Logo added after title so we can calculate proper alignment
+
+    renderTimer.mark('Header components added');
+
     this._createGrid();
+
+    renderTimer.mark('Grid created');
+
     this._addLegend();
     this._addRegulatorySummary(); // BANKING ENHANCEMENT: Add regulatory milestones summary
 
@@ -176,6 +187,10 @@ export class GanttChart {
       console.log('🔧 Restoring edit mode features after re-render');
       this._enableAllEditFeatures();
     }
+
+    // PERFORMANCE: End timing
+    renderTimer.mark('All components and listeners initialized');
+    renderTimer.end();
   }
 
   /**
@@ -341,6 +356,16 @@ export class GanttChart {
    * @private
    */
   _createDataRows(numCols) {
+    // PERFORMANCE: Check if we need virtualization for large datasets (100+ rows)
+    const totalRows = this.ganttData.data.length;
+    const VIRTUALIZATION_THRESHOLD = 100;
+
+    if (totalRows > VIRTUALIZATION_THRESHOLD) {
+      console.log(`📊 Large dataset detected (${totalRows} rows). Enabling virtualization for better performance.`);
+      this._createVirtualizedRows(numCols);
+      return;
+    }
+
     // Use DocumentFragment to batch DOM operations for better performance
     const rowsFragment = document.createDocumentFragment();
 
@@ -499,6 +524,196 @@ export class GanttChart {
     }
 
     return barAreaEl;
+  }
+
+  /**
+   * PERFORMANCE: Creates virtualized data rows for large datasets (100+ rows)
+   * Only renders visible rows to improve performance
+   * @param {number} numCols - Number of time columns
+   * @private
+   */
+  _createVirtualizedRows(numCols) {
+    const ROW_HEIGHT = 40; // Approximate height of each row in pixels
+    const BUFFER_ROWS = 20; // Number of extra rows to render above/below viewport
+
+    // Create a scroll container
+    const scrollContainer = document.createElement('div');
+    scrollContainer.className = 'gantt-virtualized-container';
+    scrollContainer.style.height = `${this.ganttData.data.length * ROW_HEIGHT}px`;
+    scrollContainer.style.position = 'relative';
+    scrollContainer.style.overflow = 'auto';
+    scrollContainer.style.maxHeight = '600px'; // Limit viewport height
+
+    // Create viewport for visible rows
+    const viewport = document.createElement('div');
+    viewport.className = 'gantt-virtualized-viewport';
+    viewport.style.position = 'absolute';
+    viewport.style.top = '0';
+    viewport.style.left = '0';
+    viewport.style.right = '0';
+
+    // Store references for scroll handling
+    this.virtualScroll = {
+      container: scrollContainer,
+      viewport: viewport,
+      rowHeight: ROW_HEIGHT,
+      bufferRows: BUFFER_ROWS,
+      numCols: numCols,
+      visibleStart: 0,
+      visibleEnd: Math.min(50, this.ganttData.data.length) // Initial render
+    };
+
+    // Render initial visible rows
+    this._renderVisibleRows();
+
+    // Add scroll listener for dynamic rendering
+    scrollContainer.addEventListener('scroll', () => {
+      this._handleVirtualScroll();
+    });
+
+    scrollContainer.appendChild(viewport);
+    this.gridElement.appendChild(scrollContainer);
+
+    console.log(`✓ Virtualization enabled: Rendering ${this.virtualScroll.visibleEnd} of ${this.ganttData.data.length} rows initially`);
+  }
+
+  /**
+   * PERFORMANCE: Renders only the visible rows in the viewport
+   * @private
+   */
+  _renderVisibleRows() {
+    if (!this.virtualScroll) return;
+
+    const { viewport, visibleStart, visibleEnd, rowHeight, numCols } = this.virtualScroll;
+
+    // Clear existing rows
+    viewport.innerHTML = '';
+
+    // Create document fragment for batch rendering
+    const rowsFragment = document.createDocumentFragment();
+
+    // Render visible rows
+    for (let dataIndex = visibleStart; dataIndex < visibleEnd; dataIndex++) {
+      const row = this.ganttData.data[dataIndex];
+      if (!row) continue;
+
+      const isSwimlane = row.isSwimlane;
+
+      // Create row container
+      const rowContainer = document.createElement('div');
+      rowContainer.className = 'gantt-virtual-row';
+      rowContainer.style.position = 'absolute';
+      rowContainer.style.top = `${dataIndex * rowHeight}px`;
+      rowContainer.style.left = '0';
+      rowContainer.style.right = '0';
+      rowContainer.style.height = `${rowHeight}px`;
+      rowContainer.style.display = 'grid';
+      rowContainer.style.gridTemplateColumns = this.gridElement.style.gridTemplateColumns;
+
+      // Create label and bar area (reuse existing logic)
+      const labelEl = this._createRowLabel(row, dataIndex, isSwimlane);
+      const barAreaEl = this._createBarArea(row, numCols, isSwimlane, dataIndex);
+
+      rowContainer.appendChild(labelEl);
+      rowContainer.appendChild(barAreaEl);
+      rowsFragment.appendChild(rowContainer);
+    }
+
+    viewport.appendChild(rowsFragment);
+  }
+
+  /**
+   * PERFORMANCE: Handles scroll events for virtual rendering
+   * @private
+   */
+  _handleVirtualScroll() {
+    if (!this.virtualScroll) return;
+
+    const { container, rowHeight, bufferRows } = this.virtualScroll;
+    const scrollTop = container.scrollTop;
+    const viewportHeight = container.clientHeight;
+
+    // Calculate visible range
+    const newVisibleStart = Math.max(0, Math.floor(scrollTop / rowHeight) - bufferRows);
+    const newVisibleEnd = Math.min(
+      this.ganttData.data.length,
+      Math.ceil((scrollTop + viewportHeight) / rowHeight) + bufferRows
+    );
+
+    // Only re-render if range changed significantly
+    if (newVisibleStart !== this.virtualScroll.visibleStart ||
+        newVisibleEnd !== this.virtualScroll.visibleEnd) {
+      this.virtualScroll.visibleStart = newVisibleStart;
+      this.virtualScroll.visibleEnd = newVisibleEnd;
+
+      // Debounce rendering for better performance
+      if (this.virtualScrollTimeout) {
+        clearTimeout(this.virtualScrollTimeout);
+      }
+
+      this.virtualScrollTimeout = setTimeout(() => {
+        this._renderVisibleRows();
+      }, 50); // 50ms debounce
+    }
+  }
+
+  /**
+   * PERFORMANCE: Creates a row label element (extracted for virtualization)
+   * @param {Object} row - Row data
+   * @param {number} dataIndex - Row index
+   * @param {boolean} isSwimlane - Whether this is a swimlane
+   * @returns {HTMLElement} Label element
+   * @private
+   */
+  _createRowLabel(row, dataIndex, isSwimlane) {
+    const labelEl = document.createElement('div');
+    labelEl.className = `gantt-row-label ${isSwimlane ? 'swimlane' : 'task'}`;
+
+    const labelContent = document.createElement('span');
+    labelContent.className = 'label-content';
+    labelContent.textContent = row.title;
+    labelEl.appendChild(labelContent);
+
+    // Add action buttons for tasks (not swimlanes)
+    if (!isSwimlane) {
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'row-actions';
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'row-action-btn add-task';
+      addBtn.title = 'Add task below';
+      addBtn.textContent = '+';
+      addBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.addNewTaskRow(dataIndex);
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'row-action-btn delete-task';
+      deleteBtn.title = 'Delete this row';
+      deleteBtn.textContent = '×';
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.removeTaskRow(dataIndex);
+      });
+
+      actionsDiv.appendChild(addBtn);
+      actionsDiv.appendChild(deleteBtn);
+      labelEl.appendChild(actionsDiv);
+    }
+
+    labelEl.setAttribute('data-row-id', `row-${dataIndex}`);
+    labelEl.setAttribute('data-task-index', dataIndex);
+
+    // Add double-click to edit
+    labelContent.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      if (this.isEditMode) {
+        this._makeEditable(labelContent, dataIndex);
+      }
+    });
+
+    return labelEl;
   }
 
   /**
@@ -1003,7 +1218,7 @@ export class GanttChart {
   }
 
   /**
-   * Adds export to PNG functionality
+   * PERFORMANCE: Adds export to PNG functionality with loading indicator and timing
    * @private
    */
   _addExportListener() {
@@ -1015,29 +1230,108 @@ export class GanttChart {
       return;
     }
 
-    exportBtn.addEventListener('click', () => {
+    exportBtn.addEventListener('click', async () => {
+      // Performance timing
+      const startTime = performance.now();
+
+      // Update button state
       exportBtn.textContent = 'Exporting...';
       exportBtn.disabled = true;
 
-      html2canvas(chartContainer, {
-        useCORS: true,
-        logging: false,
-        scale: 2 // Render at 2x resolution
-      }).then(canvas => {
+      // Create loading overlay
+      const loadingOverlay = this._createExportLoadingOverlay();
+      document.body.appendChild(loadingOverlay);
+
+      try {
+        // Use requestAnimationFrame to prevent UI blocking
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const canvas = await html2canvas(chartContainer, {
+          useCORS: true,
+          logging: false,
+          scale: 2, // Render at 2x resolution for quality
+          allowTaint: false,
+          backgroundColor: null
+        });
+
+        // Create download link
         const link = document.createElement('a');
         link.download = 'gantt-chart.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
 
+        // Performance logging
+        const duration = Math.round(performance.now() - startTime);
+        console.log(`✓ PNG export completed in ${duration}ms`);
+
+        // Update button state
         exportBtn.textContent = 'Export as PNG';
         exportBtn.disabled = false;
-      }).catch(err => {
+
+        // Remove loading overlay
+        document.body.removeChild(loadingOverlay);
+      } catch (err) {
         console.error('Error exporting canvas:', err);
         exportBtn.textContent = 'Export as PNG';
         exportBtn.disabled = false;
+
+        // Remove loading overlay
+        if (loadingOverlay.parentNode) {
+          document.body.removeChild(loadingOverlay);
+        }
+
         alert('Error exporting chart. See console for details.');
-      });
+      }
     });
+  }
+
+  /**
+   * PERFORMANCE: Creates a loading overlay for export operations
+   * @returns {HTMLElement} Loading overlay element
+   * @private
+   */
+  _createExportLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'export-loading-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      color: white;
+      font-family: 'Work Sans', sans-serif;
+    `;
+
+    const spinner = document.createElement('div');
+    spinner.className = 'export-spinner';
+    spinner.style.cssText = `
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #50AF7B;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    `;
+
+    const message = document.createElement('div');
+    message.textContent = 'Generating high-resolution PNG...';
+    message.style.cssText = `
+      font-size: 16px;
+      font-weight: 500;
+    `;
+
+    overlay.appendChild(spinner);
+    overlay.appendChild(message);
+
+    return overlay;
   }
 
   /**
