@@ -98,7 +98,7 @@ export class DeterministicGeminiClient {
         temperature: 0.0,        // CRITICAL: Zero randomness
         topK: 1,                 // CRITICAL: Only most likely token
         topP: 0.0,               // CRITICAL: No nucleus sampling
-        maxOutputTokens: 8192,   // Sufficient for fact extraction
+        maxOutputTokens: CONFIG.SEMANTIC.GEMINI.MAX_OUTPUT_TOKENS_FACTS, // Configurable fact extraction limit
         responseMimeType: 'application/json'
       },
       safetySettings: [
@@ -173,7 +173,7 @@ export class DeterministicGeminiClient {
         temperature: 0.0,
         topK: 1,
         topP: 0.0,
-        maxOutputTokens: 16384,  // Larger for complete structure
+        maxOutputTokens: CONFIG.SEMANTIC.GEMINI.MAX_OUTPUT_TOKENS_INFERENCES, // Configurable inference limit (supports complex research)
         responseMimeType: 'application/json'
       },
       safetySettings: [
