@@ -763,7 +763,7 @@ export class ExecutiveSummary {
     const metrics = [
       { label: 'Total Investment', value: this.summaryData.keyMetricsDashboard.totalInvestment, icon: '💰' },
       { label: 'Time to Value', value: this.summaryData.keyMetricsDashboard.timeToValue, icon: '⏱️' },
-      { label: 'Regulatory Risk', value: this.summaryData.keyMetricsDashboard.regulatoryRisk, icon: '🏛️' },
+      { label: 'Compliance Risk', value: this.summaryData.keyMetricsDashboard.complianceRisk, icon: '🏛️' },
       { label: 'ROI Projection', value: this.summaryData.keyMetricsDashboard.roiProjection, icon: '📈' },
       { label: 'Critical Path', value: this.summaryData.keyMetricsDashboard.criticalPathStatus, icon: '🎯' },
       { label: 'Vendor Lock-in', value: this.summaryData.keyMetricsDashboard.vendorLockIn, icon: '🔗' }
