@@ -1088,15 +1088,20 @@ export class GanttChart {
       return;
     }
 
-    // Get all task rows (not swimlane rows)
-    const allRows = this.gridElement.querySelectorAll('.gantt-row');
+    // Get all row labels - each row has a label and a corresponding bar area
+    const allRowLabels = this.gridElement.querySelectorAll('.gantt-row-label');
 
-    allRows.forEach((row, index) => {
+    allRowLabels.forEach((labelElement, index) => {
       const dataItem = this.ganttData.data[index];
 
       // Skip swimlanes - always show them
       if (dataItem && dataItem.isSwimlane) {
-        row.style.display = '';
+        labelElement.style.display = '';
+        // Also show corresponding bar area
+        const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+        if (barArea) {
+          barArea.style.display = '';
+        }
         return;
       }
 
@@ -1107,13 +1112,28 @@ export class GanttChart {
         const isExecutiveTask = ['milestone', 'regulatory', 'decision'].includes(taskType);
 
         if (isExecutiveTask) {
-          row.style.display = '';
+          labelElement.style.display = '';
+          // Also show corresponding bar area
+          const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+          if (barArea) {
+            barArea.style.display = '';
+          }
         } else {
-          row.style.display = 'none';
+          labelElement.style.display = 'none';
+          // Also hide corresponding bar area
+          const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+          if (barArea) {
+            barArea.style.display = 'none';
+          }
         }
       } else {
         // Show all tasks in detail view
-        row.style.display = '';
+        labelElement.style.display = '';
+        // Also show corresponding bar area
+        const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+        if (barArea) {
+          barArea.style.display = '';
+        }
       }
     });
   }
@@ -1164,20 +1184,19 @@ export class GanttChart {
       return;
     }
 
-    // Get all rows (both labels and bar areas)
-    // Each task has 2 elements: label (.gantt-row-label) and bar area (.gantt-bar-area)
-    // We need to show/hide both elements together
-    const allLabels = this.gridElement.querySelectorAll('.gantt-row-label');
-    const allBarAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
+    // Get all row labels - each row has a label and a corresponding bar area
+    const allRowLabels = this.gridElement.querySelectorAll('.gantt-row-label');
 
-    allLabels.forEach((label, index) => {
+    allRowLabels.forEach((labelElement, index) => {
       const dataItem = this.ganttData.data[index];
 
       // Skip swimlanes - always show them
       if (dataItem && dataItem.isSwimlane) {
-        label.style.display = '';
-        if (allBarAreas[index]) {
-          allBarAreas[index].style.display = '';
+        labelElement.style.display = '';
+        // Also show corresponding bar area
+        const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+        if (barArea) {
+          barArea.style.display = '';
         }
         return;
       }
@@ -1188,21 +1207,27 @@ export class GanttChart {
         const isCriticalPath = dataItem?.isCriticalPath || false;
 
         if (isCriticalPath) {
-          label.style.display = '';
-          if (allBarAreas[index]) {
-            allBarAreas[index].style.display = '';
+          labelElement.style.display = '';
+          // Also show corresponding bar area
+          const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+          if (barArea) {
+            barArea.style.display = '';
           }
         } else {
-          label.style.display = 'none';
-          if (allBarAreas[index]) {
-            allBarAreas[index].style.display = 'none';
+          labelElement.style.display = 'none';
+          // Also hide corresponding bar area
+          const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+          if (barArea) {
+            barArea.style.display = 'none';
           }
         }
       } else {
         // Show all tasks
-        label.style.display = '';
-        if (allBarAreas[index]) {
-          allBarAreas[index].style.display = '';
+        labelElement.style.display = '';
+        // Also show corresponding bar area
+        const barArea = this.gridElement.querySelector(`.gantt-bar-area[data-task-index="${index}"]`);
+        if (barArea) {
+          barArea.style.display = '';
         }
       }
     });
