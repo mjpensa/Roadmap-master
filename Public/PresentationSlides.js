@@ -1,29 +1,27 @@
 /**
- * PresentationSlides Module (Refactored)
- * Loads and displays pre-built HTML slide templates (bip-slide-*.html)
- * Replaces the old dynamic slide generation system
+ * PresentationSlides Module
+ * Renders AI-generated presentation slides in a collapsible format
+ * Displays professional slide content with navigation
  */
 
 import { CONFIG } from './config.js';
 
 /**
  * PresentationSlides Class
- * Responsible for loading and managing the presentation slides from HTML templates
+ * Responsible for rendering and managing the presentation slides component
  */
 export class PresentationSlides {
   /**
    * Creates a new PresentationSlides instance
-   * @param {Object} _unusedSlidesData - (Deprecated) No longer used - kept for backward compatibility
-   * @param {string} _unusedFooterSVG - (Deprecated) No longer used - kept for backward compatibility
+   * @param {Object} slidesData - The presentation slides data from the API
+   * @param {string} footerSVG - The SVG content for the header/footer decoration
    */
-  constructor(_unusedSlidesData = null, _unusedFooterSVG = null) {
-    // Note: slidesData and footerSVG parameters are no longer used
-    // They are kept in the constructor signature for backward compatibility with existing code
+  constructor(slidesData, footerSVG) {
+    this.slidesData = slidesData;
+    this.footerSVG = footerSVG;
     this.isExpanded = true; // Default to expanded on load
     this.currentSlideIndex = 0;
     this.container = null;
-    this.totalSlides = 13; // We have 13 pre-built slide templates (bip-slide-1.html through bip-slide-13.html)
-    this.slideCache = {}; // Cache loaded slide content
   }
 
   /**
@@ -35,6 +33,12 @@ export class PresentationSlides {
     this.container = document.createElement('div');
     this.container.className = 'presentation-slides-container';
     this.container.id = 'presentationSlides';
+
+    // Check if slides data exists
+    if (!this.slidesData || !this.slidesData.slides || this.slidesData.slides.length === 0) {
+      this.container.innerHTML = '<p class="slides-unavailable">Presentation slides not available for this chart.</p>';
+      return this.container;
+    }
 
     // Build header
     const header = this._buildHeader();
@@ -75,7 +79,7 @@ export class PresentationSlides {
   }
 
   /**
-   * Builds the content section with slide viewer
+   * Builds the content section with all slides
    * @private
    * @returns {HTMLElement} The content element
    */
@@ -93,9 +97,6 @@ export class PresentationSlides {
     slideDisplay.className = 'slide-display';
     slideDisplay.id = 'currentSlide';
 
-    // Add loading indicator
-    slideDisplay.innerHTML = '<div class="slide-loading">Loading slide...</div>';
-
     // Render the first slide
     this._renderSlide(slideDisplay, this.currentSlideIndex);
 
@@ -111,73 +112,347 @@ export class PresentationSlides {
   }
 
   /**
-   * Renders a specific slide by fetching its HTML template
+   * Renders a specific slide
    * @private
    * @param {HTMLElement} container - The container to render the slide into
-   * @param {number} index - The index of the slide to render (0-based)
+   * @param {number} index - The index of the slide to render
    */
-  async _renderSlide(container, index) {
-    try {
-      // Show loading state
-      container.innerHTML = '<div class="slide-loading" style="padding: 40px; text-align: center; color: #6B7280;">Loading slide...</div>';
+  _renderSlide(container, index) {
+    const slide = this.slidesData.slides[index];
+    container.innerHTML = '';
 
-      // Slide numbers are 1-based in filenames (bip-slide-1.html, bip-slide-2.html, etc.)
-      const slideNumber = index + 1;
-      const slideUrl = `/bip-slide-${slideNumber}.html`;
+    // Create swiper-slide structure matching the template
+    const swiperSlide = document.createElement('div');
+    swiperSlide.className = `swiper-slide slide-${slide.type}`;
 
-      // Check cache first
-      let slideHTML;
-      if (this.slideCache[slideNumber]) {
-        slideHTML = this.slideCache[slideNumber];
-      } else {
-        // Fetch the slide HTML
-        const response = await fetch(slideUrl);
+    const slideContainer = document.createElement('div');
+    slideContainer.className = 'slide-container';
 
-        if (!response.ok) {
-          throw new Error(`Failed to load slide ${slideNumber}: ${response.statusText}`);
-        }
+    // Add slide number
+    const slideNumber = document.createElement('div');
+    slideNumber.className = 'slide-number';
+    slideNumber.textContent = `${String(index + 1).padStart(2, '0')}`;
 
-        const fullHTML = await response.text();
-
-        // Parse the HTML to extract both styles and body content
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(fullHTML, 'text/html');
-
-        // Extract all style tags from the head
-        const styles = Array.from(doc.head.querySelectorAll('style'))
-          .map(style => style.outerHTML)
-          .join('\n');
-
-        // Extract body content
-        const bodyContent = doc.body.innerHTML;
-
-        // Combine styles and body content
-        slideHTML = styles + bodyContent;
-
-        // Cache the extracted content
-        this.slideCache[slideNumber] = slideHTML;
-      }
-
-      // Clear container and inject the slide content
-      container.innerHTML = '';
-
-      // Create a wrapper div to contain the slide
-      const slideWrapper = document.createElement('div');
-      slideWrapper.className = 'bip-slide-wrapper';
-      slideWrapper.style.cssText = 'background: white; position: relative; width: 100%; height: 100%; overflow: auto;';
-      slideWrapper.innerHTML = slideHTML;
-
-      container.appendChild(slideWrapper);
-
-    } catch (error) {
-      console.error('Error loading slide:', error);
-      container.innerHTML = `
-        <div class="slide-error" style="padding: 40px; text-align: center; color: #DC2626;">
-          <p><strong>Error loading slide ${index + 1}</strong></p>
-          <p style="margin-top: 10px; color: #6B7280;">${error.message}</p>
-        </div>
-      `;
+    // Render based on slide type
+    switch (slide.type) {
+      case 'title':
+        this._renderTitleSlide(slideContainer, slide);
+        break;
+      case 'narrative':
+        this._renderNarrativeSlide(slideContainer, slide);
+        break;
+      case 'drivers':
+        this._renderDriversSlide(slideContainer, slide);
+        break;
+      case 'dependencies':
+        this._renderDependenciesSlide(slideContainer, slide);
+        break;
+      case 'risks':
+        this._renderRisksSlide(slideContainer, slide);
+        break;
+      case 'insights':
+        this._renderInsightsSlide(slideContainer, slide);
+        break;
+      case 'simple':
+        this._renderSimpleSlide(slideContainer, slide);
+        break;
+      default:
+        this._renderSimpleSlide(slideContainer, slide);
     }
+
+    slideContainer.appendChild(slideNumber);
+    swiperSlide.appendChild(slideContainer);
+    container.appendChild(swiperSlide);
+  }
+
+  /**
+   * Renders a title slide
+   * @private
+   */
+  _renderTitleSlide(container, slide) {
+    const content = document.createElement('div');
+    content.className = 'title-content';
+    content.innerHTML = `
+      <h1 class="main-title">${slide.title || 'AI-Powered Strategic Intelligence'}</h1>
+      <div class="title-accent"></div>
+      <p class="subtitle">${slide.subtitle || 'Strategic Intelligence Brief'}</p>
+    `;
+    container.appendChild(content);
+  }
+
+  /**
+   * Renders a narrative slide
+   * @private
+   */
+  _renderNarrativeSlide(container, slide) {
+    const header = document.createElement('div');
+    header.className = 'narrative-header';
+
+    const title = document.createElement('h2');
+    title.className = 'narrative-title';
+    title.textContent = slide.title || 'Elevator Pitch';
+    header.appendChild(title);
+
+    const narrativeContent = document.createElement('div');
+    narrativeContent.className = 'narrative-content';
+
+    if (Array.isArray(slide.content)) {
+      slide.content.forEach(paragraph => {
+        const p = document.createElement('p');
+        p.textContent = paragraph;
+        narrativeContent.appendChild(p);
+      });
+    } else {
+      const p = document.createElement('p');
+      p.textContent = slide.content;
+      narrativeContent.appendChild(p);
+    }
+
+    container.appendChild(header);
+    container.appendChild(narrativeContent);
+  }
+
+  /**
+   * Renders a drivers slide
+   * @private
+   */
+  _renderDriversSlide(container, slide) {
+    const header = document.createElement('div');
+    header.className = 'drivers-header';
+
+    const title = document.createElement('h2');
+    title.className = 'drivers-title';
+    title.textContent = slide.title || 'Key Strategic Drivers';
+    header.appendChild(title);
+
+    const driversList = document.createElement('div');
+    driversList.className = 'drivers-list';
+
+    if (slide.drivers && Array.isArray(slide.drivers)) {
+      slide.drivers.forEach((driver, idx) => {
+        const driverItem = document.createElement('div');
+        driverItem.className = 'driver-item';
+        driverItem.innerHTML = `
+          <div class="driver-bullet">${idx + 1}</div>
+          <div class="driver-content">
+            <h3 class="driver-title">${driver.title}</h3>
+            <p class="driver-description">${driver.description}</p>
+          </div>
+        `;
+        driversList.appendChild(driverItem);
+      });
+    }
+
+    container.appendChild(header);
+    container.appendChild(driversList);
+  }
+
+  /**
+   * Renders a dependencies slide
+   * @private
+   */
+  _renderDependenciesSlide(container, slide) {
+    const header = document.createElement('div');
+    header.className = 'dependencies-header';
+
+    const title = document.createElement('h2');
+    title.className = 'dependencies-title';
+    title.textContent = slide.title || 'Critical Dependencies';
+    header.appendChild(title);
+
+    const dependenciesFlow = document.createElement('div');
+    dependenciesFlow.className = 'dependencies-flow';
+
+    if (slide.dependencies && Array.isArray(slide.dependencies)) {
+      slide.dependencies.forEach((dep, idx) => {
+        const depItem = document.createElement('div');
+        depItem.className = `dependency-item ${dep.criticality}`;
+        depItem.innerHTML = `
+          <h3 class="dependency-name">${dep.name}</h3>
+          <span class="dependency-criticality criticality-${dep.criticalityLevel}">${dep.criticality}</span>
+          <p class="dependency-impact">${dep.impact}</p>
+          ${idx < slide.dependencies.length - 1 ? '<span class="dependency-arrow">→</span>' : ''}
+        `;
+        dependenciesFlow.appendChild(depItem);
+      });
+    }
+
+    container.appendChild(header);
+    container.appendChild(dependenciesFlow);
+  }
+
+  /**
+   * Renders a risks slide as 3x3 matrix grid
+   * @private
+   */
+  _renderRisksSlide(container, slide) {
+    const header = document.createElement('div');
+    header.className = 'risks-header';
+
+    const title = document.createElement('h2');
+    title.className = 'risks-title';
+    title.textContent = slide.title || 'Strategic Risk Matrix';
+    header.appendChild(title);
+
+    // Create 3x3 risk matrix grid
+    const riskMatrix = document.createElement('div');
+    riskMatrix.className = 'risk-matrix';
+
+    // Group risks by probability and impact for positioning
+    const risksByCell = {};
+    if (slide.risks && Array.isArray(slide.risks)) {
+      slide.risks.forEach(risk => {
+        const key = `${risk.probability}-${risk.impact}`;
+        if (!risksByCell[key]) {
+          risksByCell[key] = [];
+        }
+        risksByCell[key].push(risk);
+      });
+    }
+
+    // Build matrix: 4 rows (header + 3 probability levels) x 4 columns (label + 3 impact levels)
+
+    // Row 1: Column headers
+    riskMatrix.appendChild(this._createMatrixLabel('')); // Empty top-left corner
+    riskMatrix.appendChild(this._createMatrixLabel('Low'));
+    riskMatrix.appendChild(this._createMatrixLabel('Medium'));
+    riskMatrix.appendChild(this._createMatrixLabel('High'));
+
+    // Row 2: High Probability
+    riskMatrix.appendChild(this._createMatrixLabel('High'));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'low', risksByCell['high-low']));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'medium', risksByCell['high-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('high', 'high', risksByCell['high-high']));
+
+    // Row 3: Medium Probability
+    riskMatrix.appendChild(this._createMatrixLabel('Medium'));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'low', risksByCell['medium-low']));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'medium', risksByCell['medium-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('medium', 'high', risksByCell['medium-high']));
+
+    // Row 4: Low Probability
+    riskMatrix.appendChild(this._createMatrixLabel('Low'));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'low', risksByCell['low-low']));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'medium', risksByCell['low-medium']));
+    riskMatrix.appendChild(this._createMatrixCell('low', 'high', risksByCell['low-high']));
+
+    // Create wrapper for matrix and axis labels
+    const matrixWrapper = document.createElement('div');
+    matrixWrapper.style.position = 'relative';
+    matrixWrapper.style.display = 'inline-block';
+    matrixWrapper.style.margin = '0 auto';
+
+    // Add axis labels
+    const xAxisLabel = document.createElement('span');
+    xAxisLabel.className = 'axis-label x-axis';
+    xAxisLabel.textContent = 'Impact →';
+
+    const yAxisLabel = document.createElement('span');
+    yAxisLabel.className = 'axis-label y-axis';
+    yAxisLabel.textContent = 'Probability';
+
+    matrixWrapper.appendChild(riskMatrix);
+    matrixWrapper.appendChild(xAxisLabel);
+    matrixWrapper.appendChild(yAxisLabel);
+
+    container.appendChild(header);
+    container.appendChild(matrixWrapper);
+  }
+
+  /**
+   * Creates a matrix label cell
+   * @private
+   */
+  _createMatrixLabel(text) {
+    const label = document.createElement('div');
+    label.className = 'matrix-label';
+    label.textContent = text;
+    return label;
+  }
+
+  /**
+   * Creates a matrix cell with risks
+   * @private
+   */
+  _createMatrixCell(probability, impact, risks) {
+    const cell = document.createElement('div');
+    cell.className = `matrix-cell ${probability}-${impact}`;
+
+    if (risks && risks.length > 0) {
+      risks.forEach(risk => {
+        const riskItem = document.createElement('div');
+        riskItem.className = 'risk-item';
+        riskItem.innerHTML = `<p class="risk-description">${risk.description}</p>`;
+        cell.appendChild(riskItem);
+      });
+    }
+
+    return cell;
+  }
+
+  /**
+   * Renders an insights slide
+   * @private
+   */
+  _renderInsightsSlide(container, slide) {
+    const header = document.createElement('div');
+    header.className = 'insights-header';
+
+    const title = document.createElement('h2');
+    title.className = 'insights-title';
+    title.textContent = slide.title || 'Expert Conversation Points';
+    header.appendChild(title);
+
+    const insightsGrid = document.createElement('div');
+    insightsGrid.className = 'insights-grid';
+
+    if (slide.insights && Array.isArray(slide.insights)) {
+      slide.insights.forEach(insight => {
+        const insightCard = document.createElement('div');
+        insightCard.className = 'insight-card';
+        insightCard.innerHTML = `
+          <span class="insight-category">${insight.category}</span>
+          <p class="insight-text">${insight.text}</p>
+        `;
+        insightsGrid.appendChild(insightCard);
+      });
+    }
+
+    container.appendChild(header);
+    container.appendChild(insightsGrid);
+  }
+
+  /**
+   * Renders a simple text slide
+   * @private
+   */
+  _renderSimpleSlide(container, slide) {
+    const content = document.createElement('div');
+    content.className = 'simple-content';
+
+    const header = document.createElement('h2');
+    header.className = 'simple-title';
+    header.textContent = slide.title || 'Summary';
+
+    const textContent = document.createElement('div');
+    textContent.className = 'simple-text';
+
+    // Handle content as array or string for backwards compatibility
+    if (Array.isArray(slide.content)) {
+      slide.content.forEach(item => {
+        const p = document.createElement('p');
+        p.textContent = item;
+        textContent.appendChild(p);
+      });
+    } else {
+      const p = document.createElement('p');
+      p.textContent = slide.content || slide.text || '';
+      textContent.appendChild(p);
+    }
+
+    content.appendChild(header);
+    content.appendChild(textContent);
+    container.appendChild(content);
   }
 
   /**
@@ -200,7 +475,7 @@ export class PresentationSlides {
     const slideIndicator = document.createElement('div');
     slideIndicator.className = 'slide-indicator';
     slideIndicator.id = 'slideIndicator';
-    slideIndicator.textContent = `${this.currentSlideIndex + 1} / ${this.totalSlides}`;
+    slideIndicator.textContent = `${this.currentSlideIndex + 1} / ${this.slidesData.slides.length}`;
 
     const nextBtn = document.createElement('button');
     nextBtn.className = 'nav-btn next-btn';
@@ -232,7 +507,7 @@ export class PresentationSlides {
       }
 
       if (slideIndicator) {
-        slideIndicator.textContent = `${this.currentSlideIndex + 1} / ${this.totalSlides}`;
+        slideIndicator.textContent = `${this.currentSlideIndex + 1} / ${this.slidesData.slides.length}`;
       }
     }
   }
@@ -242,7 +517,7 @@ export class PresentationSlides {
    * @private
    */
   _nextSlide() {
-    if (this.currentSlideIndex < this.totalSlides - 1) {
+    if (this.currentSlideIndex < this.slidesData.slides.length - 1) {
       this.currentSlideIndex++;
       const slideDisplay = document.getElementById('currentSlide');
       const slideIndicator = document.getElementById('slideIndicator');
@@ -252,7 +527,7 @@ export class PresentationSlides {
       }
 
       if (slideIndicator) {
-        slideIndicator.textContent = `${this.currentSlideIndex + 1} / ${this.totalSlides}`;
+        slideIndicator.textContent = `${this.currentSlideIndex + 1} / ${this.slidesData.slides.length}`;
       }
     }
   }
