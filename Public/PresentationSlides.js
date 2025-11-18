@@ -479,9 +479,20 @@ export class PresentationSlides {
       this._nextSlide();
     });
 
+    // Export to PowerPoint button
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'nav-btn export-pptx-btn';
+    exportBtn.innerHTML = '📥 Export to PowerPoint';
+    exportBtn.title = 'Export slides as PowerPoint presentation';
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._exportToPowerPoint();
+    });
+
     nav.appendChild(prevBtn);
     nav.appendChild(slideIndicator);
     nav.appendChild(nextBtn);
+    nav.appendChild(exportBtn);
 
     return nav;
   }
@@ -585,5 +596,617 @@ export class PresentationSlides {
     footerSvgEl.style.backgroundSize = 'auto 30px';
 
     this.container.appendChild(footerSvgEl);
+  }
+
+  /**
+   * Exports the presentation to PowerPoint format
+   * @private
+   */
+  _exportToPowerPoint() {
+    // Check if PptxGenJS is available
+    if (typeof PptxGenJS === 'undefined') {
+      alert('PowerPoint export library not loaded. Please refresh the page and try again.');
+      return;
+    }
+
+    try {
+      // Create a new presentation
+      const pptx = new PptxGenJS();
+
+      // Set presentation properties
+      pptx.author = 'AI Roadmap Generator';
+      pptx.company = 'Strategic Intelligence';
+      pptx.subject = 'Strategic Roadmap Presentation';
+      pptx.title = this.slidesData.slides[0]?.title || 'Strategic Intelligence Brief';
+
+      // Define color scheme (banking theme - dark blue)
+      const colors = {
+        primary: '1a3a52',      // Dark blue
+        accent: '50AF7B',        // Green accent
+        text: 'FFFFFF',          // White text
+        background: '0F1419',    // Dark background
+        lightText: 'E5E7EB',     // Light gray text
+        red: 'DA291C',           // Priority red
+        gray: '6B7280'           // Mid gray
+      };
+
+      // Process each slide
+      this.slidesData.slides.forEach((slide, index) => {
+        switch (slide.type) {
+          case 'title':
+            this._addTitleSlideToPPTX(pptx, slide, colors);
+            break;
+          case 'narrative':
+            this._addNarrativeSlideToPPTX(pptx, slide, colors);
+            break;
+          case 'drivers':
+            this._addDriversSlideToPPTX(pptx, slide, colors);
+            break;
+          case 'dependencies':
+            this._addDependenciesSlideToPPTX(pptx, slide, colors);
+            break;
+          case 'risks':
+            this._addRisksSlideToPPTX(pptx, slide, colors);
+            break;
+          case 'insights':
+            this._addInsightsSlideToPPTX(pptx, slide, colors);
+            break;
+          case 'simple':
+            this._addSimpleSlideToPPTX(pptx, slide, colors);
+            break;
+          default:
+            this._addSimpleSlideToPPTX(pptx, slide, colors);
+        }
+      });
+
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `Strategic_Roadmap_${timestamp}.pptx`;
+
+      // Save the presentation
+      pptx.writeFile({ fileName: filename });
+
+      console.log(`PowerPoint presentation exported: ${filename}`);
+    } catch (error) {
+      console.error('Error exporting to PowerPoint:', error);
+      alert('Failed to export PowerPoint. Please try again or check the console for details.');
+    }
+  }
+
+  /**
+   * Adds a title slide to the PowerPoint presentation
+   * @private
+   */
+  _addTitleSlideToPPTX(pptx, slide, colors) {
+    const titleSlide = pptx.addSlide();
+    titleSlide.background = { color: colors.background };
+
+    // Main title
+    titleSlide.addText(slide.title || 'AI-Powered Strategic Intelligence', {
+      x: 0.5,
+      y: 2.0,
+      w: 9.0,
+      h: 1.5,
+      fontSize: 44,
+      bold: true,
+      color: colors.text,
+      align: 'center',
+      fontFace: 'Arial'
+    });
+
+    // Accent line
+    titleSlide.addShape(pptx.ShapeType.rect, {
+      x: 4.0,
+      y: 3.6,
+      w: 2.0,
+      h: 0.1,
+      fill: { color: colors.accent }
+    });
+
+    // Subtitle
+    titleSlide.addText(slide.subtitle || 'Strategic Intelligence Brief', {
+      x: 0.5,
+      y: 4.0,
+      w: 9.0,
+      h: 0.8,
+      fontSize: 24,
+      color: colors.lightText,
+      align: 'center',
+      fontFace: 'Arial'
+    });
+
+    // Slide number
+    titleSlide.addText('01', {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  }
+
+  /**
+   * Adds a narrative slide to the PowerPoint presentation
+   * @private
+   */
+  _addNarrativeSlideToPPTX(pptx, slide, colors) {
+    const narrativeSlide = pptx.addSlide();
+    narrativeSlide.background = { color: colors.background };
+
+    // Title
+    narrativeSlide.addText(slide.title || 'Elevator Pitch', {
+      x: 0.5,
+      y: 0.5,
+      w: 9.0,
+      h: 0.6,
+      fontSize: 32,
+      bold: true,
+      color: colors.accent,
+      fontFace: 'Arial'
+    });
+
+    // Content paragraphs
+    const content = Array.isArray(slide.content) ? slide.content.join('\n\n') : slide.content;
+    narrativeSlide.addText(content, {
+      x: 0.5,
+      y: 1.5,
+      w: 9.0,
+      h: 4.0,
+      fontSize: 16,
+      color: colors.lightText,
+      align: 'left',
+      fontFace: 'Arial',
+      valign: 'top'
+    });
+
+    // Slide number
+    const slideNum = this.slidesData.slides.findIndex(s => s === slide) + 1;
+    narrativeSlide.addText(String(slideNum).padStart(2, '0'), {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  }
+
+  /**
+   * Adds a drivers slide to the PowerPoint presentation
+   * @private
+   */
+  _addDriversSlideToPPTX(pptx, slide, colors) {
+    const driversSlide = pptx.addSlide();
+    driversSlide.background = { color: colors.background };
+
+    // Title
+    driversSlide.addText(slide.title || 'Key Strategic Drivers', {
+      x: 0.5,
+      y: 0.5,
+      w: 9.0,
+      h: 0.6,
+      fontSize: 32,
+      bold: true,
+      color: colors.accent,
+      fontFace: 'Arial'
+    });
+
+    // Drivers list
+    if (slide.drivers && Array.isArray(slide.drivers)) {
+      slide.drivers.forEach((driver, idx) => {
+        const yPos = 1.5 + (idx * 0.9);
+
+        // Numbered bullet
+        driversSlide.addShape(pptx.ShapeType.ellipse, {
+          x: 0.5,
+          y: yPos,
+          w: 0.4,
+          h: 0.4,
+          fill: { color: colors.accent }
+        });
+
+        driversSlide.addText(String(idx + 1), {
+          x: 0.5,
+          y: yPos,
+          w: 0.4,
+          h: 0.4,
+          fontSize: 18,
+          bold: true,
+          color: colors.background,
+          align: 'center',
+          valign: 'middle',
+          fontFace: 'Arial'
+        });
+
+        // Driver title
+        driversSlide.addText(driver.title, {
+          x: 1.1,
+          y: yPos,
+          w: 8.4,
+          h: 0.3,
+          fontSize: 18,
+          bold: true,
+          color: colors.text,
+          fontFace: 'Arial'
+        });
+
+        // Driver description
+        driversSlide.addText(driver.description, {
+          x: 1.1,
+          y: yPos + 0.35,
+          w: 8.4,
+          h: 0.5,
+          fontSize: 14,
+          color: colors.lightText,
+          fontFace: 'Arial'
+        });
+      });
+    }
+
+    // Slide number
+    const slideNum = this.slidesData.slides.findIndex(s => s === slide) + 1;
+    driversSlide.addText(String(slideNum).padStart(2, '0'), {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  }
+
+  /**
+   * Adds a dependencies slide to the PowerPoint presentation
+   * @private
+   */
+  _addDependenciesSlideToPPTX(pptx, slide, colors) {
+    const depsSlide = pptx.addSlide();
+    depsSlide.background = { color: colors.background };
+
+    // Title
+    depsSlide.addText(slide.title || 'Critical Dependencies', {
+      x: 0.5,
+      y: 0.5,
+      w: 9.0,
+      h: 0.6,
+      fontSize: 32,
+      bold: true,
+      color: colors.accent,
+      fontFace: 'Arial'
+    });
+
+    // Dependencies flow
+    if (slide.dependencies && Array.isArray(slide.dependencies)) {
+      slide.dependencies.forEach((dep, idx) => {
+        const yPos = 1.8 + (idx * 1.2);
+
+        // Criticality color
+        let criticalityColor = colors.gray;
+        if (dep.criticalityLevel === 'high') criticalityColor = colors.red;
+        else if (dep.criticalityLevel === 'medium') criticalityColor = 'FFA500'; // Orange
+
+        // Dependency box
+        depsSlide.addShape(pptx.ShapeType.rect, {
+          x: 1.0,
+          y: yPos,
+          w: 7.5,
+          h: 0.9,
+          fill: { color: colors.primary },
+          line: { color: criticalityColor, width: 3 }
+        });
+
+        // Dependency name
+        depsSlide.addText(dep.name, {
+          x: 1.2,
+          y: yPos + 0.1,
+          w: 5.0,
+          h: 0.3,
+          fontSize: 18,
+          bold: true,
+          color: colors.text,
+          fontFace: 'Arial'
+        });
+
+        // Criticality badge
+        depsSlide.addText(dep.criticality, {
+          x: 6.5,
+          y: yPos + 0.1,
+          w: 1.8,
+          h: 0.3,
+          fontSize: 12,
+          bold: true,
+          color: criticalityColor,
+          align: 'right',
+          fontFace: 'Arial'
+        });
+
+        // Impact
+        depsSlide.addText(dep.impact, {
+          x: 1.2,
+          y: yPos + 0.45,
+          w: 7.0,
+          h: 0.4,
+          fontSize: 12,
+          color: colors.lightText,
+          fontFace: 'Arial'
+        });
+
+        // Arrow (if not last)
+        if (idx < slide.dependencies.length - 1) {
+          depsSlide.addText('→', {
+            x: 8.7,
+            y: yPos + 0.3,
+            w: 0.5,
+            h: 0.3,
+            fontSize: 24,
+            color: colors.accent,
+            fontFace: 'Arial'
+          });
+        }
+      });
+    }
+
+    // Slide number
+    const slideNum = this.slidesData.slides.findIndex(s => s === slide) + 1;
+    depsSlide.addText(String(slideNum).padStart(2, '0'), {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  }
+
+  /**
+   * Adds a risks slide to the PowerPoint presentation
+   * @private
+   */
+  _addRisksSlideToPPTX(pptx, slide, colors) {
+    const risksSlide = pptx.addSlide();
+    risksSlide.background = { color: colors.background };
+
+    // Title
+    risksSlide.addText(slide.title || 'Strategic Risk Matrix', {
+      x: 0.5,
+      y: 0.5,
+      w: 9.0,
+      h: 0.6,
+      fontSize: 32,
+      bold: true,
+      color: colors.accent,
+      fontFace: 'Arial'
+    });
+
+    // Create 3x3 risk matrix
+    const cellWidth = 2.5;
+    const cellHeight = 1.0;
+    const startX = 1.5;
+    const startY = 2.0;
+
+    // Axis labels
+    risksSlide.addText('Impact →', {
+      x: 4.5,
+      y: 5.2,
+      w: 2.0,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.lightText,
+      align: 'center',
+      fontFace: 'Arial'
+    });
+
+    risksSlide.addText('Probability', {
+      x: 0.3,
+      y: 3.0,
+      w: 1.0,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.lightText,
+      rotate: 270,
+      fontFace: 'Arial'
+    });
+
+    // Group risks by probability and impact
+    const risksByCell = {};
+    if (slide.risks && Array.isArray(slide.risks)) {
+      slide.risks.forEach(risk => {
+        const key = `${risk.probability}-${risk.impact}`;
+        if (!risksByCell[key]) risksByCell[key] = [];
+        risksByCell[key].push(risk);
+      });
+    }
+
+    // Build 3x3 matrix (probability: high/medium/low, impact: low/medium/high)
+    const probabilities = ['high', 'medium', 'low'];
+    const impacts = ['low', 'medium', 'high'];
+
+    probabilities.forEach((prob, rowIdx) => {
+      impacts.forEach((impact, colIdx) => {
+        const x = startX + (colIdx * cellWidth);
+        const y = startY + (rowIdx * cellHeight);
+
+        // Cell color based on risk level
+        let cellColor = '2D3748'; // Default dark gray
+        if (prob === 'high' && impact === 'high') cellColor = 'DC2626'; // Red
+        else if ((prob === 'high' && impact === 'medium') || (prob === 'medium' && impact === 'high')) cellColor = 'F59E0B'; // Orange
+        else if (prob === 'low' && impact === 'low') cellColor = '10B981'; // Green
+
+        // Draw cell
+        risksSlide.addShape(pptx.ShapeType.rect, {
+          x: x,
+          y: y,
+          w: cellWidth,
+          h: cellHeight,
+          fill: { color: cellColor, transparency: 50 },
+          line: { color: colors.gray, width: 1 }
+        });
+
+        // Add risks to cell
+        const key = `${prob}-${impact}`;
+        if (risksByCell[key]) {
+          risksByCell[key].forEach((risk, riskIdx) => {
+            risksSlide.addText(risk.description, {
+              x: x + 0.1,
+              y: y + 0.1 + (riskIdx * 0.3),
+              w: cellWidth - 0.2,
+              h: 0.25,
+              fontSize: 10,
+              color: colors.text,
+              fontFace: 'Arial',
+              valign: 'top'
+            });
+          });
+        }
+      });
+    });
+
+    // Slide number
+    const slideNum = this.slidesData.slides.findIndex(s => s === slide) + 1;
+    risksSlide.addText(String(slideNum).padStart(2, '0'), {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  }
+
+  /**
+   * Adds an insights slide to the PowerPoint presentation
+   * @private
+   */
+  _addInsightsSlideToPPTX(pptx, slide, colors) {
+    const insightsSlide = pptx.addSlide();
+    insightsSlide.background = { color: colors.background };
+
+    // Title
+    insightsSlide.addText(slide.title || 'Expert Conversation Points', {
+      x: 0.5,
+      y: 0.5,
+      w: 9.0,
+      h: 0.6,
+      fontSize: 32,
+      bold: true,
+      color: colors.accent,
+      fontFace: 'Arial'
+    });
+
+    // Insights grid (2 columns)
+    if (slide.insights && Array.isArray(slide.insights)) {
+      slide.insights.forEach((insight, idx) => {
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const x = 0.5 + (col * 4.75);
+        const y = 1.5 + (row * 1.3);
+
+        // Insight card
+        insightsSlide.addShape(pptx.ShapeType.rect, {
+          x: x,
+          y: y,
+          w: 4.5,
+          h: 1.2,
+          fill: { color: colors.primary },
+          line: { color: colors.accent, width: 1 }
+        });
+
+        // Category badge
+        insightsSlide.addText(insight.category, {
+          x: x + 0.1,
+          y: y + 0.1,
+          w: 4.3,
+          h: 0.25,
+          fontSize: 10,
+          bold: true,
+          color: colors.accent,
+          fontFace: 'Arial'
+        });
+
+        // Insight text
+        insightsSlide.addText(insight.text, {
+          x: x + 0.1,
+          y: y + 0.4,
+          w: 4.3,
+          h: 0.7,
+          fontSize: 11,
+          color: colors.lightText,
+          fontFace: 'Arial',
+          valign: 'top'
+        });
+      });
+    }
+
+    // Slide number
+    const slideNum = this.slidesData.slides.findIndex(s => s === slide) + 1;
+    insightsSlide.addText(String(slideNum).padStart(2, '0'), {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  }
+
+  /**
+   * Adds a simple text slide to the PowerPoint presentation
+   * @private
+   */
+  _addSimpleSlideToPPTX(pptx, slide, colors) {
+    const simpleSlide = pptx.addSlide();
+    simpleSlide.background = { color: colors.background };
+
+    // Title
+    simpleSlide.addText(slide.title || 'Summary', {
+      x: 0.5,
+      y: 0.5,
+      w: 9.0,
+      h: 0.6,
+      fontSize: 32,
+      bold: true,
+      color: colors.accent,
+      fontFace: 'Arial'
+    });
+
+    // Content
+    const content = Array.isArray(slide.content) ? slide.content.join('\n\n') : (slide.content || slide.text || '');
+    simpleSlide.addText(content, {
+      x: 0.5,
+      y: 1.5,
+      w: 9.0,
+      h: 4.0,
+      fontSize: 16,
+      color: colors.lightText,
+      align: 'left',
+      fontFace: 'Arial',
+      valign: 'top'
+    });
+
+    // Slide number
+    const slideNum = this.slidesData.slides.findIndex(s => s === slide) + 1;
+    simpleSlide.addText(String(slideNum).padStart(2, '0'), {
+      x: 9.0,
+      y: 5.0,
+      w: 0.5,
+      h: 0.3,
+      fontSize: 14,
+      color: colors.gray,
+      align: 'right',
+      fontFace: 'Arial'
+    });
   }
 }
