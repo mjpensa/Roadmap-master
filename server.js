@@ -42,6 +42,7 @@ import chartRoutes from './server/routes/charts.js';
 import analysisRoutes from './server/routes/analysis.js';
 import analyticsRoutes from './server/routes/analytics.js';
 import researchRoutes from './server/routes/research.js';
+import semanticRoutes from './server/routes/semantic-gantt.js';
 
 // --- Server Setup ---
 const app = express();
@@ -90,6 +91,8 @@ app.use('/', analysisRoutes);
 app.use('/', analyticsRoutes);
 // Research synthesis routes (with upload middleware for /api/research/upload)
 app.use('/', uploadMiddleware.array('files'), researchRoutes);
+// Semantic gantt routes (with upload middleware for file processing)
+app.use('/', uploadMiddleware.array('files'), semanticRoutes);
 
 // --- Error Handling ---
 app.use(handleUploadErrors);
