@@ -740,6 +740,310 @@ export function buildFinancialImpact(financialImpact) {
 }
 
 /**
+ * BANKING ENHANCEMENT - Stakeholder & Change Management Analysis
+ * Builds the Stakeholder Impact section
+ * Shows customer impact, internal stakeholders, executive alignment, change readiness, and resistance risks
+ * @param {Object} stakeholderImpact - Stakeholder analysis data from AI
+ * @returns {string} HTML string for the stakeholder impact section
+ */
+export function buildStakeholderImpact(stakeholderImpact) {
+  if (!stakeholderImpact) return '';
+
+  const customer = stakeholderImpact.customerExperience || {};
+  const stakeholders = stakeholderImpact.internalStakeholders || [];
+  const alignment = stakeholderImpact.executiveAlignment || {};
+  const readiness = stakeholderImpact.changeReadiness || {};
+  const risks = stakeholderImpact.resistanceRisks || [];
+
+  // Helper function to build stakeholder cards
+  const buildStakeholderCards = () => {
+    if (!stakeholders.length) return '<p class="no-data">No stakeholder data available</p>';
+
+    return stakeholders.map(sh => {
+      const impactColor = {
+        high: '#BA3930',
+        medium: '#EE9E20',
+        low: '#50AF7B'
+      }[sh.impactLevel] || '#666666';
+
+      return `
+        <div class="stakeholder-card">
+          <div class="stakeholder-header">
+            <h6>${DOMPurify.sanitize(sh.group || 'Unknown Group')}</h6>
+            <span class="impact-badge" style="background-color: ${impactColor};">
+              ${DOMPurify.sanitize(sh.impactLevel || 'medium').toUpperCase()} IMPACT
+            </span>
+          </div>
+          <div class="stakeholder-details">
+            <div class="detail-row">
+              <span class="detail-label">Size:</span>
+              <span class="detail-value">${DOMPurify.sanitize(sh.size || 'Unknown')}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Current Role:</span>
+              <span class="detail-value">${DOMPurify.sanitize(sh.currentRole || 'N/A')}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Future Role:</span>
+              <span class="detail-value">${DOMPurify.sanitize(sh.futureRole || 'N/A')}</span>
+            </div>
+            ${sh.concerns && sh.concerns.length ? `
+              <div class="detail-row">
+                <span class="detail-label">Key Concerns:</span>
+                <ul class="concerns-list">
+                  ${sh.concerns.map(c => `<li>${DOMPurify.sanitize(c)}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            ${sh.trainingNeeds ? `
+              <div class="detail-row">
+                <span class="detail-label">Training Needs:</span>
+                <span class="detail-value">${DOMPurify.sanitize(sh.trainingNeeds)}</span>
+              </div>
+            ` : ''}
+            ${sh.championOpportunity ? `
+              <div class="champion-badge">⭐ Potential Change Champion</div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  // Helper function to build executive alignment visualization
+  const buildExecutiveAlignment = () => {
+    if (!alignment.sponsor && !alignment.supporters && !alignment.neutrals && !alignment.resistors) {
+      return '<p class="no-data">No executive alignment data available</p>';
+    }
+
+    return `
+      <div class="executive-alignment-grid">
+        ${alignment.sponsor ? `
+          <div class="alignment-section sponsor">
+            <h6>👔 Executive Sponsor</h6>
+            <p>${DOMPurify.sanitize(alignment.sponsor)}</p>
+          </div>
+        ` : ''}
+
+        ${alignment.supporters && alignment.supporters.length ? `
+          <div class="alignment-section supporters">
+            <h6>✅ Supporters</h6>
+            <ul>
+              ${alignment.supporters.map(s => `<li>${DOMPurify.sanitize(s)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${alignment.neutrals && alignment.neutrals.length ? `
+          <div class="alignment-section neutrals">
+            <h6>⚪ Neutrals</h6>
+            <ul>
+              ${alignment.neutrals.map(n => `<li>${DOMPurify.sanitize(n)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${alignment.resistors && alignment.resistors.length ? `
+          <div class="alignment-section resistors">
+            <h6>⛔ Potential Resistors</h6>
+            <ul>
+              ${alignment.resistors.map(r => `<li>${DOMPurify.sanitize(r)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${alignment.alignmentStrategy ? `
+          <div class="alignment-section strategy">
+            <h6>🎯 Alignment Strategy</h6>
+            <p>${DOMPurify.sanitize(alignment.alignmentStrategy)}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Helper function to build change readiness gauge
+  const buildChangeReadiness = () => {
+    const score = readiness.score || 50;
+    const scoreColor = score >= 70 ? '#50AF7B' : score >= 40 ? '#EE9E20' : '#BA3930';
+    const scoreLabel = score >= 70 ? 'Good Readiness' : score >= 40 ? 'Moderate Readiness' : 'Low Readiness';
+
+    return `
+      <div class="change-readiness-card">
+        <div class="readiness-gauge">
+          <div class="gauge-container">
+            <div class="gauge-bar" style="width: ${score}%; background-color: ${scoreColor};"></div>
+          </div>
+          <div class="gauge-label">
+            <span class="score-value">${score}/100</span>
+            <span class="score-label">${scoreLabel}</span>
+          </div>
+        </div>
+
+        <div class="readiness-factors">
+          ${readiness.culturalFit ? `
+            <div class="factor">
+              <strong>Cultural Fit:</strong> ${DOMPurify.sanitize(readiness.culturalFit)}
+            </div>
+          ` : ''}
+          ${readiness.historicalChangeSuccess ? `
+            <div class="factor">
+              <strong>Past Change Success:</strong> ${DOMPurify.sanitize(readiness.historicalChangeSuccess)}
+            </div>
+          ` : ''}
+          ${readiness.leadershipSupport ? `
+            <div class="factor">
+              <strong>Leadership Support:</strong> ${DOMPurify.sanitize(readiness.leadershipSupport)}
+            </div>
+          ` : ''}
+          ${readiness.resourceAvailability ? `
+            <div class="factor">
+              <strong>Resource Availability:</strong> ${DOMPurify.sanitize(readiness.resourceAvailability)}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  };
+
+  // Helper function to build resistance risks table
+  const buildResistanceRisks = () => {
+    if (!risks.length) return '<p class="no-data">No resistance risks identified</p>';
+
+    return `
+      <div class="resistance-risks-table">
+        ${risks.map(risk => {
+          const probColor = {
+            high: '#BA3930',
+            medium: '#EE9E20',
+            low: '#50AF7B'
+          }[risk.probability] || '#666666';
+
+          const impactColor = {
+            critical: '#DA291C',
+            major: '#BA3930',
+            moderate: '#EE9E20'
+          }[risk.impact] || '#666666';
+
+          return `
+            <div class="risk-card">
+              <div class="risk-header">
+                <h6>${DOMPurify.sanitize(risk.risk || 'Unknown Risk')}</h6>
+                <div class="risk-badges">
+                  <span class="risk-badge" style="background-color: ${probColor};">
+                    ${DOMPurify.sanitize(risk.probability || 'medium').toUpperCase()} PROB
+                  </span>
+                  <span class="risk-badge" style="background-color: ${impactColor};">
+                    ${DOMPurify.sanitize(risk.impact || 'moderate').toUpperCase()} IMPACT
+                  </span>
+                </div>
+              </div>
+              ${risk.mitigation ? `
+                <div class="risk-mitigation">
+                  <strong>Mitigation:</strong> ${DOMPurify.sanitize(risk.mitigation)}
+                </div>
+              ` : ''}
+              ${risk.earlyWarnings && risk.earlyWarnings.length ? `
+                <div class="early-warnings">
+                  <strong>Early Warning Signs:</strong>
+                  <ul>
+                    ${risk.earlyWarnings.map(w => `<li>${DOMPurify.sanitize(w)}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  };
+
+  // Main section HTML
+  return `
+    <div class="analysis-section stakeholder-impact-section">
+      <h4>👥 Stakeholder & Change Management Analysis</h4>
+
+      <!-- Customer Experience Impact -->
+      ${customer.currentState || customer.futureState ? `
+        <div class="stakeholder-subsection customer-experience">
+          <h5>🎯 Customer Experience Impact</h5>
+          <div class="customer-comparison">
+            ${customer.currentState ? `
+              <div class="customer-state current">
+                <h6>Current State</h6>
+                <p>${DOMPurify.sanitize(customer.currentState)}</p>
+              </div>
+            ` : ''}
+            ${customer.futureState ? `
+              <div class="customer-state future">
+                <h6>Future State</h6>
+                <p>${DOMPurify.sanitize(customer.futureState)}</p>
+              </div>
+            ` : ''}
+          </div>
+          ${customer.primaryBenefits && customer.primaryBenefits.length ? `
+            <div class="customer-benefits">
+              <h6>Primary Benefits</h6>
+              <ul>
+                ${customer.primaryBenefits.map(b => `<li>✓ ${DOMPurify.sanitize(b)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          ${customer.potentialConcerns && customer.potentialConcerns.length ? `
+            <div class="customer-concerns">
+              <h6>Potential Concerns</h6>
+              <ul>
+                ${customer.potentialConcerns.map(c => `<li>⚠ ${DOMPurify.sanitize(c)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          ${customer.communicationStrategy ? `
+            <div class="communication-strategy">
+              <h6>Communication Strategy</h6>
+              <p>${DOMPurify.sanitize(customer.communicationStrategy)}</p>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      <!-- Internal Stakeholders -->
+      ${stakeholders.length ? `
+        <div class="stakeholder-subsection internal-stakeholders">
+          <h5>🏢 Internal Stakeholders</h5>
+          <div class="stakeholders-grid">
+            ${buildStakeholderCards()}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Executive Alignment -->
+      ${alignment.sponsor || alignment.supporters ? `
+        <div class="stakeholder-subsection executive-alignment">
+          <h5>👔 Executive Alignment</h5>
+          ${buildExecutiveAlignment()}
+        </div>
+      ` : ''}
+
+      <!-- Change Readiness -->
+      ${readiness.score !== undefined ? `
+        <div class="stakeholder-subsection change-readiness">
+          <h5>📊 Organizational Change Readiness</h5>
+          ${buildChangeReadiness()}
+        </div>
+      ` : ''}
+
+      <!-- Resistance Risks -->
+      ${risks.length ? `
+        <div class="stakeholder-subsection resistance-risks">
+          <h5>⚠️ Resistance Risk Analysis</h5>
+          ${buildResistanceRisks()}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+/**
  * Builds the HTML legend element for the Gantt chart.
  * Creates a visual legend showing color-coded categories and their meanings.
  * @param {Array<Object>} legendData - Array of legend items
