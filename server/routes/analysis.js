@@ -10,6 +10,7 @@ import { getSession } from '../storage.js';
 import { callGeminiForJson, callGeminiForText } from '../gemini.js';
 import { TASK_ANALYSIS_SYSTEM_PROMPT, TASK_ANALYSIS_SCHEMA, getQASystemPrompt } from '../prompts.js';
 import { apiLimiter } from '../middleware.js';
+import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
 
 const router = express.Router();
 
@@ -63,6 +64,15 @@ ${researchTextCache}
   // Call the API
   try {
     const analysisData = await callGeminiForJson(payload);
+
+    // FEATURE #9: Track task analysis
+    trackEvent('task_analysis', {
+      taskName,
+      entity,
+      hasFinancialImpact: !!analysisData.financialImpact,
+      riskCount: analysisData.risks?.length || 0
+    }, null, sessionId);
+
     res.json(analysisData);
   } catch (e) {
     console.error("Task Analysis API error:", e);
@@ -125,6 +135,15 @@ router.post('/ask-question', apiLimiter, async (req, res) => {
   // Call the API
   try {
     const textResponse = await callGeminiForText(payload);
+
+    // FEATURE #9: Track Q&A interaction
+    trackEvent('qa_question', {
+      taskName,
+      entity,
+      questionLength: question.trim().length,
+      answerLength: textResponse.length
+    }, null, sessionId);
+
     res.json({ answer: textResponse });
   } catch (e) {
     console.error("Q&A API error:", e);

@@ -13,6 +13,7 @@ import { createSession, storeChart, getChart, updateChart, createJob, updateJob,
 import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter } from '../middleware.js';
+import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
 
 const router = express.Router();
 
@@ -474,10 +475,29 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
 
     completeJob(jobId, completeData);
 
+    // FEATURE #9: Track successful chart generation
+    const taskCount = ganttData.data.length;
+    const generationTime = Date.now() - (getJob(jobId)?.createdAt || Date.now());
+    trackEvent('chart_generated', {
+      taskCount,
+      generationTime,
+      hasExecutiveSummary: !!executiveSummary,
+      hasPresentationSlides: !!presentationSlides,
+      slideCount: presentationSlides?.slides?.length || 0,
+      fileCount: researchFilesCache.length
+    }, chartId, sessionId);
+
     console.log(`Job ${jobId}: Successfully completed`);
 
   } catch (error) {
     console.error(`Job ${jobId} failed:`, error);
+
+    // FEATURE #9: Track failed chart generation
+    trackEvent('chart_failed', {
+      errorMessage: error.message,
+      errorType: error.constructor.name
+    }, null, null);
+
     failJob(jobId, error.message);
   }
 }
@@ -628,6 +648,13 @@ router.get('/chart/:id', (req, res) => {
   }
 
   console.log(`✅ Chart ${chartId} found - returning ${chart.data.timeColumns.length} timeColumns and ${chart.data.data.length} tasks`);
+
+  // FEATURE #9: Track chart view
+  trackEvent('chart_viewed', {
+    taskCount: chart.data.data.length,
+    hasExecutiveSummary: !!chart.data.executiveSummary,
+    hasPresentationSlides: !!chart.data.presentationSlides
+  }, chartId, chart.sessionId);
 
   // Return chart data along with sessionId for subsequent requests
   const responseData = {
