@@ -187,10 +187,33 @@ async function processFiles(files) {
     const fragment = document.createDocumentFragment();
     for (const file of displayFiles) {
         const li = document.createElement('li');
-        li.className = 'truncate';
+        li.className = 'break-words py-1.5 px-2 rounded hover:bg-gray-700 transition-colors';
+
+        // Create filename span with icon
+        const filenameSpan = document.createElement('span');
+        filenameSpan.className = 'font-medium text-white';
+
         // Show relative path if available (folder upload)
         const displayName = file.webkitRelativePath || file.name;
-        li.textContent = displayName;
+
+        // Add file icon based on extension
+        const ext = displayName.split('.').pop().toLowerCase();
+        let icon = '📄';
+        if (ext === 'md') icon = '📝';
+        else if (ext === 'txt') icon = '📃';
+        else if (ext === 'docx' || ext === 'doc') icon = '📘';
+
+        filenameSpan.textContent = `${icon} ${displayName}`;
+        li.appendChild(filenameSpan);
+
+        // Add file size if available
+        if (file.size) {
+            const sizeSpan = document.createElement('span');
+            sizeSpan.className = 'ml-2 text-sm text-gray-400';
+            sizeSpan.textContent = `(${formatFileSize(file.size)})`;
+            li.appendChild(sizeSpan);
+        }
+
         li.title = displayName; // Show full name on hover
         fragment.appendChild(li);
     }
