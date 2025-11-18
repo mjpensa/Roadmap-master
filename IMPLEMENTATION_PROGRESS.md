@@ -62,25 +62,22 @@ Implementing features #2-9 from the gap analysis and UX enhancement reports.
 
 ## 🚧 In Progress
 
-None - Ready to start Feature #5
+### Feature #5: Executive-First Information Architecture
+**Status:** 🚧 In Progress (v2.5.0)
+**Priority:** P1
+**Started:** November 18, 2025
+
+**Implementation Plan:**
+1. Add Key Metrics Dashboard to Executive Summary
+2. Create Top 3 Strategic Priorities section
+3. Enhance Risk Landscape with banking-specific categorization
+4. Add "Executive View" toggle to Gantt chart (milestones only)
+5. Implement progressive disclosure interaction model
+6. Add keyboard shortcuts (E/T/D/P for view switching)
 
 ---
 
 ## 📋 Upcoming Features (Prioritized)
-
-### Feature #5: Executive-First Information Architecture
-**Status:** ⬜ Not Started
-**Priority:** P1
-**Estimated Effort:** 5-7 days
-
-**Scope:**
-- Strategic Executive Summary component
-- Three-tier hierarchy (Strategic → Tactical → Deep-Dive)
-- Top 3 Strategic Priorities
-- Executive View toggle
-- Progressive disclosure
-
----
 
 ### Feature #6: Advanced Gantt Chart Features
 **Status:** ⬜ Not Started
@@ -145,8 +142,8 @@ None - Ready to start Feature #5
 
 ### Progress Breakdown
 - **Completed:** 10 features (Financial Impact, Regulatory Alerts, Light Mode, Competitive Intelligence, Industry Benchmarks, PowerPoint Export, Testing, Stakeholder & Change Management, Data Migration & Analytics, Success Metrics & KPI Framework)
-- **In Progress:** None
-- **Remaining:** 4 features (#5-#9)
+- **In Progress:** Feature #5 (Executive-First Information Architecture)
+- **Remaining:** 4 features (#6-#9)
 
 ### Estimated Timeline
 - **Week 1-2:** Stakeholder Analysis (#2) + Success Metrics (#4)

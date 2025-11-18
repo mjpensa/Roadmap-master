@@ -98,6 +98,18 @@ export class ExecutiveSummary {
       content.appendChild(narrativeCard);
     }
 
+    // EXECUTIVE-FIRST ENHANCEMENT: Key Metrics Dashboard
+    if (this.summaryData.keyMetricsDashboard) {
+      const metricsCard = this._buildKeyMetricsDashboard();
+      content.appendChild(metricsCard);
+    }
+
+    // EXECUTIVE-FIRST ENHANCEMENT: Top 3 Strategic Priorities
+    if (this.summaryData.strategicPriorities && this.summaryData.strategicPriorities.length > 0) {
+      const prioritiesCard = this._buildStrategicPriorities();
+      content.appendChild(prioritiesCard);
+    }
+
     // Intelligence Grid
     const intelligenceGrid = document.createElement('div');
     intelligenceGrid.className = 'intelligence-grid';
@@ -714,6 +726,199 @@ export class ExecutiveSummary {
     item.appendChild(insightEl);
 
     return item;
+  }
+
+  /**
+   * Builds the Key Metrics Dashboard (EXECUTIVE-FIRST ENHANCEMENT)
+   * Displays 6 high-level executive metrics in a 2x3 grid
+   * @private
+   * @returns {HTMLElement} The key metrics dashboard element
+   */
+  _buildKeyMetricsDashboard() {
+    const card = document.createElement('div');
+    card.className = 'key-metrics-dashboard elevated';
+
+    const header = document.createElement('div');
+    header.className = 'metrics-header';
+
+    const badge = document.createElement('div');
+    badge.className = 'card-badge badge-executive';
+    badge.textContent = 'KEY METRICS';
+
+    const title = document.createElement('h3');
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '📊';
+    title.appendChild(icon);
+    title.appendChild(document.createTextNode(' Executive Dashboard'));
+
+    header.appendChild(badge);
+    header.appendChild(title);
+    card.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'metrics-grid';
+
+    // Create the 6 metrics in order
+    const metrics = [
+      { label: 'Total Investment', value: this.summaryData.keyMetricsDashboard.totalInvestment, icon: '💰' },
+      { label: 'Time to Value', value: this.summaryData.keyMetricsDashboard.timeToValue, icon: '⏱️' },
+      { label: 'Regulatory Risk', value: this.summaryData.keyMetricsDashboard.regulatoryRisk, icon: '🏛️' },
+      { label: 'ROI Projection', value: this.summaryData.keyMetricsDashboard.roiProjection, icon: '📈' },
+      { label: 'Critical Path', value: this.summaryData.keyMetricsDashboard.criticalPathStatus, icon: '🎯' },
+      { label: 'Vendor Lock-in', value: this.summaryData.keyMetricsDashboard.vendorLockIn, icon: '🔗' }
+    ];
+
+    metrics.forEach(metric => {
+      const item = document.createElement('div');
+      item.className = 'metric-item';
+
+      const metricIcon = document.createElement('div');
+      metricIcon.className = 'metric-icon';
+      metricIcon.textContent = metric.icon;
+
+      const metricContent = document.createElement('div');
+      metricContent.className = 'metric-content';
+
+      const metricLabel = document.createElement('div');
+      metricLabel.className = 'metric-label';
+      metricLabel.textContent = metric.label;
+
+      const metricValue = document.createElement('div');
+      metricValue.className = 'metric-value';
+      metricValue.textContent = metric.value;
+
+      metricContent.appendChild(metricLabel);
+      metricContent.appendChild(metricValue);
+
+      item.appendChild(metricIcon);
+      item.appendChild(metricContent);
+
+      grid.appendChild(item);
+    });
+
+    card.appendChild(grid);
+
+    return card;
+  }
+
+  /**
+   * Builds the Strategic Priorities section (EXECUTIVE-FIRST ENHANCEMENT)
+   * Displays the top 3 critical priorities for executive focus
+   * @private
+   * @returns {HTMLElement} The strategic priorities element
+   */
+  _buildStrategicPriorities() {
+    const card = document.createElement('div');
+    card.className = 'strategic-priorities elevated';
+
+    const header = document.createElement('div');
+    header.className = 'priorities-header';
+
+    const badge = document.createElement('div');
+    badge.className = 'card-badge badge-priority';
+    badge.textContent = 'STRATEGIC FOCUS';
+
+    const title = document.createElement('h3');
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '🎯';
+    title.appendChild(icon);
+    title.appendChild(document.createTextNode(' Top 3 Strategic Priorities'));
+
+    header.appendChild(badge);
+    header.appendChild(title);
+    card.appendChild(header);
+
+    const prioritiesList = document.createElement('div');
+    prioritiesList.className = 'priorities-list';
+
+    this.summaryData.strategicPriorities.forEach((priority, index) => {
+      const priorityItem = document.createElement('div');
+      priorityItem.className = 'priority-item';
+
+      const priorityNumber = document.createElement('div');
+      priorityNumber.className = 'priority-number';
+      priorityNumber.textContent = index + 1;
+
+      const priorityContent = document.createElement('div');
+      priorityContent.className = 'priority-content';
+
+      const priorityTitle = document.createElement('h4');
+      priorityTitle.className = 'priority-title';
+      priorityTitle.textContent = priority.title;
+
+      const priorityDescription = document.createElement('p');
+      priorityDescription.className = 'priority-description';
+      priorityDescription.textContent = priority.description;
+
+      const priorityDetails = document.createElement('div');
+      priorityDetails.className = 'priority-details';
+
+      if (priority.bankingContext) {
+        const contextRow = document.createElement('div');
+        contextRow.className = 'priority-detail-row';
+
+        const contextLabel = document.createElement('span');
+        contextLabel.className = 'detail-label';
+        contextLabel.textContent = '🏦 Banking Context:';
+
+        const contextValue = document.createElement('span');
+        contextValue.className = 'detail-value';
+        contextValue.textContent = priority.bankingContext;
+
+        contextRow.appendChild(contextLabel);
+        contextRow.appendChild(contextValue);
+        priorityDetails.appendChild(contextRow);
+      }
+
+      if (priority.dependencies) {
+        const depsRow = document.createElement('div');
+        depsRow.className = 'priority-detail-row';
+
+        const depsLabel = document.createElement('span');
+        depsLabel.className = 'detail-label';
+        depsLabel.textContent = '🤝 Dependencies:';
+
+        const depsValue = document.createElement('span');
+        depsValue.className = 'detail-value';
+        depsValue.textContent = priority.dependencies;
+
+        depsRow.appendChild(depsLabel);
+        depsRow.appendChild(depsValue);
+        priorityDetails.appendChild(depsRow);
+      }
+
+      if (priority.deadline) {
+        const deadlineRow = document.createElement('div');
+        deadlineRow.className = 'priority-detail-row';
+
+        const deadlineLabel = document.createElement('span');
+        deadlineLabel.className = 'detail-label';
+        deadlineLabel.textContent = '⏰ Deadline:';
+
+        const deadlineValue = document.createElement('span');
+        deadlineValue.className = 'detail-value deadline-urgent';
+        deadlineValue.textContent = priority.deadline;
+
+        deadlineRow.appendChild(deadlineLabel);
+        deadlineRow.appendChild(deadlineValue);
+        priorityDetails.appendChild(deadlineRow);
+      }
+
+      priorityContent.appendChild(priorityTitle);
+      priorityContent.appendChild(priorityDescription);
+      priorityContent.appendChild(priorityDetails);
+
+      priorityItem.appendChild(priorityNumber);
+      priorityItem.appendChild(priorityContent);
+
+      prioritiesList.appendChild(priorityItem);
+    });
+
+    card.appendChild(prioritiesList);
+
+    return card;
   }
 
   /**

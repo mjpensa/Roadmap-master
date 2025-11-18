@@ -981,7 +981,29 @@ ANALYSIS FRAMEWORK:
    - Craft a 2-3 sentence "elevator pitch" that captures the essence
    - Include the "so what" - why this matters to the organization NOW
 
-6. COMPETITIVE & MARKET INTELLIGENCE (BANKING ENHANCEMENT)
+6. KEY METRICS DASHBOARD (EXECUTIVE-FIRST ENHANCEMENT)
+   - Provide exactly 6 high-level executive metrics in this specific order:
+     1. Total Investment: Estimated total cost (e.g., "$2.4M" or "15-20% cost reduction")
+     2. Time to Value: Timeline to ROI or project completion (e.g., "9 months" or "Q3 2026")
+     3. Regulatory Risk: Count of high-priority regulatory checkpoints (e.g., "3 High Priority" or "Low Risk")
+     4. ROI Projection: Projected return on investment (e.g., "340% in 18 months" or "Not Applicable")
+     5. Critical Path Status: Current status of critical path (e.g., "On Track" or "At Risk - 2 delays")
+     6. Vendor Lock-in: Vendor dependency risk level (e.g., "Medium Risk" or "Low - Multi-vendor strategy")
+   - Use concise values (4-8 words max per metric)
+   - If data unavailable, use "TBD" or "Not Specified"
+
+7. TOP 3 STRATEGIC PRIORITIES (EXECUTIVE-FIRST ENHANCEMENT)
+   - Identify the 3 MOST CRITICAL priorities that must happen first
+   - For each priority, provide:
+     * title: Brief priority name (4-8 words)
+     * description: Why this is critical (1-2 sentences)
+     * bankingContext: Banking-specific considerations (regulatory deadlines, compliance requirements, market timing)
+     * dependencies: External parties involved (vendors, regulators, partners)
+     * deadline: When this must be completed (or null if flexible)
+   - Order by criticality (most critical first)
+   - Focus on strategic decisions, not tactical tasks
+
+8. COMPETITIVE & MARKET INTELLIGENCE (BANKING ENHANCEMENT)
    - Analyze competitive positioning:
      * Market timing: Are we early adopters, fast followers, or catching up?
      * Competitor moves: What have major competitors (JPMorgan, Wells Fargo, Bank of America, regional banks) done in this space?
@@ -990,7 +1012,7 @@ ANALYSIS FRAMEWORK:
    - Look for competitive mentions, market trends, and industry adoption data in research
    - If no competitive data in research, provide general banking industry context
 
-7. INDUSTRY BENCHMARKS (BANKING ENHANCEMENT)
+9. INDUSTRY BENCHMARKS (BANKING ENHANCEMENT)
    - Compare this initiative to banking industry standards:
      * Time to Market: How does the timeline compare to typical bank IT projects? (Industry average: 12-18 months for similar initiatives)
      * Investment Level: Is this cost-competitive? (Industry median: Varies by project type, typically $2-5M for digital banking initiatives)
@@ -1011,8 +1033,40 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
   properties: {
     executiveSummary: {
       type: "object",
-      required: ["drivers", "dependencies", "risks", "keyInsights", "strategicNarrative", "metadata"],
+      required: ["drivers", "dependencies", "risks", "keyInsights", "strategicNarrative", "metadata", "keyMetricsDashboard", "strategicPriorities"],
       properties: {
+        // EXECUTIVE-FIRST ENHANCEMENT: Key Metrics Dashboard
+        keyMetricsDashboard: {
+          type: "object",
+          properties: {
+            totalInvestment: { type: "string" },
+            timeToValue: { type: "string" },
+            regulatoryRisk: { type: "string" },
+            roiProjection: { type: "string" },
+            criticalPathStatus: { type: "string" },
+            vendorLockIn: { type: "string" }
+          },
+          required: ["totalInvestment", "timeToValue", "regulatoryRisk", "roiProjection", "criticalPathStatus", "vendorLockIn"]
+        },
+
+        // EXECUTIVE-FIRST ENHANCEMENT: Top 3 Strategic Priorities
+        strategicPriorities: {
+          type: "array",
+          minItems: 3,
+          maxItems: 3,
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              bankingContext: { type: "string" },
+              dependencies: { type: "string" },
+              deadline: { type: "string" }
+            },
+            required: ["title", "description", "bankingContext", "dependencies"]
+          }
+        },
+
         drivers: {
           type: "array",
           items: {
