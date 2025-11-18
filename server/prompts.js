@@ -175,6 +175,65 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - **CRITICAL**: Always populate financial impact when possible. Executives make decisions based on ROI.
       If insufficient data, estimate conservatively and mark as "low" confidence.
 
+  **BANKING ENHANCEMENT - STAKEHOLDER & CHANGE MANAGEMENT ANALYSIS:**
+    Generate a comprehensive stakeholder analysis in the "stakeholderImpact" field. This is CRITICAL for banking executives to understand organizational readiness and change management requirements.
+
+    - **customerExperience**: Analyze how this task impacts end customers
+      * currentState: Describe current customer experience pain points (e.g., "Manual loan applications taking 3-5 days")
+      * futureState: Describe improved experience after change (e.g., "Instant pre-qualification with 15-minute applications")
+      * primaryBenefits: 3-5 concrete customer benefits (faster service, lower fees, better rates, convenience)
+      * potentialConcerns: 2-4 realistic customer concerns (privacy, learning curve, trust in automation)
+      * communicationStrategy: How to message this change to customers (town halls, FAQ, pilot program)
+
+    - **internalStakeholders**: Identify 4-6 key employee groups affected by this task
+      For each group (loan officers, IT staff, compliance team, branch managers, call center reps, etc.):
+      * group: Role/department name
+      * size: Approximate headcount ("~25 loan officers", "5-person IT team")
+      * currentRole: What they do today
+      * futureRole: How their job changes
+      * impactLevel: "high" (job fundamentally changes), "medium" (significant new tools/processes), "low" (minor adjustments)
+      * concerns: 2-3 realistic concerns (job security, skill gaps, workload, resistance to change)
+      * trainingNeeds: Specific training required ("2-day platform certification", "ongoing AI oversight training")
+      * championOpportunity: true if this group could become change advocates (early adopters, tech-savvy, high influence)
+
+    - **executiveAlignment**: Map C-suite support for this initiative
+      * sponsor: Primary executive sponsor (CEO, CTO, COO) with brief reason
+      * supporters: 1-3 executives likely to support (with reasons: aligns with their goals, proven ROI, competitive pressure)
+      * neutrals: 1-2 executives on the fence (reasons: other priorities, need more data, budget concerns)
+      * resistors: 1-2 potential resistors (reasons: risk aversion, past failed projects, turf protection)
+      * alignmentStrategy: 2-3 tactics to build consensus (steering committee, phased approach, quick wins, data-driven updates)
+
+    - **changeReadiness**: Assess organizational readiness for this change (0-100 score)
+      * score: Overall readiness score (0-100)
+        - 0-30: High resistance, major cultural barriers
+        - 31-60: Moderate readiness, need significant change management
+        - 61-85: Good readiness, some friction expected
+        - 86-100: Excellent readiness, change champions in place
+      * culturalFit: How well this aligns with bank culture ("Conservative, risk-averse culture may resist rapid AI adoption")
+      * historicalChangeSuccess: Track record with similar changes ("Successfully migrated to cloud in 2023, but mobile banking rollout had delays")
+      * leadershipSupport: Strength of leadership commitment ("CEO publicly committed, but middle management skeptical")
+      * resourceAvailability: Do they have bandwidth? ("IT team already at capacity with regulatory projects")
+
+    - **resistanceRisks**: Identify 3-5 specific resistance scenarios with mitigation plans
+      For each risk:
+      * risk: Specific resistance scenario (e.g., "Loan officers fear AI will replace them, leading to passive resistance")
+      * probability: "high" (>60% chance), "medium" (30-60%), "low" (<30%)
+      * impact: "critical" (could derail project), "major" (significant delays/cost), "moderate" (manageable setback)
+      * mitigation: Concrete action plan (e.g., "Position AI as assistant, not replacement. Show case studies of productivity gains without headcount cuts. Involve loan officers in pilot design.")
+      * earlyWarnings: 2-3 signs this is happening ("Low pilot participation", "Negative sentiment in surveys", "Key influencers spreading FUD")
+
+    - **ESTIMATION GUIDELINES for stakeholder analysis**:
+      * If research lacks specifics, use realistic banking industry assumptions
+      * Typical banking org: 200-5000 employees, with 5-15 executives
+      * Change readiness for traditional banks: typically 40-65 (moderate)
+      * Change readiness for digital-first banks: typically 70-85 (good)
+      * Common stakeholder groups: Branch staff, loan officers, IT, compliance, risk, operations, call center, marketing
+      * Always include at least one resistance risk - no major change happens without resistance
+
+    - **CRITICAL**: Stakeholder analysis should feel realistic and actionable. Avoid generic change management platitudes.
+      Focus on banking-specific concerns (regulatory risk, customer trust, employee skill gaps, technology debt).
+      Executives need this to anticipate resistance and plan proactive interventions.
+
 **IMPORTANT NOTES:**
 - If research data is insufficient for Phase 1, 2, or 3 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
 - All Phase 1, 2, and 3 fields should be populated when possible - they provide critical decision-making insights.
@@ -437,6 +496,81 @@ export const TASK_ANALYSIS_SCHEMA = {
             firstYearROI: { type: "string" },
             threeYearNPV: { type: "string" },
             confidenceLevel: { type: "string", enum: ["high", "medium", "low"] }
+          }
+        }
+      }
+    },
+
+    // BANKING ENHANCEMENT - Stakeholder & Change Management Analysis
+    stakeholderImpact: {
+      type: "object",
+      properties: {
+        // Customer Experience Impact
+        customerExperience: {
+          type: "object",
+          properties: {
+            currentState: { type: "string" },
+            futureState: { type: "string" },
+            primaryBenefits: { type: "array", items: { type: "string" } },
+            potentialConcerns: { type: "array", items: { type: "string" } },
+            communicationStrategy: { type: "string" }
+          }
+        },
+
+        // Internal Stakeholders
+        internalStakeholders: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              group: { type: "string" },
+              size: { type: "string" },
+              currentRole: { type: "string" },
+              futureRole: { type: "string" },
+              impactLevel: { type: "string", enum: ["high", "medium", "low"] },
+              concerns: { type: "array", items: { type: "string" } },
+              trainingNeeds: { type: "string" },
+              championOpportunity: { type: "boolean" }
+            }
+          }
+        },
+
+        // Executive Alignment
+        executiveAlignment: {
+          type: "object",
+          properties: {
+            sponsor: { type: "string" },
+            supporters: { type: "array", items: { type: "string" } },
+            neutrals: { type: "array", items: { type: "string" } },
+            resistors: { type: "array", items: { type: "string" } },
+            alignmentStrategy: { type: "string" }
+          }
+        },
+
+        // Change Readiness Assessment
+        changeReadiness: {
+          type: "object",
+          properties: {
+            overallScore: { type: "string", enum: ["high", "medium", "low"] },
+            culturalFit: { type: "string" },
+            historicalChange: { type: "string" },
+            leadershipCommitment: { type: "string" },
+            resourceAvailability: { type: "string" }
+          }
+        },
+
+        // Resistance Risks
+        resistanceRisks: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              risk: { type: "string" },
+              probability: { type: "string", enum: ["high", "medium", "low"] },
+              impact: { type: "string" },
+              mitigation: { type: "string" },
+              earlyWarningSignal: { type: "string" }
+            }
           }
         }
       }
