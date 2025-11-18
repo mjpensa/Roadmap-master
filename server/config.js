@@ -160,7 +160,8 @@ export const CONFIG = {
     // ID validation patterns
     PATTERNS: {
       CHART_ID: /^[a-f0-9]{32}$/i,
-      JOB_ID: /^[a-f0-9]{32}$/i
+      JOB_ID: /^[a-f0-9]{32}$/i,
+      SESSION_ID: /^[a-f0-9]{32}$/i
     }
   },
 
