@@ -558,25 +558,29 @@ async function handleChartGenerate(event) {
       return; // Will re-enable button in finally block
     }
 
-    const formData = new FormData();
-    formData.append('prompt', promptInput.value);
-    for (const file of validFiles) {
-      formData.append('researchFiles', file);
-    }
-
-    // 4. Update UI to show loading
-    loadingIndicator.style.display = 'flex';
-    errorMessage.style.display = 'none';
-    chartOutput.innerHTML = ''; // Clear old chart
-
-    // 4.5. Check if semantic mode is enabled
+    // 4. Check if semantic mode is enabled (before creating FormData)
     const semanticModeToggle = document.getElementById('semantic-mode-toggle');
     const isSemanticMode = semanticModeToggle && semanticModeToggle.checked;
 
     // Store semantic mode flag for polling
     window.isSemanticMode = isSemanticMode;
 
-    // 5. Phase 3 Enhancement: Call appropriate endpoint based on mode
+    const formData = new FormData();
+    formData.append('prompt', promptInput.value);
+
+    // Use correct field name based on mode
+    // Standard endpoint expects 'researchFiles', semantic expects 'files'
+    const fileFieldName = isSemanticMode ? 'files' : 'researchFiles';
+    for (const file of validFiles) {
+      formData.append(fileFieldName, file);
+    }
+
+    // 5. Update UI to show loading
+    loadingIndicator.style.display = 'flex';
+    errorMessage.style.display = 'none';
+    chartOutput.innerHTML = ''; // Clear old chart
+
+    // 6. Phase 3 Enhancement: Call appropriate endpoint based on mode
     const endpoint = isSemanticMode ? '/api/generate-semantic-gantt' : '/generate-chart';
     console.log(`Generating chart in ${isSemanticMode ? 'SEMANTIC' : 'STANDARD'} mode`);
 
@@ -603,7 +607,7 @@ async function handleChartGenerate(event) {
       throw new Error(errorText);
     }
 
-    // 6. Get job ID from response
+    // 7. Get job ID from response
     const jobResponse = await response.json();
     const jobId = jobResponse.jobId;
 
@@ -613,7 +617,7 @@ async function handleChartGenerate(event) {
 
     console.log('Job started:', jobId);
 
-    // 7. Poll for job completion
+    // 8. Poll for job completion
     const ganttData = await pollForJobCompletion(jobId, generateBtn);
 
     // Debug: Log the received data structure
