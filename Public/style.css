@@ -2710,6 +2710,145 @@ body.dragging {
   line-height: 1.5;
 }
 
+/* --- BANKING ENHANCEMENT: COMPETITIVE INTELLIGENCE CARD --- */
+.intel-card.competitive {
+  background: linear-gradient(135deg, #1a2a3a 0%, #1f2937 100%);
+  border-left: 4px solid #3B82F6;
+}
+
+.competitive-content {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.competitive-section {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.competitive-section strong {
+  display: block;
+  color: #60A5FA;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.competitive-section p {
+  margin: 0;
+  color: #E5E7EB;
+  line-height: 1.6;
+}
+
+.competitor-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+}
+
+.competitor-list li {
+  padding: 6px 0 6px 20px;
+  position: relative;
+  color: #D1D5DB;
+}
+
+.competitor-list li:before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: #60A5FA;
+  font-weight: bold;
+}
+
+.competitive-section.advantage-highlight {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.competitive-section.market-window {
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid #F59E0B;
+}
+
+/* --- BANKING ENHANCEMENT: INDUSTRY BENCHMARKS CARD --- */
+.intel-card.benchmarks {
+  background: linear-gradient(135deg, #1e293b 0%, #1f2937 100%);
+  border-left: 4px solid #10B981;
+}
+
+.benchmarks-content {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.benchmark-item {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.benchmark-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10B981;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.benchmark-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.your-value {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.industry-value {
+  color: #9CA3AF;
+}
+
+.variance {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.variance.positive {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.benchmark-insight {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #D1D5DB;
+  font-size: 13px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.benchmark-value {
+  color: #E5E7EB;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .intelligence-grid {

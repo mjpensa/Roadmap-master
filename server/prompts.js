@@ -480,6 +480,24 @@ ANALYSIS FRAMEWORK:
    - Craft a 2-3 sentence "elevator pitch" that captures the essence
    - Include the "so what" - why this matters to the organization NOW
 
+6. COMPETITIVE & MARKET INTELLIGENCE (BANKING ENHANCEMENT)
+   - Analyze competitive positioning:
+     * Market timing: Are we early adopters, fast followers, or catching up?
+     * Competitor moves: What have major competitors (JPMorgan, Wells Fargo, Bank of America, regional banks) done in this space?
+     * Competitive advantage: What unique positioning does this initiative create?
+     * Market window: How long before this becomes table stakes vs. differentiator?
+   - Look for competitive mentions, market trends, and industry adoption data in research
+   - If no competitive data in research, provide general banking industry context
+
+7. INDUSTRY BENCHMARKS (BANKING ENHANCEMENT)
+   - Compare this initiative to banking industry standards:
+     * Time to Market: How does the timeline compare to typical bank IT projects? (Industry average: 12-18 months for similar initiatives)
+     * Investment Level: Is this cost-competitive? (Industry median: Varies by project type, typically $2-5M for digital banking initiatives)
+     * Risk Profile: Is this riskier or safer than typical projects?
+   - Provide variance percentages (e.g., "37% faster than industry average")
+   - Include actionable insights (e.g., "Faster timeline creates competitive advantage but increases execution risk")
+   - If specific benchmarks unavailable, use general banking industry knowledge
+
 IMPORTANT: Your analysis must synthesize insights across ALL provided documents,
 not just individual tasks. Look for patterns, contradictions, and convergent themes.
 Use specific examples and data points from the research to support each insight.`;
@@ -566,6 +584,49 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
             analysisDepth: { type: "string", enum: ["comprehensive", "standard", "preliminary"] }
           },
           required: ["confidenceLevel", "documentsCited"]
+        },
+
+        // BANKING ENHANCEMENT: Competitive & Market Intelligence
+        competitiveIntelligence: {
+          type: "object",
+          properties: {
+            marketTiming: { type: "string" },
+            competitorMoves: { type: "array", items: { type: "string" } },
+            competitiveAdvantage: { type: "string" },
+            marketWindow: { type: "string" }
+          }
+        },
+
+        // BANKING ENHANCEMENT: Industry Benchmarks
+        industryBenchmarks: {
+          type: "object",
+          properties: {
+            timeToMarket: {
+              type: "object",
+              properties: {
+                yourPlan: { type: "string" },
+                industryAverage: { type: "string" },
+                variance: { type: "string" },
+                insight: { type: "string" }
+              }
+            },
+            investmentLevel: {
+              type: "object",
+              properties: {
+                yourPlan: { type: "string" },
+                industryMedian: { type: "string" },
+                variance: { type: "string" },
+                insight: { type: "string" }
+              }
+            },
+            riskProfile: {
+              type: "object",
+              properties: {
+                yourPlan: { type: "string" },
+                insight: { type: "string" }
+              }
+            }
+          }
         }
       }
     }

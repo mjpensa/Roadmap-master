@@ -128,6 +128,18 @@ export class ExecutiveSummary {
       content.appendChild(insightsCard);
     }
 
+    // BANKING ENHANCEMENT: Competitive Intelligence Section
+    if (this.summaryData.competitiveIntelligence) {
+      const competitiveCard = this._buildCompetitiveIntelligenceCard();
+      content.appendChild(competitiveCard);
+    }
+
+    // BANKING ENHANCEMENT: Industry Benchmarks Section
+    if (this.summaryData.industryBenchmarks) {
+      const benchmarksCard = this._buildIndustryBenchmarksCard();
+      content.appendChild(benchmarksCard);
+    }
+
     return content;
   }
 
@@ -486,6 +498,222 @@ export class ExecutiveSummary {
     card.appendChild(insightsCarousel);
 
     return card;
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Builds the competitive intelligence card
+   * @private
+   * @returns {HTMLElement} The competitive intelligence card element
+   */
+  _buildCompetitiveIntelligenceCard() {
+    const card = document.createElement('div');
+    card.className = 'intel-card competitive full-width';
+
+    const header = document.createElement('h3');
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '🎯';
+    header.appendChild(icon);
+    header.appendChild(document.createTextNode(' Competitive & Market Intelligence'));
+
+    const content = document.createElement('div');
+    content.className = 'competitive-content';
+
+    const ci = this.summaryData.competitiveIntelligence;
+
+    // Market Timing
+    if (ci.marketTiming) {
+      const timingSection = document.createElement('div');
+      timingSection.className = 'competitive-section';
+
+      const timingLabel = document.createElement('strong');
+      timingLabel.textContent = 'Market Positioning:';
+
+      const timingText = document.createElement('p');
+      timingText.textContent = ci.marketTiming;
+
+      timingSection.appendChild(timingLabel);
+      timingSection.appendChild(timingText);
+      content.appendChild(timingSection);
+    }
+
+    // Competitor Moves
+    if (ci.competitorMoves && ci.competitorMoves.length > 0) {
+      const movesSection = document.createElement('div');
+      movesSection.className = 'competitive-section';
+
+      const movesLabel = document.createElement('strong');
+      movesLabel.textContent = 'Competitor Activity:';
+
+      const movesList = document.createElement('ul');
+      movesList.className = 'competitor-list';
+      ci.competitorMoves.forEach(move => {
+        const li = document.createElement('li');
+        li.textContent = move;
+        movesList.appendChild(li);
+      });
+
+      movesSection.appendChild(movesLabel);
+      movesSection.appendChild(movesList);
+      content.appendChild(movesSection);
+    }
+
+    // Competitive Advantage
+    if (ci.competitiveAdvantage) {
+      const advantageSection = document.createElement('div');
+      advantageSection.className = 'competitive-section advantage-highlight';
+
+      const advantageLabel = document.createElement('strong');
+      advantageLabel.textContent = '✨ Competitive Advantage:';
+
+      const advantageText = document.createElement('p');
+      advantageText.textContent = ci.competitiveAdvantage;
+
+      advantageSection.appendChild(advantageLabel);
+      advantageSection.appendChild(advantageText);
+      content.appendChild(advantageSection);
+    }
+
+    // Market Window
+    if (ci.marketWindow) {
+      const windowSection = document.createElement('div');
+      windowSection.className = 'competitive-section market-window';
+
+      const windowLabel = document.createElement('strong');
+      windowLabel.textContent = '⏰ Market Window:';
+
+      const windowText = document.createElement('p');
+      windowText.textContent = ci.marketWindow;
+
+      windowSection.appendChild(windowLabel);
+      windowSection.appendChild(windowText);
+      content.appendChild(windowSection);
+    }
+
+    card.appendChild(header);
+    card.appendChild(content);
+
+    return card;
+  }
+
+  /**
+   * BANKING ENHANCEMENT: Builds the industry benchmarks card
+   * @private
+   * @returns {HTMLElement} The industry benchmarks card element
+   */
+  _buildIndustryBenchmarksCard() {
+    const card = document.createElement('div');
+    card.className = 'intel-card benchmarks full-width';
+
+    const header = document.createElement('h3');
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '📊';
+    header.appendChild(icon);
+    header.appendChild(document.createTextNode(' Industry Benchmarks'));
+
+    const content = document.createElement('div');
+    content.className = 'benchmarks-content';
+
+    const ib = this.summaryData.industryBenchmarks;
+
+    // Time to Market Benchmark
+    if (ib.timeToMarket) {
+      const benchmarkItem = this._buildBenchmarkItem(
+        'Time to Market',
+        ib.timeToMarket.yourPlan,
+        ib.timeToMarket.industryAverage,
+        ib.timeToMarket.variance,
+        ib.timeToMarket.insight
+      );
+      content.appendChild(benchmarkItem);
+    }
+
+    // Investment Level Benchmark
+    if (ib.investmentLevel) {
+      const benchmarkItem = this._buildBenchmarkItem(
+        'Investment Level',
+        ib.investmentLevel.yourPlan,
+        ib.investmentLevel.industryMedian,
+        ib.investmentLevel.variance,
+        ib.investmentLevel.insight
+      );
+      content.appendChild(benchmarkItem);
+    }
+
+    // Risk Profile
+    if (ib.riskProfile) {
+      const riskItem = document.createElement('div');
+      riskItem.className = 'benchmark-item';
+
+      const riskLabel = document.createElement('div');
+      riskLabel.className = 'benchmark-label';
+      riskLabel.textContent = 'Risk Profile';
+
+      const riskComparison = document.createElement('div');
+      riskComparison.className = 'benchmark-value';
+      riskComparison.textContent = ib.riskProfile.yourPlan;
+
+      const riskInsight = document.createElement('div');
+      riskInsight.className = 'benchmark-insight';
+      riskInsight.textContent = ib.riskProfile.insight;
+
+      riskItem.appendChild(riskLabel);
+      riskItem.appendChild(riskComparison);
+      riskItem.appendChild(riskInsight);
+      content.appendChild(riskItem);
+    }
+
+    card.appendChild(header);
+    card.appendChild(content);
+
+    return card;
+  }
+
+  /**
+   * Helper method to build a single benchmark comparison item
+   * @private
+   */
+  _buildBenchmarkItem(label, yourPlan, industryValue, variance, insight) {
+    const item = document.createElement('div');
+    item.className = 'benchmark-item';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'benchmark-label';
+    labelEl.textContent = label;
+
+    const comparison = document.createElement('div');
+    comparison.className = 'benchmark-comparison';
+
+    const yourValue = document.createElement('span');
+    yourValue.className = 'your-value';
+    yourValue.textContent = `Your Plan: ${yourPlan}`;
+
+    const industryVal = document.createElement('span');
+    industryVal.className = 'industry-value';
+    industryVal.textContent = `Industry: ${industryValue}`;
+
+    const varianceEl = document.createElement('span');
+    varianceEl.className = variance && variance.includes('faster') || variance && variance.includes('less') || variance && variance.includes('lower') ? 'variance positive' : 'variance';
+    varianceEl.textContent = variance || '';
+
+    comparison.appendChild(yourValue);
+    comparison.appendChild(document.createTextNode(' vs '));
+    comparison.appendChild(industryVal);
+    if (variance) {
+      comparison.appendChild(document.createTextNode(' '));
+      comparison.appendChild(varianceEl);
+    }
+
+    const insightEl = document.createElement('div');
+    insightEl.className = 'benchmark-insight';
+    insightEl.textContent = insight;
+
+    item.appendChild(labelEl);
+    item.appendChild(comparison);
+    item.appendChild(insightEl);
+
+    return item;
   }
 
   /**
