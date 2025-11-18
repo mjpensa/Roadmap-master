@@ -6,12 +6,14 @@ class Router {
         this.routes = {
             'roadmap': () => this.showSection('roadmap'),
             'executive-summary': () => this.showSection('executive-summary'),
-            'presentation': () => this.showSection('presentation')
+            'presentation': () => this.showSection('presentation'),
+            'research-synthesis': () => this.showSection('research-synthesis')
         };
         this.currentRoute = null;
         this.ganttChart = null;
         this.executiveSummary = null;
         this.presentationSlides = null;
+        this.researchSynthesizer = null;
         this.hamburgerMenu = null;
 
         // Bind event handlers
@@ -21,11 +23,12 @@ class Router {
     /**
      * Initialize the router with component references
      */
-    init(ganttChart, executiveSummary, presentationSlides) {
+    init(ganttChart, executiveSummary, presentationSlides, researchSynthesizer = null) {
         console.log('🚀 Router.init called with:', {
             ganttChart: !!ganttChart,
             executiveSummary: !!executiveSummary,
             presentationSlides: !!presentationSlides,
+            researchSynthesizer: !!researchSynthesizer,
             executiveSummaryContainer: !!executiveSummary?.container,
             presentationSlidesContainer: !!presentationSlides?.container
         });
@@ -33,6 +36,7 @@ class Router {
         this.ganttChart = ganttChart;
         this.executiveSummary = executiveSummary;
         this.presentationSlides = presentationSlides;
+        this.researchSynthesizer = researchSynthesizer;
         this.hamburgerMenu = ganttChart?.hamburgerMenu;
 
         // Listen for hash changes
@@ -91,15 +95,18 @@ class Router {
         const ganttTitle = document.querySelector('.gantt-title');
         const summaryContainer = this.executiveSummary?.container || document.getElementById('executiveSummary');
         const slidesContainer = this.presentationSlides?.container || document.getElementById('presentationSlides');
+        const researchContainer = document.getElementById('researchSynthesis');
 
         console.log('📦 Container references:', {
             ganttGrid: !!ganttGrid,
             ganttTitle: !!ganttTitle,
             summaryContainer: !!summaryContainer,
             slidesContainer: !!slidesContainer,
+            researchContainer: !!researchContainer,
             ganttChart: !!this.ganttChart,
             executiveSummary: !!this.executiveSummary,
-            presentationSlides: !!this.presentationSlides
+            presentationSlides: !!this.presentationSlides,
+            researchSynthesizer: !!this.researchSynthesizer
         });
 
         // Warn if containers are missing
@@ -108,6 +115,9 @@ class Router {
         }
         if (!slidesContainer) {
             console.warn('⚠️ Presentation Slides container not found');
+        }
+        if (!researchContainer) {
+            console.warn('⚠️ Research Synthesis container not found');
         }
 
         // Also get the legend and other Gantt-specific elements
@@ -141,6 +151,10 @@ class Router {
                     slidesContainer.style.display = 'none';
                     slidesContainer.classList.remove('section-isolated');
                 }
+                if (researchContainer) {
+                    researchContainer.style.display = 'none';
+                    researchContainer.classList.remove('section-isolated');
+                }
                 break;
 
             case 'executive-summary':
@@ -168,6 +182,10 @@ class Router {
                     slidesContainer.style.display = 'none';
                     slidesContainer.classList.remove('section-isolated');
                 }
+                if (researchContainer) {
+                    researchContainer.style.display = 'none';
+                    researchContainer.classList.remove('section-isolated');
+                }
                 break;
 
             case 'presentation':
@@ -194,6 +212,45 @@ class Router {
                 if (slidesContainer) {
                     slidesContainer.style.display = '';
                     slidesContainer.classList.add('section-isolated');
+                }
+                if (researchContainer) {
+                    researchContainer.style.display = 'none';
+                    researchContainer.classList.remove('section-isolated');
+                }
+                break;
+
+            case 'research-synthesis':
+                // Show only the Research Synthesis
+                if (ganttGrid) {
+                    ganttGrid.style.display = 'none';
+                }
+                if (ganttTitle) {
+                    ganttTitle.style.display = 'none';
+                }
+                if (legend) {
+                    legend.style.display = 'none';
+                }
+                if (todayLine) {
+                    todayLine.style.display = 'none';
+                }
+                if (exportContainer) {
+                    exportContainer.style.display = 'none';
+                }
+                if (summaryContainer) {
+                    summaryContainer.style.display = 'none';
+                    summaryContainer.classList.remove('section-isolated');
+                }
+                if (slidesContainer) {
+                    slidesContainer.style.display = 'none';
+                    slidesContainer.classList.remove('section-isolated');
+                }
+                if (researchContainer) {
+                    researchContainer.style.display = '';
+                    researchContainer.classList.add('section-isolated');
+                    // Render the research synthesizer when showing this section
+                    if (this.researchSynthesizer && typeof this.researchSynthesizer.render === 'function') {
+                        this.researchSynthesizer.render();
+                    }
                 }
                 break;
 
