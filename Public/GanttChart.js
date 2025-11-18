@@ -6,7 +6,7 @@
  */
 
 import { CONFIG } from './config.js';
-import { safeGetElement, findTodayColumnPosition, buildLegend, PerformanceTimer } from './Utils.js';
+import { safeGetElement, findTodayColumnPosition, buildLegend, PerformanceTimer, trackEvent } from './Utils.js';
 import { DraggableGantt } from './DraggableGantt.js';
 import { ResizableGantt } from './ResizableGantt.js';
 import { ContextMenu } from './ContextMenu.js';
@@ -1065,6 +1065,12 @@ export class GanttChart {
       // ACCESSIBILITY: Announce view change to screen readers
       this._announceToScreenReader(`${this.isExecutiveView ? 'Executive' : 'Detail'} view enabled`);
 
+      // FEATURE #9: Track feature usage
+      trackEvent('feature_executive_view', {
+        enabled: this.isExecutiveView,
+        taskCount: this.ganttData.data.length
+      });
+
       console.log(`✓ ${this.isExecutiveView ? 'Executive View' : 'Detail View'} enabled`);
     });
   }
@@ -1134,6 +1140,12 @@ export class GanttChart {
 
       // ACCESSIBILITY: Announce view change to screen readers
       this._announceToScreenReader(`${this.isCriticalPathView ? 'Critical path' : 'All tasks'} view enabled`);
+
+      // FEATURE #9: Track feature usage
+      trackEvent('feature_critical_path', {
+        enabled: this.isCriticalPathView,
+        taskCount: this.ganttData.data.length
+      });
 
       console.log(`✓ ${this.isCriticalPathView ? 'Critical Path View' : 'All Tasks View'} enabled`);
     });
@@ -1217,11 +1229,23 @@ export class GanttChart {
         this._enableAllEditFeatures();
         // ACCESSIBILITY: Announce mode change to screen readers
         this._announceToScreenReader('Edit mode enabled. You can now drag, resize, and customize chart elements.');
+
+        // FEATURE #9: Track feature usage
+        trackEvent('feature_edit_mode', {
+          enabled: true
+        });
+
         console.log('✓ Edit mode enabled');
       } else {
         this._disableAllEditFeatures();
         // ACCESSIBILITY: Announce mode change to screen readers
         this._announceToScreenReader('Edit mode disabled. Chart is now read-only.');
+
+        // FEATURE #9: Track feature usage
+        trackEvent('feature_edit_mode', {
+          enabled: false
+        });
+
         console.log('✓ Edit mode disabled');
       }
     });
@@ -1273,6 +1297,14 @@ export class GanttChart {
         // Performance logging
         const duration = Math.round(performance.now() - startTime);
         console.log(`✓ PNG export completed in ${duration}ms`);
+
+        // FEATURE #9: Track PNG export
+        trackEvent('export_png', {
+          taskCount: this.ganttData.data.length,
+          exportTime: duration,
+          isExecutiveView: this.isExecutiveView,
+          isCriticalPathView: this.isCriticalPathView
+        });
 
         // Update button state
         exportBtn.textContent = 'Export as PNG';
@@ -1373,6 +1405,11 @@ export class GanttChart {
         toggleBtn.setAttribute('aria-pressed', 'true');
         // ACCESSIBILITY: Announce theme change to screen readers
         this._announceToScreenReader('Light theme enabled for presentations');
+
+        // FEATURE #9: Track theme toggle
+        trackEvent('feature_theme_toggle', {
+          theme: 'light'
+        });
       } else {
         this._applyDarkTheme();
         localStorage.setItem('gantt-theme', 'dark');
@@ -1381,6 +1418,11 @@ export class GanttChart {
         toggleBtn.setAttribute('aria-pressed', 'false');
         // ACCESSIBILITY: Announce theme change to screen readers
         this._announceToScreenReader('Dark theme enabled');
+
+        // FEATURE #9: Track theme toggle
+        trackEvent('feature_theme_toggle', {
+          theme: 'dark'
+        });
       }
     });
   }
@@ -1415,6 +1457,12 @@ export class GanttChart {
 
         // ACCESSIBILITY: Announce to screen readers
         this._announceToScreenReader('Chart URL copied to clipboard');
+
+        // FEATURE #9: Track URL sharing
+        trackEvent('url_share', {
+          url: currentUrl,
+          taskCount: this.ganttData.data.length
+        });
 
         // Reset button after 2 seconds
         setTimeout(() => {
