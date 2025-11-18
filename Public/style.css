@@ -3682,6 +3682,17 @@ body.dragging {
   transform: none;
 }
 
+/* PowerPoint Export Button - Banking theme accent */
+.export-pptx-btn {
+  background: #50AF7B;
+  margin-left: 10px;
+}
+
+.export-pptx-btn:hover {
+  background: #4A9D6F;
+  box-shadow: 0 4px 12px rgba(80, 175, 123, 0.4);
+}
+
 .slide-indicator {
   font-size: 14px;
   font-weight: 500;
