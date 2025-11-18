@@ -6979,6 +6979,33 @@ body.dragging {
   margin: 0;
 }
 
+/* Modern custom scrollbar for file list - Webkit browsers (Chrome, Safari, Edge) */
+#file-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#file-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+#file-list::-webkit-scrollbar-thumb {
+  background: rgba(218, 41, 28, 0.6);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+#file-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(218, 41, 28, 0.9);
+}
+
+/* Modern custom scrollbar for Firefox */
+#file-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(218, 41, 28, 0.6) rgba(255, 255, 255, 0.05);
+}
+
 .file-item {
   display: flex;
   align-items: center;
