@@ -270,14 +270,47 @@ export class DeterministicGeminiClient {
    * @returns {Object} Parsed JSON data
    */
   extractJsonFromResponse(response) {
+    // Debug: Log response structure
+    console.log('[Deterministic] Response structure:', {
+      hasCandidates: !!response.candidates,
+      candidatesLength: response.candidates?.length || 0,
+      hasPromptFeedback: !!response.promptFeedback
+    });
+
     if (!response.candidates || response.candidates.length === 0) {
+      // Check for prompt feedback (safety blocks)
+      if (response.promptFeedback) {
+        console.error('[Deterministic] Prompt blocked:', JSON.stringify(response.promptFeedback, null, 2));
+        throw new Error(`Gemini blocked the request: ${response.promptFeedback.blockReason || 'Unknown reason'}`);
+      }
       throw new Error('No candidates in Gemini response');
     }
 
     const candidate = response.candidates[0];
 
+    // Check for finish reason (safety blocks, etc.)
+    console.log('[Deterministic] Finish reason:', candidate.finishReason);
+    if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+      console.error('[Deterministic] Unusual finish reason:', candidate.finishReason);
+      if (candidate.safetyRatings) {
+        console.error('[Deterministic] Safety ratings:', JSON.stringify(candidate.safetyRatings, null, 2));
+      }
+
+      // If blocked due to safety, provide detailed error
+      if (candidate.finishReason === 'SAFETY') {
+        throw new Error(`Content was blocked due to safety filters. Please try with different content.`);
+      } else if (candidate.finishReason === 'RECITATION') {
+        throw new Error(`Content was blocked due to recitation detection.`);
+      } else if (candidate.finishReason === 'MAX_TOKENS') {
+        throw new Error(`Response exceeded maximum token limit. Try with less content.`);
+      } else {
+        throw new Error(`Generation stopped with reason: ${candidate.finishReason}`);
+      }
+    }
+
     if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
-      throw new Error('No content parts in Gemini response');
+      console.error('[Deterministic] Missing content. Candidate:', JSON.stringify(candidate, null, 2));
+      throw new Error('No content parts in Gemini response - content may have been blocked');
     }
 
     let text = candidate.content.parts[0].text;
