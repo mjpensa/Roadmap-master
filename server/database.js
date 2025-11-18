@@ -81,6 +81,21 @@ function createTables(db) {
     )
   `);
 
+  // Semantic charts table - stores bimodal (fact/inference) charts
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS semantic_charts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chartId TEXT UNIQUE NOT NULL,
+      sessionId TEXT NOT NULL,
+      ganttData TEXT NOT NULL,
+      semanticMetadata TEXT NOT NULL,
+      repairLog TEXT,
+      createdAt INTEGER NOT NULL,
+      expiresAt INTEGER NOT NULL,
+      FOREIGN KEY (sessionId) REFERENCES sessions(sessionId)
+    )
+  `);
+
   // FEATURE #9: Analytics tables
   // Analytics events table - stores individual tracking events
   db.exec(`
@@ -117,9 +132,12 @@ function createTables(db) {
     CREATE INDEX IF NOT EXISTS idx_sessions_sessionId ON sessions(sessionId);
     CREATE INDEX IF NOT EXISTS idx_charts_chartId ON charts(chartId);
     CREATE INDEX IF NOT EXISTS idx_charts_sessionId ON charts(sessionId);
+    CREATE INDEX IF NOT EXISTS idx_semantic_charts_chartId ON semantic_charts(chartId);
+    CREATE INDEX IF NOT EXISTS idx_semantic_charts_sessionId ON semantic_charts(sessionId);
     CREATE INDEX IF NOT EXISTS idx_jobs_jobId ON jobs(jobId);
     CREATE INDEX IF NOT EXISTS idx_sessions_expiresAt ON sessions(expiresAt);
     CREATE INDEX IF NOT EXISTS idx_charts_expiresAt ON charts(expiresAt);
+    CREATE INDEX IF NOT EXISTS idx_semantic_charts_expiresAt ON semantic_charts(expiresAt);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_timestamp ON analytics_events(timestamp);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_eventType ON analytics_events(eventType);
     CREATE INDEX IF NOT EXISTS idx_analytics_summary_date ON analytics_summary(date);
@@ -709,6 +727,103 @@ export function getOverallAnalytics() {
         urlShares: recentActivity.recent_shares || 0
       }
     }
+  };
+}
+
+/**
+ * SEMANTIC CHART OPERATIONS
+ */
+
+/**
+ * Create a new semantic chart
+ * @param {string} chartId - Unique chart identifier
+ * @param {string} sessionId - Associated session ID
+ * @param {Object} ganttData - BimodalGanttData structure
+ * @param {Object} metadata - Semantic metadata (fact/inference stats)
+ * @param {Array} repairLog - Validation repair log
+ * @param {number} expirationDays - Days until expiration
+ * @returns {Object} Created chart record
+ */
+export function createSemanticChart(chartId, sessionId, ganttData, metadata, repairLog = [], expirationDays = DEFAULT_EXPIRATION_DAYS) {
+  const db = getDatabase();
+  const now = Date.now();
+  const expiresAt = now + (expirationDays * 24 * 60 * 60 * 1000);
+
+  const stmt = db.prepare(`
+    INSERT INTO semantic_charts (chartId, sessionId, ganttData, semanticMetadata, repairLog, createdAt, expiresAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    chartId,
+    sessionId,
+    JSON.stringify(ganttData),
+    JSON.stringify(metadata),
+    JSON.stringify(repairLog),
+    now,
+    expiresAt
+  );
+
+  console.log(`[Database] Semantic chart created: ${chartId}`);
+  return { chartId, sessionId, createdAt: now, expiresAt };
+}
+
+/**
+ * Get semantic chart by ID
+ * @param {string} chartId - Chart identifier
+ * @returns {Object|null} Chart data or null if not found
+ */
+export function getSemanticChart(chartId) {
+  const db = getDatabase();
+  const stmt = db.prepare('SELECT * FROM semantic_charts WHERE chartId = ?');
+  const row = stmt.get(chartId);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    ganttData: row.ganttData,  // Keep as string for now
+    semanticMetadata: JSON.parse(row.semanticMetadata),
+    repairLog: JSON.parse(row.repairLog || '[]')
+  };
+}
+
+/**
+ * Get all semantic charts for a session
+ * @param {string} sessionId - Session identifier
+ * @returns {Array} Array of semantic charts
+ */
+export function getSemanticChartsBySession(sessionId) {
+  const db = getDatabase();
+  const stmt = db.prepare('SELECT * FROM semantic_charts WHERE sessionId = ?');
+  const rows = stmt.all(sessionId);
+
+  return rows.map(row => ({
+    ...row,
+    semanticMetadata: JSON.parse(row.semanticMetadata),
+    repairLog: JSON.parse(row.repairLog || '[]')
+  }));
+}
+
+/**
+ * Get semantic chart statistics
+ * @returns {Object} Statistics about semantic charts
+ */
+export function getSemanticChartStats() {
+  const db = getDatabase();
+
+  const totalStmt = db.prepare('SELECT COUNT(*) as count FROM semantic_charts');
+  const total = totalStmt.get().count;
+
+  const activeStmt = db.prepare('SELECT COUNT(*) as count FROM semantic_charts WHERE expiresAt > ?');
+  const active = activeStmt.get(Date.now()).count;
+
+  return {
+    total,
+    active,
+    expired: total - active
   };
 }
 
