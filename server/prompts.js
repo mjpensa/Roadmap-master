@@ -46,7 +46,21 @@ You MUST respond with *only* a valid JSON object matching the schema.
           - All tasks within the same swimlane get that swimlane's color
           - Populate the 'legend' array with swimlane names: \`"legend": [{ "color": "priority-red", "label": "Swimlane A Name" }, { "color": "medium-red", "label": "Swimlane B Name" }]\`
         * **CRITICAL:** The 'legend' array must NEVER be empty. It must always explain what the colors represent (either themes or swimlanes).
-6.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
+6.  **REGULATORY FLAGS (BANKING ENHANCEMENT):** For each task, analyze if it involves regulatory approval or compliance:
+    - Set 'hasRegulatoryDependency' to true if the task requires:
+      * Regulatory pre-approval (OCC, FDIC, Federal Reserve, State Banking Department)
+      * Regulatory filing or notification
+      * Compliance audit or review
+      * Regulatory exam preparation
+    - Populate 'regulatorName' with the specific regulator (e.g., "OCC", "FDIC", "Federal Reserve", "CFPB", "State Banking Department")
+    - Set 'approvalType' to describe the requirement (e.g., "Pre-approval required", "Post-launch filing", "Ongoing compliance review")
+    - Provide 'deadline' if mentioned in research (e.g., "Q2 2026 OCC exam window")
+    - Set 'criticalityLevel' to:
+      * "high" if delays would block project launch or cause compliance violations
+      * "medium" if regulatory review is required but some flexibility exists
+      * "low" if regulatory involvement is routine oversight
+    - If task has no regulatory dependency, you may omit the entire 'regulatoryFlags' object or set 'hasRegulatoryDependency' to false
+7.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
 
 /**
  * Task Analysis System Prompt
@@ -126,6 +140,41 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - 'assumptionCount': Count the total number of assumptions made in the analysis (from assumptions array)
     - 'rationale': Brief explanation of confidence level (1-2 sentences explaining why confidence is high/medium/low)
 
+**BANKING ENHANCEMENT - FINANCIAL IMPACT ANALYSIS:**
+
+13. **FINANCIAL IMPACT ANALYSIS (BANKING CRITICAL):**
+    Analyze the research documents for financial information and calculate ROI metrics:
+
+    - **COSTS**: Extract or estimate cost information:
+      * 'laborCosts': FTE counts × duration × average salary (use "$250K fully-loaded per banking FTE" if not specified)
+      * 'technologyCosts': Infrastructure, licenses, cloud costs
+      * 'vendorCosts': Consulting fees, third-party services
+      * 'totalCost': Sum of all costs
+      Example format: "$1.2M - 8 FTE × 6 months @ $250K fully-loaded"
+
+    - **BENEFITS**: Identify and quantify benefits from research:
+      * 'revenueIncrease': New customers, faster processing, upsell opportunities
+      * 'costSavings': Automation savings, headcount reduction, efficiency gains
+      * 'riskReduction': Compliance improvements, fraud prevention, error reduction
+      * 'totalAnnualBenefit': Sum of annual benefits
+      Example format: "$4.2M annually - 2,000 new accounts @ $2,100 annual value"
+
+    - **ROI METRICS**: Calculate financial performance indicators:
+      * 'paybackPeriod': Total Investment ÷ Annual Benefit (in months)
+      * 'firstYearROI': ((Annual Benefit - Total Cost) ÷ Total Cost) × 100 (as percentage)
+      * 'threeYearNPV': Sum of discounted cash flows using 8% discount rate (standard for banking)
+      * 'confidenceLevel': "high" (strong financial data), "medium" (some estimates), "low" (many assumptions)
+      Example: "paybackPeriod": "4.3 months", "firstYearROI": "277%", "threeYearNPV": "$16.4M at 8% discount"
+
+    - **ESTIMATION GUIDELINES**: If specific financial numbers aren't in research, provide reasonable estimates:
+      * Banking FTE fully-loaded cost: $200K-$300K
+      * Typical digital banking project: 6-12 FTE for 6-12 months
+      * Technology costs: $300K-$800K for cloud platforms
+      * Clearly note all assumptions with disclaimer: "Estimated based on industry benchmarks"
+
+    - **CRITICAL**: Always populate financial impact when possible. Executives make decisions based on ROI.
+      If insufficient data, estimate conservatively and mark as "low" confidence.
+
 **IMPORTANT NOTES:**
 - If research data is insufficient for Phase 1, 2, or 3 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
 - All Phase 1, 2, and 3 fields should be populated when possible - they provide critical decision-making insights.
@@ -178,6 +227,16 @@ export const GANTT_CHART_SCHEMA = {
               endCol: { type: "number" },
               color: { type: "string" }
             },
+          },
+          regulatoryFlags: {
+            type: "object",
+            properties: {
+              hasRegulatoryDependency: { type: "boolean" },
+              regulatorName: { type: "string" },
+              approvalType: { type: "string" },
+              deadline: { type: "string" },
+              criticalityLevel: { type: "string", enum: ["high", "medium", "low"] }
+            }
           }
         },
         required: ["title", "isSwimlane", "entity"]
@@ -346,6 +405,40 @@ export const TASK_ANALYSIS_SCHEMA = {
         dataQuality: { type: "string", enum: ["complete", "partial", "limited"] },
         assumptionCount: { type: "number" },
         rationale: { type: "string" }
+      }
+    },
+
+    // BANKING ENHANCEMENT - Financial Impact Analysis
+    financialImpact: {
+      type: "object",
+      properties: {
+        costs: {
+          type: "object",
+          properties: {
+            laborCosts: { type: "string" },
+            technologyCosts: { type: "string" },
+            vendorCosts: { type: "string" },
+            totalCost: { type: "string" }
+          }
+        },
+        benefits: {
+          type: "object",
+          properties: {
+            revenueIncrease: { type: "string" },
+            costSavings: { type: "string" },
+            riskReduction: { type: "string" },
+            totalAnnualBenefit: { type: "string" }
+          }
+        },
+        roiMetrics: {
+          type: "object",
+          properties: {
+            paybackPeriod: { type: "string" },
+            firstYearROI: { type: "string" },
+            threeYearNPV: { type: "string" },
+            confidenceLevel: { type: "string", enum: ["high", "medium", "low"] }
+          }
+        }
       }
     }
   },

@@ -626,6 +626,120 @@ export function buildAccelerators(accelerators) {
 }
 
 /**
+ * BANKING ENHANCEMENT - Financial Impact Dashboard
+ * Builds the Financial Impact Dashboard section
+ * Shows costs, benefits, and ROI metrics in executive-friendly format
+ * @param {Object} financialImpact - Financial impact data from AI analysis
+ * @returns {string} HTML string for the financial impact section
+ */
+export function buildFinancialImpact(financialImpact) {
+  if (!financialImpact || !financialImpact.costs) return '';
+
+  const costs = financialImpact.costs || {};
+  const benefits = financialImpact.benefits || {};
+  const roi = financialImpact.roiMetrics || {};
+
+  // Confidence level badge color
+  const confidenceColors = {
+    high: '#50AF7B',
+    medium: '#EE9E20',
+    low: '#BA3930'
+  };
+  const confidenceColor = confidenceColors[roi.confidenceLevel] || '#666666';
+
+  return `
+    <div class="analysis-section financial-impact-section">
+      <h4>💰 Financial Impact Analysis</h4>
+
+      <div class="financial-dashboard">
+        <!-- ROI Summary Card (Most Prominent) -->
+        <div class="roi-summary-card">
+          <div class="roi-header">
+            <h5>Investment Summary</h5>
+            <span class="confidence-badge" style="background-color: ${confidenceColor};">
+              ${roi.confidenceLevel ? roi.confidenceLevel.toUpperCase() : 'MEDIUM'} CONFIDENCE
+            </span>
+          </div>
+
+          <div class="roi-metrics">
+            <div class="roi-metric primary">
+              <span class="metric-label">Payback Period</span>
+              <span class="metric-value">${DOMPurify.sanitize(roi.paybackPeriod || 'TBD')}</span>
+            </div>
+            <div class="roi-metric primary">
+              <span class="metric-label">First Year ROI</span>
+              <span class="metric-value highlight-green">${DOMPurify.sanitize(roi.firstYearROI || 'TBD')}</span>
+            </div>
+            <div class="roi-metric">
+              <span class="metric-label">3-Year NPV</span>
+              <span class="metric-value">${DOMPurify.sanitize(roi.threeYearNPV || 'TBD')}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cost Breakdown -->
+        <div class="financial-breakdown-card">
+          <h5>Investment Required</h5>
+          <div class="financial-items">
+            ${costs.laborCosts ? `
+              <div class="financial-item cost">
+                <span class="item-label">Labor Costs</span>
+                <span class="item-value">${DOMPurify.sanitize(costs.laborCosts)}</span>
+              </div>
+            ` : ''}
+            ${costs.technologyCosts ? `
+              <div class="financial-item cost">
+                <span class="item-label">Technology</span>
+                <span class="item-value">${DOMPurify.sanitize(costs.technologyCosts)}</span>
+              </div>
+            ` : ''}
+            ${costs.vendorCosts ? `
+              <div class="financial-item cost">
+                <span class="item-label">Vendors/Consulting</span>
+                <span class="item-value">${DOMPurify.sanitize(costs.vendorCosts)}</span>
+              </div>
+            ` : ''}
+            <div class="financial-item cost total">
+              <span class="item-label">Total Investment</span>
+              <span class="item-value">${DOMPurify.sanitize(costs.totalCost || 'TBD')}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Benefit Breakdown -->
+        <div class="financial-breakdown-card">
+          <h5>Expected Annual Benefits</h5>
+          <div class="financial-items">
+            ${benefits.revenueIncrease ? `
+              <div class="financial-item benefit">
+                <span class="item-label">Revenue Increase</span>
+                <span class="item-value">${DOMPurify.sanitize(benefits.revenueIncrease)}</span>
+              </div>
+            ` : ''}
+            ${benefits.costSavings ? `
+              <div class="financial-item benefit">
+                <span class="item-label">Cost Savings</span>
+                <span class="item-value">${DOMPurify.sanitize(benefits.costSavings)}</span>
+              </div>
+            ` : ''}
+            ${benefits.riskReduction ? `
+              <div class="financial-item benefit">
+                <span class="item-label">Risk Mitigation</span>
+                <span class="item-value">${DOMPurify.sanitize(benefits.riskReduction)}</span>
+              </div>
+            ` : ''}
+            <div class="financial-item benefit total">
+              <span class="item-label">Total Annual Benefit</span>
+              <span class="item-value highlight-green">${DOMPurify.sanitize(benefits.totalAnnualBenefit || 'TBD')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Builds the HTML legend element for the Gantt chart.
  * Creates a visual legend showing color-coded categories and their meanings.
  * @param {Array<Object>} legendData - Array of legend items

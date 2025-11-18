@@ -4,7 +4,7 @@
  * Handles task analysis modal functionality
  */
 
-import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext, buildProgressIndicators, buildAccelerators } from './Utils.js';
+import { safeGetElement, safeQuerySelector, buildAnalysisSection, buildAnalysisList, buildTimelineScenarios, buildRiskAnalysis, buildImpactAnalysis, buildSchedulingContext, buildProgressIndicators, buildAccelerators, buildFinancialImpact } from './Utils.js';
 import { ChatInterface } from './ChatInterface.js';
 
 /**
@@ -157,8 +157,9 @@ export class TaskAnalyzer {
     const quickFactsHTML = this._buildQuickFacts(analysis);
 
     // Build main analysis content
-    // ORDER: Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
+    // ORDER: Financial Impact (NEW - Banking Enhancement), Timeline Scenarios, Risks, Impact, Scheduling Context, Progress (Phase 2), Accelerators (Phase 2), Facts, Assumptions, Summary/Rationale
     const mainContentHTML = `
+      ${buildFinancialImpact(analysis.financialImpact)}
       ${buildTimelineScenarios(analysis.timelineScenarios)}
       ${buildRiskAnalysis(analysis.risks)}
       ${buildImpactAnalysis(analysis.impact)}
