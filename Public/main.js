@@ -388,7 +388,9 @@ async function pollForJobCompletion(jobId, generateBtn) {
     attempts++;
 
     try {
-      const response = await fetch(`/job/${jobId}`);
+      // Use semantic endpoint if in semantic mode
+      const jobEndpoint = window.isSemanticMode ? `/api/semantic-job/${jobId}` : `/job/${jobId}`;
+      const response = await fetch(jobEndpoint);
 
       if (!response.ok) {
         // Handle non-JSON error responses gracefully
@@ -421,6 +423,24 @@ async function pollForJobCompletion(jobId, generateBtn) {
       // Check job status
       if (job.status === 'complete') {
         console.log('Job completed successfully');
+
+        // Handle semantic mode differently (returns chartId, not full data)
+        if (window.isSemanticMode && job.chartId) {
+          console.log('Semantic mode: Fetching chart data with chartId:', job.chartId);
+
+          // Fetch the full semantic chart data
+          const chartResponse = await fetch(`/api/semantic-gantt/${job.chartId}`);
+          if (!chartResponse.ok) {
+            throw new Error(`Failed to fetch semantic chart: ${chartResponse.status}`);
+          }
+
+          const chartData = await chartResponse.json();
+          console.log('Semantic chart data received:', chartData);
+
+          return chartData.ganttData; // Return the ganttData from semantic chart
+        }
+
+        // Standard mode: data is directly in job.data
         console.log('Job data structure:', Object.keys(job.data || {}));
 
         // *** ENHANCED DEBUG: Log exact structure received from server ***
@@ -549,8 +569,18 @@ async function handleChartGenerate(event) {
     errorMessage.style.display = 'none';
     chartOutput.innerHTML = ''; // Clear old chart
 
-    // 5. Phase 3 Enhancement: Call /generate-chart to start async job
-    const response = await fetch('/generate-chart', {
+    // 4.5. Check if semantic mode is enabled
+    const semanticModeToggle = document.getElementById('semantic-mode-toggle');
+    const isSemanticMode = semanticModeToggle && semanticModeToggle.checked;
+
+    // Store semantic mode flag for polling
+    window.isSemanticMode = isSemanticMode;
+
+    // 5. Phase 3 Enhancement: Call appropriate endpoint based on mode
+    const endpoint = isSemanticMode ? '/api/generate-semantic-gantt' : '/generate-chart';
+    console.log(`Generating chart in ${isSemanticMode ? 'SEMANTIC' : 'STANDARD'} mode`);
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       body: formData,
     });
