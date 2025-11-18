@@ -7,6 +7,20 @@
 */
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600&display=swap'); /* CHANGED */
 
+/* --- ACCESSIBILITY UTILITIES --- */
+/* Screen reader only class - visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 /* --- GANTT CHART STYLES --- */
 /* These are applied by main.js when building the chart */
 
