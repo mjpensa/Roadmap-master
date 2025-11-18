@@ -5588,6 +5588,12 @@ body.dragging {
   min-height: 100%;
 }
 
+/* Adjust slide-display background when showing BIP slides */
+.slide-display:has(.bip-slide-wrapper) {
+  background: white;
+  padding: 0;
+}
+
 /* Loading and error states */
 .slide-loading {
   padding: 40px;

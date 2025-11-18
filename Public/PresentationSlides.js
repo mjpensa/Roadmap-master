@@ -139,13 +139,22 @@ export class PresentationSlides {
 
         const fullHTML = await response.text();
 
-        // Parse the HTML to extract body content
+        // Parse the HTML to extract both styles and body content
         const parser = new DOMParser();
         const doc = parser.parseFromString(fullHTML, 'text/html');
+
+        // Extract all style tags from the head
+        const styles = Array.from(doc.head.querySelectorAll('style'))
+          .map(style => style.outerHTML)
+          .join('\n');
+
+        // Extract body content
         const bodyContent = doc.body.innerHTML;
 
+        // Combine styles and body content
+        slideHTML = styles + bodyContent;
+
         // Cache the extracted content
-        slideHTML = bodyContent;
         this.slideCache[slideNumber] = slideHTML;
       }
 
@@ -155,6 +164,7 @@ export class PresentationSlides {
       // Create a wrapper div to contain the slide
       const slideWrapper = document.createElement('div');
       slideWrapper.className = 'bip-slide-wrapper';
+      slideWrapper.style.cssText = 'background: white; position: relative; width: 100%; height: 100%; overflow: auto;';
       slideWrapper.innerHTML = slideHTML;
 
       container.appendChild(slideWrapper);
