@@ -42,7 +42,7 @@ export class GanttChart {
     this.resizableGantt = null; // Phase 2: Bar resizing functionality
     this.contextMenu = null; // Phase 5: Context menu for color changing
     this.isEditMode = false; // Edit mode toggle - default is read-only
-    this.isExecutiveView = false; // EXECUTIVE-FIRST: Executive View toggle - shows only milestones/decisions/regulatory
+    this.isExecutiveView = false; // EXECUTIVE-FIRST: Executive View toggle - shows only milestones/decisions
     this.isCriticalPathView = false; // ADVANCED GANTT: Critical Path View toggle - shows only critical path tasks
     this.titleElement = null; // Reference to the title element for edit mode
     this.legendElement = null; // Reference to the legend element for edit mode
@@ -88,7 +88,6 @@ export class GanttChart {
     renderTimer.mark('Grid created');
 
     this._addLegend();
-    this._addRegulatorySummary(); // BANKING ENHANCEMENT: Add regulatory milestones summary
 
     // Add Executive Summary - Always create component, it will handle missing data gracefully
     this._addExecutiveSummary();
@@ -115,7 +114,7 @@ export class GanttChart {
     executiveViewBtn.id = 'executive-view-toggle-btn';
     executiveViewBtn.className = 'executive-view-toggle-button';
     executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
-    executiveViewBtn.title = 'Toggle Executive View (show only milestones, decisions, and regulatory checkpoints)';
+    executiveViewBtn.title = 'Toggle Executive View (show only milestones and decisions)';
     executiveViewBtn.setAttribute('aria-label', 'Toggle Executive View to show only strategic-level tasks');
     executiveViewBtn.setAttribute('aria-pressed', this.isExecutiveView ? 'true' : 'false');
     executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
@@ -522,11 +521,6 @@ export class GanttChart {
         barEl.setAttribute('data-critical-path', 'true');
       }
 
-      // BANKING ENHANCEMENT: Add regulatory icon if task has regulatory dependency
-      if (row.regulatoryFlags && row.regulatoryFlags.hasRegulatoryDependency) {
-        this._addRegulatoryIcon(barEl, row.regulatoryFlags);
-      }
-
       // ADVANCED GANTT: Add milestone marker based on task type
       if (row.taskType) {
         this._addMilestoneMarker(barEl, row.taskType, row.title);
@@ -753,37 +747,9 @@ export class GanttChart {
   }
 
   /**
-   * BANKING ENHANCEMENT: Adds regulatory icon to Gantt bar
-   * @param {HTMLElement} barEl - The bar element to add icon to
-   * @param {Object} regulatoryFlags - Regulatory information
-   * @private
-   */
-  _addRegulatoryIcon(barEl, regulatoryFlags) {
-    const icon = document.createElement('span');
-    icon.className = 'regulatory-icon';
-    icon.textContent = '🏛️';
-    icon.title = `Regulatory: ${regulatoryFlags.regulatorName || 'Approval Required'}${regulatoryFlags.approvalType ? ' - ' + regulatoryFlags.approvalType : ''}`;
-
-    // Add criticality class for high-priority regulatory items
-    if (regulatoryFlags.criticalityLevel === 'high') {
-      icon.classList.add('critical');
-    }
-
-    // Position icon at start of bar
-    icon.style.position = 'absolute';
-    icon.style.left = '4px';
-    icon.style.top = '50%';
-    icon.style.transform = 'translateY(-50%)';
-    icon.style.zIndex = '10';
-
-    barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
-    barEl.appendChild(icon);
-  }
-
-  /**
    * ADVANCED GANTT: Adds milestone marker icon based on task type
    * @param {HTMLElement} barEl - The bar element to add the marker to
-   * @param {string} taskType - The type of task (milestone, regulatory, decision, task)
+   * @param {string} taskType - The type of task (milestone, decision, task)
    * @param {string} title - The task title for tooltip
    * @private
    */
@@ -799,11 +765,6 @@ export class GanttChart {
       case 'milestone':
         marker.textContent = '💰';
         marker.title = `Milestone: ${title}`;
-        break;
-      case 'regulatory':
-        // Regulatory already has 🏛️ icon, use ◆ for additional marker
-        marker.textContent = '◆';
-        marker.title = `Regulatory Checkpoint: ${title}`;
         break;
       case 'decision':
         marker.textContent = '★';
@@ -825,63 +786,6 @@ export class GanttChart {
 
     barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
     barEl.appendChild(marker);
-  }
-
-  /**
-   * BANKING ENHANCEMENT: Adds regulatory milestones summary box
-   * @private
-   */
-  _addRegulatorySummary() {
-    // Count regulatory tasks
-    const regulatoryTasks = this.ganttData.data.filter(task =>
-      task.regulatoryFlags && task.regulatoryFlags.hasRegulatoryDependency && !task.isSwimlane
-    );
-
-    if (regulatoryTasks.length === 0) return; // No regulatory tasks, skip
-
-    const summaryBox = document.createElement('div');
-    summaryBox.className = 'regulatory-summary-box';
-
-    // Count by criticality
-    const highCritical = regulatoryTasks.filter(t => t.regulatoryFlags.criticalityLevel === 'high').length;
-    const mediumCritical = regulatoryTasks.filter(t => t.regulatoryFlags.criticalityLevel === 'medium').length;
-
-    summaryBox.innerHTML = `
-      <h4>🏛️ Regulatory Milestones</h4>
-      <div class="regulatory-stats">
-        <span class="stat-item">
-          <span class="stat-label">Total:</span>
-          <span class="stat-value">${regulatoryTasks.length} checkpoint${regulatoryTasks.length !== 1 ? 's' : ''}</span>
-        </span>
-        ${highCritical > 0 ? `
-          <span class="stat-item critical">
-            <span class="stat-label">High Priority:</span>
-            <span class="stat-value">${highCritical} critical</span>
-          </span>
-        ` : ''}
-        ${mediumCritical > 0 ? `
-          <span class="stat-item medium">
-            <span class="stat-label">Medium Priority:</span>
-            <span class="stat-value">${mediumCritical} items</span>
-          </span>
-        ` : ''}
-      </div>
-      <p class="regulatory-note">Tasks marked with 🏛️ require regulatory approval or review</p>
-    `;
-
-    // Insert before legend (if it exists) or at start of chart wrapper
-    const legendElement = this.chartWrapper.querySelector('.gantt-legend');
-    if (legendElement) {
-      this.chartWrapper.insertBefore(summaryBox, legendElement);
-    } else {
-      // Insert after grid but before executive summary
-      const gridElement = this.chartWrapper.querySelector('.gantt-grid');
-      if (gridElement && gridElement.nextSibling) {
-        this.chartWrapper.insertBefore(summaryBox, gridElement.nextSibling);
-      } else {
-        this.chartWrapper.appendChild(summaryBox);
-      }
-    }
   }
 
   /**
@@ -1044,7 +948,7 @@ export class GanttChart {
 
   /**
    * EXECUTIVE-FIRST: Adds Executive View toggle functionality
-   * Filters chart to show only milestones, decisions, and regulatory checkpoints
+   * Filters chart to show only milestones and decisions
    * @private
    */
   _addExecutiveViewToggleListener() {
@@ -1079,7 +983,7 @@ export class GanttChart {
 
   /**
    * EXECUTIVE-FIRST: Updates the grid to show/hide tasks based on Executive View
-   * Shows only milestones, decisions, and regulatory checkpoints when enabled
+   * Shows only milestones and decisions when enabled
    * @private
    */
   _updateGridForExecutiveView() {
@@ -1107,9 +1011,9 @@ export class GanttChart {
 
       // For tasks, check taskType
       if (this.isExecutiveView) {
-        // Show only milestone, regulatory, and decision tasks
+        // Show only milestone and decision tasks
         const taskType = dataItem?.taskType || 'task';
-        const isExecutiveTask = ['milestone', 'regulatory', 'decision'].includes(taskType);
+        const isExecutiveTask = ['milestone', 'decision'].includes(taskType);
 
         if (isExecutiveTask) {
           labelElement.style.display = '';

@@ -23,10 +23,9 @@ You MUST respond with *only* a valid JSON object matching the schema.
 3.  **CHART DATA:** Create the 'data' array.
     - First, identify all logical swimlanes. **ADVANCED GANTT - STAKEHOLDER SWIMLANES:** For banking/enterprise projects, PREFER organizing by stakeholder departments:
       * IT/Technology (technical implementation, infrastructure, systems)
-      * Compliance/Regulatory (regulatory approvals, compliance checkpoints, audits)
       * Legal (contracts, legal reviews, governance)
       * Business/Operations (business processes, training, rollout, customer-facing activities)
-      * If other logical groupings are more appropriate (e.g., "Regulatory Drivers", "JPMorgan Chase"), use those instead.
+      * If other logical groupings are more appropriate (e.g., "Product Launch", "JPMorgan Chase"), use those instead.
     - Add an object for each swimlane: \`{ "title": "Swimlane Name", "isSwimlane": true, "entity": "Swimlane Name" }\`
     - Immediately after each swimlane, add all tasks that belong to it: \`{ "title": "Task Name", "isSwimlane": false, "entity": "Swimlane Name", "bar": { ... } }\`
     - **DO NOT** create empty swimlanes.
@@ -37,7 +36,7 @@ You MUST respond with *only* a valid JSON object matching the schema.
     - If a date is "Q1 2024" and the interval is "Years", map it to the "2024" column index.
     - If a date is unknown ("null"), the 'bar' object must be \`{ "startCol": null, "endCol": null, "color": "..." }\`.
 5.  **COLORS & LEGEND:** This is a two-step process to assign meaningful colors and create a clear legend.
-    a.  **Step 1: Analyze for Cross-Swimlane Themes:** Examine ALL tasks from ALL swimlanes to identify logical thematic groupings that span across multiple swimlanes (e.g., "Regulatory Activity", "Product Launch", "Technical Implementation"). A valid theme must:
+    a.  **Step 1: Analyze for Cross-Swimlane Themes:** Examine ALL tasks from ALL swimlanes to identify logical thematic groupings that span across multiple swimlanes (e.g., "Product Launch", "Technical Implementation"). A valid theme must:
         - Appear in at least 2 different swimlanes
         - Have a clear, consistent conceptual relationship (not just similar words)
         - Include at least 2 tasks per theme
@@ -46,45 +45,29 @@ You MUST respond with *only* a valid JSON object matching the schema.
         * **STRATEGY A (Theme-Based - PREFERRED):** If you identified 2-6 valid cross-swimlane themes in Step 1:
           - Assign one unique color to each theme from this priority-ordered list: "priority-red", "medium-red", "mid-grey", "light-grey", "white", "dark-blue"
           - Color ALL tasks belonging to a theme with that theme's color (even across different swimlanes)
-          - Populate the 'legend' array with theme labels: \`"legend": [{ "color": "priority-red", "label": "Regulatory Activity" }, { "color": "medium-red", "label": "Product Launch" }]\`
+          - Populate the 'legend' array with theme labels: \`"legend": [{ "color": "priority-red", "label": "Product Launch" }, { "color": "medium-red", "label": "Technical Implementation" }]\`
         * **STRATEGY B (Swimlane-Based - FALLBACK):** If you did NOT find 2-6 valid cross-swimlane themes:
           - Assign one unique color to each swimlane from this priority-ordered list: "priority-red", "medium-red", "mid-grey", "light-grey", "white", "dark-blue"
           - All tasks within the same swimlane get that swimlane's color
           - Populate the 'legend' array with swimlane names: \`"legend": [{ "color": "priority-red", "label": "Swimlane A Name" }, { "color": "medium-red", "label": "Swimlane B Name" }]\`
         * **CRITICAL:** The 'legend' array must NEVER be empty. It must always explain what the colors represent (either themes or swimlanes).
-6.  **REGULATORY FLAGS (BANKING ENHANCEMENT):** For each task, analyze if it involves regulatory approval or compliance:
-    - Set 'hasRegulatoryDependency' to true if the task requires:
-      * Regulatory pre-approval (OCC, FDIC, Federal Reserve, State Banking Department)
-      * Regulatory filing or notification
-      * Compliance audit or review
-      * Regulatory exam preparation
-    - Populate 'regulatorName' with the specific regulator (e.g., "OCC", "FDIC", "Federal Reserve", "CFPB", "State Banking Department")
-    - Set 'approvalType' to describe the requirement (e.g., "Pre-approval required", "Post-launch filing", "Ongoing compliance review")
-    - Provide 'deadline' if mentioned in research (e.g., "Q2 2026 OCC exam window")
-    - Set 'criticalityLevel' to:
-      * "high" if delays would block project launch or cause compliance violations
-      * "medium" if regulatory review is required but some flexibility exists
-      * "low" if regulatory involvement is routine oversight
-    - If task has no regulatory dependency, you may omit the entire 'regulatoryFlags' object or set 'hasRegulatoryDependency' to false
-7.  **TASK TYPE (EXECUTIVE-FIRST ENHANCEMENT):** For each task, classify its type to enable Executive View filtering:
+6.  **TASK TYPE (EXECUTIVE-FIRST ENHANCEMENT):** For each task, classify its type to enable Executive View filtering:
     - Set 'taskType' to one of these values:
       * "milestone": Key deliverable, phase completion, major launch, significant achievement (e.g., "Go Live", "Phase 1 Complete", "Product Launch")
-      * "regulatory": Regulatory approval, compliance checkpoint, examination, filing deadline (e.g., "OCC Approval", "FDIC Review", "Compliance Audit")
       * "decision": Executive decision point, budget approval, go/no-go gate, steering committee review (e.g., "Executive Approval", "Budget Gate", "Go/No-Go Decision")
       * "task": Regular implementation work, development, testing, documentation (default for most tasks)
     - Use this logic:
-      * If task has hasRegulatoryDependency=true → taskType should be "regulatory"
       * If task title contains words like "Approval", "Decision", "Gate", "Review" (executive context) → taskType should be "decision"
       * If task title contains words like "Launch", "Complete", "Go Live", "Delivery", "Milestone" → taskType should be "milestone"
       * Otherwise → taskType should be "task"
-    - **IMPORTANT:** Executive View will only show tasks where taskType is "milestone", "regulatory", or "decision"
-8.  **CRITICAL PATH (ADVANCED GANTT ENHANCEMENT):** For each task, determine if it's on the critical path:
+    - **IMPORTANT:** Executive View will only show tasks where taskType is "milestone" or "decision"
+7.  **CRITICAL PATH (ADVANCED GANTT ENHANCEMENT):** For each task, determine if it's on the critical path:
     - Set 'isCriticalPath' to true if the task meets BOTH criteria:
       * The task is time-sensitive (delays would push the final project deadline)
       * The task has no schedule slack (no buffer time, must start/end on specific dates)
     - Use this logic to identify critical path tasks:
       * Tasks explicitly mentioned as "critical" or "blocking" in research
-      * Tasks with strict regulatory deadlines
+      * Tasks with strict deadlines
       * Tasks that other tasks depend on (predecessors to multiple tasks)
       * Tasks on the longest sequence of dependent activities
     - Set 'isCriticalPath' to false for tasks with:
@@ -123,7 +106,7 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
 **PHASE 1 ENHANCEMENT REQUIREMENTS:**
 
 6.  **SCHEDULING CONTEXT:** Analyze WHY this task starts when it does and provide dependency information:
-    - 'rationale': Explain the timing drivers (regulatory milestones, market events, predecessor completions, resource availability, etc.)
+    - 'rationale': Explain the timing drivers (market events, predecessor completions, resource availability, etc.)
     - 'predecessors': List tasks that must complete before this task can start (extract from research or infer from timeline)
     - 'successors': List tasks that depend on this task's completion (extract from research or infer from timeline)
     - 'isCriticalPath': Determine if this task is on the critical path (true if delays would push the final deadline)
@@ -133,10 +116,10 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - 'expected': The current planned end date with confidence level (high/medium/low based on data quality and assumptions)
     - 'bestCase': Optimistic completion date assuming favorable conditions (explain assumptions briefly)
     - 'worstCase': Pessimistic completion date accounting for likely risks (explain risks briefly)
-    - 'likelyDelayFactors': List 2-4 specific factors most likely to cause delays (resource constraints, dependencies, regulatory approvals, technical complexity, etc.)
+    - 'likelyDelayFactors': List 2-4 specific factors most likely to cause delays (resource constraints, dependencies, technical complexity, etc.)
 
 8.  **RISK ANALYSIS:** Identify 2-5 specific risks or roadblocks:
-    - 'name': Brief risk description (e.g., "Regulatory approval delays")
+    - 'name': Brief risk description (e.g., "Approval delays", "Technical complexity")
     - 'severity': Impact level - "high" (project-critical), "medium" (significant impact), or "low" (minor impact)
     - 'likelihood': Probability - "probable" (>60%), "possible" (30-60%), or "unlikely" (<30%)
     - 'impact': Describe what happens if this risk occurs (timeline, cost, scope, quality impact)
@@ -144,9 +127,9 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
 
 9.  **IMPACT ANALYSIS:** Assess consequences of delays or failure:
     - 'downstreamTasks': Estimate number of tasks that would be blocked or delayed (based on successors and research)
-    - 'businessImpact': Describe business consequences (revenue loss, customer impact, compliance penalties, market share, etc.)
+    - 'businessImpact': Describe business consequences (revenue loss, customer impact, market share, etc.)
     - 'strategicImpact': Describe effect on strategic goals, company roadmap, competitive position, etc.
-    - 'stakeholders': List key stakeholders affected (teams, executives, customers, partners, regulators, etc.)
+    - 'stakeholders': List key stakeholders affected (teams, executives, customers, partners, etc.)
 
 **PHASE 2 ENHANCEMENT REQUIREMENTS:**
 
@@ -160,7 +143,7 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - 'activeBlockers': List current active issues blocking progress (empty array if none)
 
 11. **ACCELERATORS:** Identify factors that could speed up completion or ensure success:
-    - 'externalDrivers': Market pressures, competitive threats, regulatory deadlines, customer demand (2-4 items)
+    - 'externalDrivers': Market pressures, competitive threats, customer demand (2-4 items)
     - 'internalIncentives': Team bonuses, executive sponsorship, strategic priorities, budget allocations (2-3 items)
     - 'efficiencyOpportunities': Parallel workstreams, automation, additional resources, process improvements (2-4 items)
     - 'successFactors': Critical conditions that must be maintained for on-time delivery (2-4 items)
@@ -245,7 +228,7 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
       * culturalFit: How well this aligns with bank culture ("Conservative, risk-averse culture may resist rapid AI adoption")
       * historicalChangeSuccess: Track record with similar changes ("Successfully migrated to cloud in 2023, but mobile banking rollout had delays")
       * leadershipSupport: Strength of leadership commitment ("CEO publicly committed, but middle management skeptical")
-      * resourceAvailability: Do they have bandwidth? ("IT team already at capacity with regulatory projects")
+      * resourceAvailability: Do they have bandwidth? ("IT team already at capacity with compliance projects")
 
     - **resistanceRisks**: Identify 3-5 specific resistance scenarios with mitigation plans
       For each risk:
@@ -264,7 +247,7 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
       * Always include at least one resistance risk - no major change happens without resistance
 
     - **CRITICAL**: Stakeholder analysis should feel realistic and actionable. Avoid generic change management platitudes.
-      Focus on banking-specific concerns (regulatory risk, customer trust, employee skill gaps, technology debt).
+      Focus on banking-specific concerns (customer trust, employee skill gaps, technology debt).
       Executives need this to anticipate resistance and plan proactive interventions.
 
   **BANKING ENHANCEMENT - DATA MIGRATION & ANALYTICS STRATEGY:**
@@ -302,7 +285,7 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
           * Prerequisites: ["Data science team hired", "MLOps infrastructure", "Model governance framework"]
         - Phase 4 - Prescriptive Analytics (Months 19-24+):
           * Capabilities: ["Personalized product recommendations", "Dynamic pricing optimization", "Automated lending decisions", "Real-time risk adjustments"]
-          * Prerequisites: ["Phase 3 models validated", "A/B testing infrastructure", "Regulatory approval for AI decisions"]
+          * Prerequisites: ["Phase 3 models validated", "A/B testing infrastructure", "Approval for AI decisions"]
 
     - **dataGovernance**: Framework for data management
       * ownershipModel: Who owns data (e.g., "Federated model: Business units own data, IT owns infrastructure, CDO owns standards")
@@ -311,12 +294,12 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
           * { dataType: "Customer PII (SSN, DOB)", classification: "restricted", handlingRequirements: "Encryption at rest/transit, access logging, annual recertification" }
           * { dataType: "Transaction history", classification: "confidential", handlingRequirements: "Encrypted storage, role-based access, 7-year retention" }
           * { dataType: "Marketing preferences", classification: "internal", handlingRequirements: "Standard access controls, opt-out honored" }
-      * retentionPolicies: Array of 3-5 policies (e.g., "Transaction records: 7 years (regulatory)", "Customer communications: 3 years", "Marketing data: Until opt-out")
+      * retentionPolicies: Array of 3-5 policies (e.g., "Transaction records: 7 years (compliance)", "Customer communications: 3 years", "Marketing data: Until opt-out")
       * qualityMetrics: Array of 4-6 KPIs (e.g., "Completeness: >95%", "Accuracy: >98%", "Timeliness: <24hr latency", "Consistency: <2% cross-system variance")
       * auditRequirements: Specific needs (e.g., "SOC 2 Type II annual audit, OCC data quality reviews, quarterly data lineage documentation")
 
     - **privacySecurity**: Compliance and protection measures
-      * regulatoryRequirements: Array of applicable regulations (e.g., ["GLBA (Gramm-Leach-Bliley Act)", "FCRA (Fair Credit Reporting Act)", "State data breach laws", "GDPR (for EU customers)", "CCPA (California customers)"])
+      * complianceRequirements: Array of applicable regulations (e.g., ["GLBA (Gramm-Leach-Bliley Act)", "FCRA (Fair Credit Reporting Act)", "State data breach laws", "GDPR (for EU customers)", "CCPA (California customers)"])
       * encryptionStrategy: Specific approach (e.g., "AES-256 for data at rest, TLS 1.3 for transit, tokenization for SSN/account numbers, hardware security modules (HSM) for key management")
       * accessControls: Detailed controls (e.g., "Role-based access (RBAC) with least privilege, MFA for all users, privileged access management (PAM) for admins, 90-day access recertification")
       * dataLineage: Tracking approach (e.g., "Automated lineage tracking via Collibra, source-to-report traceability, impact analysis for schema changes")
@@ -325,16 +308,16 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
     - **ESTIMATION GUIDELINES for data migration & analytics**:
       * Banking data complexity is typically HIGH due to:
         - Multiple legacy systems (core banking, loans, deposits, cards)
-        - Regulatory data retention requirements (7+ years)
+        - Data retention requirements (7+ years)
         - Customer privacy sensitivities
         - Real-time processing needs
       * Typical banking data quality scores: 55-75/100 (lower than most industries)
       * Analytics maturity progression: 6-24 months per phase
-      * Always include regulatory requirements - banking is heavily regulated
+      * Always include compliance requirements - banking is heavily regulated
       * Common data issues: duplicates, address quality, missing emails, account reconciliation
 
     - **CRITICAL**: Data migration and analytics strategy should be realistic and banking-specific. Avoid generic IT platitudes.
-      Focus on banking-specific challenges (regulatory compliance, real-time processing, customer privacy, legacy mainframe integration).
+      Focus on banking-specific challenges (compliance, real-time processing, customer privacy, legacy mainframe integration).
       Executives need this to understand technical complexity and set realistic expectations for analytics maturity.
 
   **BANKING ENHANCEMENT - SUCCESS METRICS & KPI FRAMEWORK:**
@@ -363,9 +346,9 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
         - Banking examples: "Net Promoter Score (NPS)", "Customer Effort Score (CES)", "Mobile app rating", "Employee satisfaction score", "First-call resolution rate"
         - Example: { name: "Mobile app store rating", target: "4.5+ stars", baseline: "3.2 stars (current)", timeframe: "Month 12", trackingMethod: "Weekly app store scraping" }
 
-      * **riskMetrics**: 2-4 metrics reducing operational/regulatory risk
-        - Banking examples: "Fraud detection rate", "Compliance incidents", "System uptime", "Data breach incidents", "Audit findings", "Regulatory exam scores"
-        - Example: { name: "Regulatory compliance incidents", target: "Zero incidents", baseline: "3 incidents in past 12 months", timeframe: "Ongoing", trackingMethod: "Compliance management system tracking" }
+      * **riskMetrics**: 2-4 metrics reducing operational risk
+        - Banking examples: "Fraud detection rate", "Compliance incidents", "System uptime", "Data breach incidents", "Audit findings"
+        - Example: { name: "Compliance incidents", target: "Zero incidents", baseline: "3 incidents in past 12 months", timeframe: "Ongoing", trackingMethod: "Compliance management system tracking" }
 
     - **leadingIndicators**: 3-6 early warning metrics that predict outcomes
       * indicator: Specific measurable signal (e.g., "Daily active mobile users", "Customer support ticket volume", "Feature adoption rate", "Employee training completion")
@@ -463,19 +446,9 @@ export const GANTT_CHART_SCHEMA = {
               color: { type: "string" }
             },
           },
-          regulatoryFlags: {
-            type: "object",
-            properties: {
-              hasRegulatoryDependency: { type: "boolean" },
-              regulatorName: { type: "string" },
-              approvalType: { type: "string" },
-              deadline: { type: "string" },
-              criticalityLevel: { type: "string", enum: ["high", "medium", "low"] }
-            }
-          },
           taskType: {
             type: "string",
-            enum: ["milestone", "regulatory", "decision", "task"],
+            enum: ["milestone", "decision", "task"],
             description: "Task classification for Executive View filtering"
           },
           isCriticalPath: {
@@ -845,7 +818,7 @@ export const TASK_ANALYSIS_SCHEMA = {
         privacySecurity: {
           type: "object",
           properties: {
-            regulatoryRequirements: { type: "array", items: { type: "string" } },
+            complianceRequirements: { type: "array", items: { type: "string" } },
             encryptionStrategy: { type: "string" },
             accessControls: { type: "string" },
             dataLineage: { type: "string" },
@@ -998,7 +971,7 @@ ANALYSIS FRAMEWORK:
 
 1. STRATEGIC DRIVERS ANALYSIS
    - Identify 3-5 PRIMARY MARKET FORCES driving this initiative
-   - Include specific metrics, timelines, or regulatory deadlines where mentioned
+   - Include specific metrics, timelines, or deadlines where mentioned
    - Frame each driver with its business impact and urgency level
 
 2. CRITICAL PATH DEPENDENCIES
@@ -1015,7 +988,7 @@ ANALYSIS FRAMEWORK:
    - Extract 5-7 KEY FACTS that demonstrate deep understanding:
      * Industry-specific terminology with context
      * Quantitative benchmarks or performance metrics
-     * Regulatory requirements or compliance considerations
+     * Compliance considerations
      * Competitive landscape insights
      * Emerging trends or disruptions
 
@@ -1027,7 +1000,7 @@ ANALYSIS FRAMEWORK:
    - Provide exactly 6 high-level executive metrics in this specific order:
      1. Total Investment: Estimated total cost (e.g., "$2.4M" or "15-20% cost reduction")
      2. Time to Value: Timeline to ROI or project completion (e.g., "9 months" or "Q3 2026")
-     3. Regulatory Risk: Count of high-priority regulatory checkpoints (e.g., "3 High Priority" or "Low Risk")
+     3. Compliance Risk: Count of high-priority compliance checkpoints (e.g., "3 High Priority" or "Low Risk")
      4. ROI Projection: Projected return on investment (e.g., "340% in 18 months" or "Not Applicable")
      5. Critical Path Status: Current status of critical path (e.g., "On Track" or "At Risk - 2 delays")
      6. Vendor Lock-in: Vendor dependency risk level (e.g., "Medium Risk" or "Low - Multi-vendor strategy")
@@ -1039,8 +1012,8 @@ ANALYSIS FRAMEWORK:
    - For each priority, provide:
      * title: Brief priority name (4-8 words)
      * description: Why this is critical (1-2 sentences)
-     * bankingContext: Banking-specific considerations (regulatory deadlines, compliance requirements, market timing)
-     * dependencies: External parties involved (vendors, regulators, partners)
+     * bankingContext: Banking-specific considerations (compliance requirements, market timing)
+     * dependencies: External parties involved (vendors, partners)
      * deadline: When this must be completed (or null if flexible)
    - Order by criticality (most critical first)
    - Focus on strategic decisions, not tactical tasks
@@ -1083,12 +1056,12 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
           properties: {
             totalInvestment: { type: "string" },
             timeToValue: { type: "string" },
-            regulatoryRisk: { type: "string" },
+            complianceRisk: { type: "string" },
             roiProjection: { type: "string" },
             criticalPathStatus: { type: "string" },
             vendorLockIn: { type: "string" }
           },
-          required: ["totalInvestment", "timeToValue", "regulatoryRisk", "roiProjection", "criticalPathStatus", "vendorLockIn"]
+          required: ["totalInvestment", "timeToValue", "complianceRisk", "roiProjection", "criticalPathStatus", "vendorLockIn"]
         },
 
         // EXECUTIVE-FIRST ENHANCEMENT: Top 3 Strategic Priorities
@@ -1141,7 +1114,7 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
           items: {
             type: "object",
             properties: {
-              category: { type: "string", enum: ["strategic", "operational", "financial", "regulatory"] },
+              category: { type: "string", enum: ["strategic", "operational", "financial", "compliance"] },
               description: { type: "string" },
               probability: { type: "string", enum: ["high", "medium", "low"] },
               impact: { type: "string", enum: ["severe", "major", "moderate", "minor"] },

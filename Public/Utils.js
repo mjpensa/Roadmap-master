@@ -1353,17 +1353,17 @@ export function buildDataMigrationStrategy(dataMigrationStrategy) {
 
   // Helper function to build privacy & security controls
   const buildPrivacySecurity = () => {
-    if (!privacy.regulatoryRequirements?.length && !privacy.encryptionStrategy) {
+    if (!privacy.complianceRequirements?.length && !privacy.encryptionStrategy) {
       return '<p class="no-data">No privacy & security controls available</p>';
     }
 
     return `
       <div class="privacy-security-card">
-        ${privacy.regulatoryRequirements && privacy.regulatoryRequirements.length ? `
-          <div class="regulatory-requirements">
-            <h6>Regulatory Requirements</h6>
+        ${privacy.complianceRequirements && privacy.complianceRequirements.length ? `
+          <div class="compliance-requirements">
+            <h6>Compliance Requirements</h6>
             <div class="requirements-grid">
-              ${privacy.regulatoryRequirements.map(req => `
+              ${privacy.complianceRequirements.map(req => `
                 <div class="requirement-chip">${DOMPurify.sanitize(req)}</div>
               `).join('')}
             </div>
@@ -1439,7 +1439,7 @@ export function buildDataMigrationStrategy(dataMigrationStrategy) {
       ` : ''}
 
       <!-- Privacy & Security -->
-      ${privacy.regulatoryRequirements?.length || privacy.encryptionStrategy ? `
+      ${privacy.complianceRequirements?.length || privacy.encryptionStrategy ? `
         <div class="data-subsection privacy-security">
           <h5>🔒 Privacy & Security Controls</h5>
           ${buildPrivacySecurity()}
