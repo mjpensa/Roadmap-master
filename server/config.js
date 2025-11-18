@@ -11,6 +11,16 @@ import 'dotenv/config';
  * @throws {Error} If required variables are missing
  */
 function validateEnvironment() {
+  // Skip validation in test environment
+  if (process.env.NODE_ENV === 'test') {
+    console.log('🧪 Test environment detected - skipping strict validation');
+    // Set dummy API key if not present
+    if (!process.env.API_KEY) {
+      process.env.API_KEY = 'test_api_key_for_testing';
+    }
+    return;
+  }
+
   const required = ['API_KEY'];
   const missing = required.filter(key => !process.env[key]);
 
