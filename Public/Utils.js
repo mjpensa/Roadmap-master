@@ -1450,6 +1450,370 @@ export function buildDataMigrationStrategy(dataMigrationStrategy) {
 }
 
 /**
+ * BANKING ENHANCEMENT: Success Metrics & KPI Framework
+ * Builds the success metrics and KPI framework section for banking task analysis.
+ * Displays North Star Metric, business metrics, leading indicators, KPI dashboard, and continuous improvement.
+ * @param {Object} successMetrics - The success metrics data structure
+ * @returns {string} HTML string for the success metrics section
+ */
+export function buildSuccessMetrics(successMetrics) {
+  if (!successMetrics) return '';
+
+  const northStar = successMetrics.northStarMetric || {};
+  const businessMetrics = successMetrics.businessMetrics || {};
+  const leadingIndicators = successMetrics.leadingIndicators || [];
+  const kpiDashboard = successMetrics.kpiDashboard || [];
+  const continuousImprovement = successMetrics.continuousImprovement || {};
+
+  // Helper function to build North Star Metric visualization
+  const buildNorthStarMetric = () => {
+    if (!northStar.metric) return '';
+
+    const frequencyIcons = {
+      daily: '📅',
+      weekly: '📊',
+      monthly: '📈',
+      quarterly: '🎯'
+    };
+
+    const frequencyIcon = frequencyIcons[northStar.measurementFrequency] || '📊';
+
+    return `
+      <div class="north-star-metric-card">
+        <div class="north-star-header">
+          <div class="north-star-icon">⭐</div>
+          <div class="north-star-title">
+            <h5>North Star Metric</h5>
+            <p class="north-star-metric-name">${DOMPurify.sanitize(northStar.metric)}</p>
+          </div>
+        </div>
+
+        <div class="north-star-body">
+          <div class="metric-definition">
+            <span class="metric-label">Definition:</span>
+            <span class="metric-value">${DOMPurify.sanitize(northStar.definition || 'Not specified')}</span>
+          </div>
+
+          <div class="metric-comparison">
+            <div class="metric-baseline">
+              <span class="comparison-label">Current Baseline</span>
+              <span class="comparison-value baseline">${DOMPurify.sanitize(northStar.currentBaseline || 'N/A')}</span>
+            </div>
+            <div class="metric-arrow">→</div>
+            <div class="metric-target">
+              <span class="comparison-label">Target</span>
+              <span class="comparison-value target">${DOMPurify.sanitize(northStar.targetValue || 'N/A')}</span>
+            </div>
+          </div>
+
+          ${northStar.measurementFrequency ? `
+            <div class="metric-frequency">
+              <span class="frequency-icon">${frequencyIcon}</span>
+              <span class="frequency-text">Measured ${DOMPurify.sanitize(northStar.measurementFrequency)}</span>
+            </div>
+          ` : ''}
+
+          ${northStar.rationale ? `
+            <div class="metric-rationale">
+              <span class="rationale-label">Why This Matters:</span>
+              <p class="rationale-text">${DOMPurify.sanitize(northStar.rationale)}</p>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  };
+
+  // Helper function to build business metrics (4 categories)
+  const buildBusinessMetrics = () => {
+    const revenueMetrics = businessMetrics.revenueMetrics || [];
+    const costMetrics = businessMetrics.costMetrics || [];
+    const experienceMetrics = businessMetrics.experienceMetrics || [];
+    const riskMetrics = businessMetrics.riskMetrics || [];
+
+    if (revenueMetrics.length === 0 && costMetrics.length === 0 &&
+        experienceMetrics.length === 0 && riskMetrics.length === 0) {
+      return '';
+    }
+
+    const buildMetricCard = (metric, icon, categoryColor) => {
+      return `
+        <div class="business-metric-card" style="border-left: 3px solid ${categoryColor};">
+          <div class="metric-card-header">
+            <span class="metric-icon">${icon}</span>
+            <span class="metric-name">${DOMPurify.sanitize(metric.name)}</span>
+          </div>
+          <div class="metric-card-body">
+            <div class="metric-comparison-row">
+              <div class="metric-baseline-col">
+                <span class="metric-mini-label">Baseline</span>
+                <span class="metric-mini-value">${DOMPurify.sanitize(metric.baseline || 'N/A')}</span>
+              </div>
+              <div class="metric-target-col">
+                <span class="metric-mini-label">Target</span>
+                <span class="metric-mini-value">${DOMPurify.sanitize(metric.target || 'N/A')}</span>
+              </div>
+            </div>
+            ${metric.timeframe ? `
+              <div class="metric-timeframe">
+                <span class="timeframe-label">⏱️ Timeframe:</span> ${DOMPurify.sanitize(metric.timeframe)}
+              </div>
+            ` : ''}
+            ${metric.trackingMethod ? `
+              <div class="metric-tracking">
+                <span class="tracking-label">📊 Tracking:</span> ${DOMPurify.sanitize(metric.trackingMethod)}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    };
+
+    return `
+      <div class="business-metrics-section">
+        <h5 class="business-metrics-title">📊 Business Outcome Metrics</h5>
+        <div class="business-metrics-grid">
+          ${revenueMetrics.length > 0 ? `
+            <div class="metric-category revenue-category">
+              <h6 class="category-title">💰 Revenue Impact</h6>
+              <div class="metrics-list">
+                ${revenueMetrics.map(m => buildMetricCard(m, '💰', '#50AF7B')).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${costMetrics.length > 0 ? `
+            <div class="metric-category cost-category">
+              <h6 class="category-title">💵 Cost Reduction</h6>
+              <div class="metrics-list">
+                ${costMetrics.map(m => buildMetricCard(m, '💵', '#4A9D6F')).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${experienceMetrics.length > 0 ? `
+            <div class="metric-category experience-category">
+              <h6 class="category-title">⭐ Customer Experience</h6>
+              <div class="metrics-list">
+                ${experienceMetrics.map(m => buildMetricCard(m, '⭐', '#1a3a52')).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${riskMetrics.length > 0 ? `
+            <div class="metric-category risk-category">
+              <h6 class="category-title">🛡️ Risk Mitigation</h6>
+              <div class="metrics-list">
+                ${riskMetrics.map(m => buildMetricCard(m, '🛡️', '#BA3930')).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  };
+
+  // Helper function to build leading indicators
+  const buildLeadingIndicators = () => {
+    if (leadingIndicators.length === 0) return '';
+
+    const frequencyColors = {
+      daily: '#50AF7B',
+      weekly: '#4A9D6F',
+      monthly: '#1a3a52'
+    };
+
+    return `
+      <div class="leading-indicators-section">
+        <h5 class="leading-indicators-title">🎯 Leading Indicators (Early Warning System)</h5>
+        <div class="leading-indicators-grid">
+          ${leadingIndicators.map(indicator => {
+            const color = frequencyColors[indicator.monitoringFrequency] || '#4A9D6F';
+            return `
+              <div class="leading-indicator-card">
+                <div class="indicator-header">
+                  <span class="indicator-name">${DOMPurify.sanitize(indicator.indicator)}</span>
+                  ${indicator.monitoringFrequency ? `
+                    <span class="indicator-frequency" style="background-color: ${color};">
+                      ${DOMPurify.sanitize(indicator.monitoringFrequency)}
+                    </span>
+                  ` : ''}
+                </div>
+
+                ${indicator.predictedOutcome ? `
+                  <div class="indicator-outcome">
+                    <span class="outcome-label">📊 Predicts:</span>
+                    <span class="outcome-text">${DOMPurify.sanitize(indicator.predictedOutcome)}</span>
+                  </div>
+                ` : ''}
+
+                ${indicator.thresholdAlert ? `
+                  <div class="indicator-threshold">
+                    <span class="threshold-label">⚠️ Alert Threshold:</span>
+                    <span class="threshold-text">${DOMPurify.sanitize(indicator.thresholdAlert)}</span>
+                  </div>
+                ` : ''}
+
+                ${indicator.actionTrigger ? `
+                  <div class="indicator-action">
+                    <span class="action-label">🎬 Action:</span>
+                    <span class="action-text">${DOMPurify.sanitize(indicator.actionTrigger)}</span>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  };
+
+  // Helper function to build KPI dashboard
+  const buildKPIDashboard = () => {
+    if (kpiDashboard.length === 0) return '';
+
+    const statusColors = {
+      green: '#50AF7B',
+      yellow: '#EE9E20',
+      red: '#DA291C'
+    };
+
+    const trendIcons = {
+      improving: '📈',
+      declining: '📉',
+      stable: '➡️',
+      new: '🆕'
+    };
+
+    const categoryIcons = {
+      revenue: '💰',
+      cost: '💵',
+      experience: '⭐',
+      risk: '🛡️',
+      operational: '⚙️'
+    };
+
+    return `
+      <div class="kpi-dashboard-section">
+        <h5 class="kpi-dashboard-title">📊 Executive KPI Dashboard</h5>
+        <div class="kpi-dashboard-table">
+          <div class="kpi-table-header">
+            <div class="kpi-col kpi-name-col">KPI</div>
+            <div class="kpi-col kpi-current-col">Current</div>
+            <div class="kpi-col kpi-target-col">Target</div>
+            <div class="kpi-col kpi-trend-col">Trend</div>
+            <div class="kpi-col kpi-status-col">Status</div>
+            <div class="kpi-col kpi-owner-col">Owner</div>
+          </div>
+
+          ${kpiDashboard.map(kpi => {
+            const statusColor = statusColors[kpi.statusIndicator] || '#666666';
+            const trendIcon = trendIcons[kpi.trend] || '➡️';
+            const categoryIcon = categoryIcons[kpi.category] || '📊';
+
+            return `
+              <div class="kpi-table-row">
+                <div class="kpi-col kpi-name-col">
+                  <span class="kpi-category-icon">${categoryIcon}</span>
+                  <span class="kpi-name-text">${DOMPurify.sanitize(kpi.kpi)}</span>
+                </div>
+                <div class="kpi-col kpi-current-col">${DOMPurify.sanitize(kpi.currentValue || 'N/A')}</div>
+                <div class="kpi-col kpi-target-col">${DOMPurify.sanitize(kpi.targetValue || 'N/A')}</div>
+                <div class="kpi-col kpi-trend-col">
+                  <span class="trend-indicator">${trendIcon}</span>
+                  <span class="trend-text">${DOMPurify.sanitize(kpi.trend || 'stable')}</span>
+                </div>
+                <div class="kpi-col kpi-status-col">
+                  <span class="status-dot" style="background-color: ${statusColor};"></span>
+                  <span class="status-text">${DOMPurify.sanitize(kpi.statusIndicator || 'yellow')}</span>
+                </div>
+                <div class="kpi-col kpi-owner-col">
+                  ${kpi.owner ? DOMPurify.sanitize(kpi.owner) : 'Not assigned'}
+                  ${kpi.reviewCadence ? `<br><span class="review-cadence">(${DOMPurify.sanitize(kpi.reviewCadence)} review)</span>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  };
+
+  // Helper function to build continuous improvement
+  const buildContinuousImprovement = () => {
+    const hasContent = continuousImprovement.reviewCycle ||
+                      (continuousImprovement.improvementTargets && continuousImprovement.improvementTargets.length > 0) ||
+                      (continuousImprovement.optimizationOpportunities && continuousImprovement.optimizationOpportunities.length > 0) ||
+                      continuousImprovement.benchmarkComparison ||
+                      continuousImprovement.iterationPlan;
+
+    if (!hasContent) return '';
+
+    return `
+      <div class="continuous-improvement-section">
+        <h5 class="continuous-improvement-title">🔄 Continuous Improvement Framework</h5>
+
+        ${continuousImprovement.reviewCycle ? `
+          <div class="improvement-review-cycle">
+            <span class="review-cycle-label">📅 Review Cycle:</span>
+            <span class="review-cycle-text">${DOMPurify.sanitize(continuousImprovement.reviewCycle)}</span>
+          </div>
+        ` : ''}
+
+        ${continuousImprovement.improvementTargets && continuousImprovement.improvementTargets.length > 0 ? `
+          <div class="improvement-targets">
+            <h6 class="improvement-subtitle">🎯 Improvement Targets</h6>
+            <ul class="improvement-list">
+              ${continuousImprovement.improvementTargets.map(target => `
+                <li class="improvement-item">${DOMPurify.sanitize(target)}</li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${continuousImprovement.optimizationOpportunities && continuousImprovement.optimizationOpportunities.length > 0 ? `
+          <div class="optimization-opportunities">
+            <h6 class="improvement-subtitle">💡 Quick Win Opportunities</h6>
+            <ul class="optimization-list">
+              ${continuousImprovement.optimizationOpportunities.map(opportunity => `
+                <li class="optimization-item">${DOMPurify.sanitize(opportunity)}</li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${continuousImprovement.benchmarkComparison ? `
+          <div class="benchmark-comparison">
+            <h6 class="improvement-subtitle">📊 Industry Benchmark Comparison</h6>
+            <p class="benchmark-text">${DOMPurify.sanitize(continuousImprovement.benchmarkComparison)}</p>
+          </div>
+        ` : ''}
+
+        ${continuousImprovement.iterationPlan ? `
+          <div class="iteration-plan">
+            <h6 class="improvement-subtitle">🗺️ Metrics Evolution Plan</h6>
+            <p class="iteration-text">${DOMPurify.sanitize(continuousImprovement.iterationPlan)}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  };
+
+  // Build main section HTML
+  return `
+    <div class="analysis-section success-metrics-section">
+      <h4>🎯 Success Metrics & KPI Framework</h4>
+
+      ${buildNorthStarMetric()}
+      ${buildBusinessMetrics()}
+      ${buildLeadingIndicators()}
+      ${buildKPIDashboard()}
+      ${buildContinuousImprovement()}
+    </div>
+  `;
+}
+
+/**
  * Builds the HTML legend element for the Gantt chart.
  * Creates a visual legend showing color-coded categories and their meanings.
  * @param {Array<Object>} legendData - Array of legend items

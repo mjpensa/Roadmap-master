@@ -2393,6 +2393,604 @@
   }
 }
 
+/* --- BANKING ENHANCEMENT: SUCCESS METRICS & KPI FRAMEWORK --- */
+
+.success-metrics-section {
+  background: linear-gradient(135deg, #1a3a52 0%, #1f2937 100%);
+  border-left: 4px solid #50AF7B;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.success-metrics-section h4 {
+  color: #50AF7B;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* North Star Metric Card */
+.north-star-metric-card {
+  background: linear-gradient(135deg, rgba(80, 175, 123, 0.15) 0%, rgba(74, 157, 111, 0.1) 100%);
+  border: 2px solid #50AF7B;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(80, 175, 123, 0.2);
+}
+
+.north-star-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.north-star-icon {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(255, 215, 0, 0.3));
+}
+
+.north-star-title h5 {
+  color: #50AF7B;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+
+.north-star-metric-name {
+  color: #E0E0E0;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.north-star-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.metric-definition {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  color: #A0A0A0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  color: #E0E0E0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.metric-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.metric-baseline,
+.metric-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.comparison-label {
+  color: #A0A0A0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.comparison-value {
+  color: #E0E0E0;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 6px;
+}
+
+.comparison-value.baseline {
+  background: rgba(186, 57, 48, 0.3);
+  border: 1px solid rgba(186, 57, 48, 0.5);
+}
+
+.comparison-value.target {
+  background: rgba(80, 175, 123, 0.3);
+  border: 1px solid rgba(80, 175, 123, 0.5);
+}
+
+.metric-arrow {
+  color: #50AF7B;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.metric-frequency {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(74, 157, 111, 0.2);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.frequency-icon {
+  font-size: 16px;
+}
+
+.frequency-text {
+  color: #E0E0E0;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.metric-rationale {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid #4A9D6F;
+  border-radius: 4px;
+}
+
+.rationale-label {
+  color: #4A9D6F;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rationale-text {
+  color: #E0E0E0;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Business Metrics Section */
+.business-metrics-section {
+  margin-bottom: 24px;
+}
+
+.business-metrics-title {
+  color: #50AF7B;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.business-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.metric-category {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.category-title {
+  color: #E0E0E0;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.business-metric-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.metric-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.metric-icon {
+  font-size: 16px;
+}
+
+.metric-name {
+  color: #E0E0E0;
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.metric-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric-comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.metric-baseline-col,
+.metric-target-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-mini-label {
+  color: #A0A0A0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.metric-mini-value {
+  color: #E0E0E0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.metric-timeframe,
+.metric-tracking {
+  color: #C0C0C0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.timeframe-label,
+.tracking-label {
+  color: #A0A0A0;
+  font-weight: 600;
+}
+
+/* Leading Indicators Section */
+.leading-indicators-section {
+  margin-bottom: 24px;
+}
+
+.leading-indicators-title {
+  color: #50AF7B;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.leading-indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.leading-indicator-card {
+  background: linear-gradient(135deg, rgba(74, 157, 111, 0.1) 0%, rgba(26, 58, 82, 0.2) 100%);
+  border: 1px solid rgba(74, 157, 111, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.indicator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.indicator-name {
+  color: #E0E0E0;
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.indicator-frequency {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #FFFFFF;
+}
+
+.indicator-outcome,
+.indicator-threshold,
+.indicator-action {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.outcome-label,
+.threshold-label,
+.action-label {
+  color: #A0A0A0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.outcome-text,
+.threshold-text,
+.action-text {
+  color: #E0E0E0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* KPI Dashboard Section */
+.kpi-dashboard-section {
+  margin-bottom: 24px;
+}
+
+.kpi-dashboard-title {
+  color: #50AF7B;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.kpi-dashboard-table {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.kpi-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(80, 175, 123, 0.2);
+  border-bottom: 2px solid rgba(80, 175, 123, 0.4);
+}
+
+.kpi-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s;
+}
+
+.kpi-table-row:last-child {
+  border-bottom: none;
+}
+
+.kpi-table-row:hover {
+  background: rgba(80, 175, 123, 0.05);
+}
+
+.kpi-col {
+  color: #E0E0E0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.kpi-table-header .kpi-col {
+  color: #50AF7B;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.kpi-name-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kpi-category-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.kpi-name-text {
+  font-weight: 600;
+}
+
+.kpi-trend-col {
+  gap: 6px;
+}
+
+.trend-indicator {
+  font-size: 14px;
+}
+
+.trend-text {
+  text-transform: capitalize;
+}
+
+.kpi-status-col {
+  gap: 8px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-text {
+  text-transform: capitalize;
+}
+
+.kpi-owner-col {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.review-cadence {
+  color: #A0A0A0;
+  font-size: 10px;
+}
+
+/* Continuous Improvement Section */
+.continuous-improvement-section {
+  margin-bottom: 0;
+}
+
+.continuous-improvement-title {
+  color: #50AF7B;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.improvement-review-cycle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(74, 157, 111, 0.15);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.review-cycle-label {
+  color: #4A9D6F;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.review-cycle-text {
+  color: #E0E0E0;
+  font-size: 13px;
+}
+
+.improvement-targets,
+.optimization-opportunities,
+.benchmark-comparison,
+.iteration-plan {
+  margin-bottom: 16px;
+}
+
+.improvement-subtitle {
+  color: #4A9D6F;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.improvement-list,
+.optimization-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.improvement-item,
+.optimization-item {
+  color: #E0E0E0;
+  font-size: 13px;
+  line-height: 1.5;
+  padding-left: 24px;
+  position: relative;
+}
+
+.improvement-item::before,
+.optimization-item::before {
+  content: '▸';
+  color: #50AF7B;
+  position: absolute;
+  left: 8px;
+  font-weight: 700;
+}
+
+.benchmark-text,
+.iteration-text {
+  color: #E0E0E0;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .business-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leading-indicators-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-table-header,
+  .kpi-table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .kpi-col {
+    padding: 4px 0;
+  }
+
+  .kpi-table-header .kpi-col::before {
+    content: attr(data-label) ': ';
+    font-weight: 600;
+    color: #50AF7B;
+  }
+
+  .metric-comparison {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .metric-arrow {
+    transform: rotate(90deg);
+  }
+
+  .north-star-header {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
 /* --- BANKING ENHANCEMENT: REGULATORY ICONS & ALERTS --- */
 
 /* Regulatory Icon on Gantt Bars */
@@ -2992,6 +3590,231 @@ body.light-theme {
 }
 
 .light-theme .legend-label {
+  color: #333333;
+}
+
+/* Light theme: Success Metrics & KPI Framework */
+.light-theme .success-metrics-section {
+  background: linear-gradient(135deg, #E8F4F8 0%, #F0F7FA 100%);
+  border-left-color: #0066CC;
+}
+
+.light-theme .success-metrics-section h4 {
+  color: #0066CC;
+}
+
+/* North Star Metric */
+.light-theme .north-star-metric-card {
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.08) 0%, rgba(0, 102, 204, 0.05) 100%);
+  border-color: #0066CC;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+}
+
+.light-theme .north-star-title h5 {
+  color: #0066CC;
+}
+
+.light-theme .north-star-metric-name {
+  color: #1A1A1A;
+}
+
+.light-theme .metric-label {
+  color: #666666;
+}
+
+.light-theme .metric-value {
+  color: #333333;
+}
+
+.light-theme .metric-comparison {
+  background: rgba(0, 102, 204, 0.05);
+}
+
+.light-theme .comparison-label {
+  color: #666666;
+}
+
+.light-theme .comparison-value {
+  color: #1A1A1A;
+}
+
+.light-theme .comparison-value.baseline {
+  background: rgba(244, 67, 54, 0.15);
+  border-color: rgba(244, 67, 54, 0.3);
+}
+
+.light-theme .comparison-value.target {
+  background: rgba(0, 102, 204, 0.15);
+  border-color: rgba(0, 102, 204, 0.3);
+}
+
+.light-theme .metric-arrow {
+  color: #0066CC;
+}
+
+.light-theme .metric-frequency {
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.light-theme .frequency-text {
+  color: #333333;
+}
+
+.light-theme .metric-rationale {
+  background: rgba(0, 102, 204, 0.05);
+  border-left-color: #0066CC;
+}
+
+.light-theme .rationale-label {
+  color: #0066CC;
+}
+
+.light-theme .rationale-text {
+  color: #333333;
+}
+
+/* Business Metrics */
+.light-theme .business-metrics-title {
+  color: #0066CC;
+}
+
+.light-theme .metric-category {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .category-title {
+  color: #1A1A1A;
+}
+
+.light-theme .business-metric-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.light-theme .metric-name {
+  color: #1A1A1A;
+}
+
+.light-theme .metric-mini-label {
+  color: #666666;
+}
+
+.light-theme .metric-mini-value {
+  color: #333333;
+}
+
+.light-theme .metric-timeframe,
+.light-theme .metric-tracking {
+  color: #555555;
+}
+
+.light-theme .timeframe-label,
+.light-theme .tracking-label {
+  color: #666666;
+}
+
+/* Leading Indicators */
+.light-theme .leading-indicators-title {
+  color: #0066CC;
+}
+
+.light-theme .leading-indicator-card {
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 100%);
+  border-color: rgba(0, 102, 204, 0.2);
+}
+
+.light-theme .indicator-name {
+  color: #1A1A1A;
+}
+
+.light-theme .outcome-label,
+.light-theme .threshold-label,
+.light-theme .action-label {
+  color: #666666;
+}
+
+.light-theme .outcome-text,
+.light-theme .threshold-text,
+.light-theme .action-text {
+  color: #333333;
+}
+
+/* KPI Dashboard */
+.light-theme .kpi-dashboard-title {
+  color: #0066CC;
+}
+
+.light-theme .kpi-dashboard-table {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.light-theme .kpi-table-header {
+  background: rgba(0, 102, 204, 0.1);
+  border-bottom-color: rgba(0, 102, 204, 0.3);
+}
+
+.light-theme .kpi-table-header .kpi-col {
+  color: #0066CC;
+}
+
+.light-theme .kpi-table-row {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.light-theme .kpi-table-row:hover {
+  background: rgba(0, 102, 204, 0.03);
+}
+
+.light-theme .kpi-col {
+  color: #333333;
+}
+
+.light-theme .kpi-name-text {
+  color: #1A1A1A;
+}
+
+.light-theme .trend-text,
+.light-theme .status-text {
+  color: #333333;
+}
+
+.light-theme .review-cadence {
+  color: #666666;
+}
+
+/* Continuous Improvement */
+.light-theme .continuous-improvement-title {
+  color: #0066CC;
+}
+
+.light-theme .improvement-review-cycle {
+  background: rgba(0, 102, 204, 0.08);
+}
+
+.light-theme .review-cycle-label {
+  color: #0066CC;
+}
+
+.light-theme .review-cycle-text {
+  color: #333333;
+}
+
+.light-theme .improvement-subtitle {
+  color: #0066CC;
+}
+
+.light-theme .improvement-item,
+.light-theme .optimization-item {
+  color: #333333;
+}
+
+.light-theme .improvement-item::before,
+.light-theme .optimization-item::before {
+  color: #0066CC;
+}
+
+.light-theme .benchmark-text,
+.light-theme .iteration-text {
   color: #333333;
 }
 

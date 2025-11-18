@@ -304,6 +304,79 @@ You MUST respond with *only* a valid JSON object matching the 'analysisSchema'.
       Focus on banking-specific challenges (regulatory compliance, real-time processing, customer privacy, legacy mainframe integration).
       Executives need this to understand technical complexity and set realistic expectations for analytics maturity.
 
+  **BANKING ENHANCEMENT - SUCCESS METRICS & KPI FRAMEWORK:**
+    Generate a comprehensive success metrics and KPI framework in the "successMetrics" field. This is CRITICAL for banking executives to commit to measurable outcomes and track continuous improvement.
+
+    - **northStarMetric**: Define the single most important success indicator
+      * metric: The one metric that best represents success (e.g., "Customer Digital Adoption Rate", "Net Promoter Score (NPS)", "Operational Cost per Transaction", "Loan Approval Speed")
+      * definition: Precise measurement definition (e.g., "Percentage of customers using mobile app for >3 transactions per month")
+      * targetValue: Specific, measurable target (e.g., "65% adoption within 12 months", "NPS >50")
+      * currentBaseline: Current state measurement (e.g., "Current: 23% adoption", "Current NPS: 32")
+      * measurementFrequency: "daily", "weekly", "monthly", "quarterly" (choose appropriate cadence)
+      * rationale: Why this metric matters most (e.g., "Digital adoption is the best leading indicator of customer satisfaction, cost reduction, and competitive positioning")
+
+    - **businessMetrics**: Categorized business outcome metrics (4 categories)
+
+      * **revenueMetrics**: 2-4 metrics that drive top-line growth
+        - Banking examples: "New account acquisitions", "Cross-sell rate", "Average customer lifetime value", "Fee income per customer"
+        - For each metric: name, target, baseline, timeframe, trackingMethod
+        - Example: { name: "New digital account openings", target: "5,000/month", baseline: "1,200/month (current)", timeframe: "Month 6 onwards", trackingMethod: "Real-time dashboard from core banking system" }
+
+      * **costMetrics**: 2-4 metrics that reduce bottom-line costs
+        - Banking examples: "Cost per transaction", "Branch operating costs", "Manual processing time", "Customer service handle time"
+        - Example: { name: "Manual loan processing time", target: "Reduce from 45 min to 12 min", baseline: "45 min average (current)", timeframe: "By Month 9", trackingMethod: "Workflow system timestamps" }
+
+      * **experienceMetrics**: 2-4 metrics measuring customer/employee satisfaction
+        - Banking examples: "Net Promoter Score (NPS)", "Customer Effort Score (CES)", "Mobile app rating", "Employee satisfaction score", "First-call resolution rate"
+        - Example: { name: "Mobile app store rating", target: "4.5+ stars", baseline: "3.2 stars (current)", timeframe: "Month 12", trackingMethod: "Weekly app store scraping" }
+
+      * **riskMetrics**: 2-4 metrics reducing operational/regulatory risk
+        - Banking examples: "Fraud detection rate", "Compliance incidents", "System uptime", "Data breach incidents", "Audit findings", "Regulatory exam scores"
+        - Example: { name: "Regulatory compliance incidents", target: "Zero incidents", baseline: "3 incidents in past 12 months", timeframe: "Ongoing", trackingMethod: "Compliance management system tracking" }
+
+    - **leadingIndicators**: 3-6 early warning metrics that predict outcomes
+      * indicator: Specific measurable signal (e.g., "Daily active mobile users", "Customer support ticket volume", "Feature adoption rate", "Employee training completion")
+      * predictedOutcome: What this indicates (e.g., "High DAU predicts strong monthly adoption rates", "Rising ticket volume signals UX issues before app rating drops")
+      * thresholdAlert: When to act (e.g., "Alert if DAU drops >10% week-over-week", "Alert if tickets exceed 50/day")
+      * monitoringFrequency: "daily", "weekly", "monthly" (choose appropriate cadence)
+      * actionTrigger: What to do when threshold breached (e.g., "Conduct user interviews to identify friction points", "Activate UX improvement sprint")
+
+    - **kpiDashboard**: 6-10 KPIs for executive dashboard (mix of categories)
+      For each KPI:
+      * kpi: Specific metric name (e.g., "Mobile app monthly active users", "Cost per digital transaction", "Digital account NPS")
+      * category: "revenue", "cost", "experience", "risk", "operational"
+      * currentValue: Current measurement (e.g., "45,000 MAU", "$0.87", "NPS 42")
+      * targetValue: Goal (e.g., "120,000 MAU", "$0.25", "NPS 55+")
+      * trend: "improving" (trending toward target), "declining" (moving away), "stable" (flat), "new" (no trend yet)
+      * statusIndicator: "green" (on track), "yellow" (at risk), "red" (behind)
+      * owner: Responsible executive (e.g., "Chief Digital Officer", "Head of Retail Banking", "SVP Customer Experience")
+      * reviewCadence: "weekly", "monthly", "quarterly" (how often executives review)
+
+    - **continuousImprovement**: Framework for ongoing optimization
+      * reviewCycle: Cadence for metrics review (e.g., "Monthly business review with executives, quarterly deep-dive with board")
+      * improvementTargets: 3-5 areas for ongoing optimization (e.g., ["Reduce mobile app latency from 2.1s to <1s", "Increase self-service resolution from 45% to 70%", "Expand product features based on top 5 user requests"])
+      * optimizationOpportunities: 3-5 quick wins identified (e.g., ["A/B test simplified onboarding flow", "Implement proactive fraud alerts", "Add biometric login option"])
+      * benchmarkComparison: How you compare to industry (e.g., "Top quartile in mobile adoption (65% vs. 48% industry average), lagging in NPS (42 vs. 52 industry average)")
+      * iterationPlan: How to evolve metrics (e.g., "Phase 1: Core KPIs (months 1-6), Phase 2: Add predictive analytics (months 7-12), Phase 3: Real-time personalization metrics (year 2)")
+
+    - **ESTIMATION GUIDELINES for success metrics**:
+      * North Star Metric should be customer-centric or business-outcome-focused (not internal/technical)
+      * Banking typical targets:
+        - Digital adoption: 50-70% for retail banking, 30-50% for commercial banking
+        - NPS: 40-60 (banking industry average: 30-40)
+        - Cost reduction: 30-50% through automation
+        - Processing time: 60-80% reduction via digital channels
+      * Leading indicators should be measurable daily or weekly (not lagging annual metrics)
+      * KPI dashboard should have 6-10 KPIs total (not too many to overwhelm executives)
+      * Status indicators: Use red/yellow/green honestly based on actual progress
+      * Always include at least one risk metric - banking is heavily regulated
+      * Continuous improvement should reference industry benchmarks when possible
+
+    - **CRITICAL**: Success metrics should be SMART (Specific, Measurable, Achievable, Relevant, Time-bound).
+      Avoid vanity metrics ("increase awareness") - focus on business outcomes (revenue, cost, satisfaction, risk).
+      Executives use these metrics to justify investment, track ROI, and make course corrections.
+      Leading indicators are especially valuable - they allow proactive intervention before lagging metrics decline.
+
 **IMPORTANT NOTES:**
 - If research data is insufficient for Phase 1, 2, or 3 fields, provide reasonable estimates based on context, but note uncertainty in confidence levels.
 - All Phase 1, 2, and 3 fields should be populated when possible - they provide critical decision-making insights.
@@ -735,6 +808,136 @@ export const TASK_ANALYSIS_SCHEMA = {
             accessControls: { type: "string" },
             dataLineage: { type: "string" },
             incidentResponse: { type: "string" }
+          }
+        }
+      }
+    },
+
+    // BANKING ENHANCEMENT - Success Metrics & KPI Framework
+    successMetrics: {
+      type: "object",
+      properties: {
+        // North Star Metric - The single most important success indicator
+        northStarMetric: {
+          type: "object",
+          properties: {
+            metric: { type: "string" },
+            definition: { type: "string" },
+            targetValue: { type: "string" },
+            currentBaseline: { type: "string" },
+            measurementFrequency: { type: "string", enum: ["daily", "weekly", "monthly", "quarterly"] },
+            rationale: { type: "string" }
+          }
+        },
+
+        // Business Outcome Metrics (categorized)
+        businessMetrics: {
+          type: "object",
+          properties: {
+            // Revenue Impact
+            revenueMetrics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  target: { type: "string" },
+                  baseline: { type: "string" },
+                  timeframe: { type: "string" },
+                  trackingMethod: { type: "string" }
+                }
+              }
+            },
+
+            // Cost Reduction
+            costMetrics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  target: { type: "string" },
+                  baseline: { type: "string" },
+                  timeframe: { type: "string" },
+                  trackingMethod: { type: "string" }
+                }
+              }
+            },
+
+            // Customer Experience
+            experienceMetrics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  target: { type: "string" },
+                  baseline: { type: "string" },
+                  timeframe: { type: "string" },
+                  trackingMethod: { type: "string" }
+                }
+              }
+            },
+
+            // Risk Mitigation
+            riskMetrics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  target: { type: "string" },
+                  baseline: { type: "string" },
+                  timeframe: { type: "string" },
+                  trackingMethod: { type: "string" }
+                }
+              }
+            }
+          }
+        },
+
+        // Leading Indicators (Early Warning System)
+        leadingIndicators: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              indicator: { type: "string" },
+              predictedOutcome: { type: "string" },
+              thresholdAlert: { type: "string" },
+              monitoringFrequency: { type: "string", enum: ["daily", "weekly", "monthly"] },
+              actionTrigger: { type: "string" }
+            }
+          }
+        },
+
+        // KPI Dashboard Configuration
+        kpiDashboard: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              kpi: { type: "string" },
+              category: { type: "string", enum: ["revenue", "cost", "experience", "risk", "operational"] },
+              currentValue: { type: "string" },
+              targetValue: { type: "string" },
+              trend: { type: "string", enum: ["improving", "declining", "stable", "new"] },
+              statusIndicator: { type: "string", enum: ["green", "yellow", "red"] },
+              owner: { type: "string" },
+              reviewCadence: { type: "string", enum: ["weekly", "monthly", "quarterly"] }
+            }
+          }
+        },
+
+        // Continuous Improvement Tracking
+        continuousImprovement: {
+          type: "object",
+          properties: {
+            reviewCycle: { type: "string" },
+            improvementTargets: { type: "array", items: { type: "string" } },
+            optimizationOpportunities: { type: "array", items: { type: "string" } },
+            benchmarkComparison: { type: "string" },
+            iterationPlan: { type: "string" }
           }
         }
       }
