@@ -131,9 +131,10 @@ export function getChart(chartId) {
   }
 
   // Transform database format to match original interface
+  // Spread ganttData properties to flatten the structure
   return {
     data: {
-      ganttData: chart.ganttData,
+      ...chart.ganttData,
       executiveSummary: chart.executiveSummary,
       presentationSlides: chart.presentationSlides
     },
