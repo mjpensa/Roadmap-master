@@ -21,7 +21,13 @@ You MUST respond with *only* a valid JSON object matching the schema.
     - 1-3 years total: Use "Quarters" (e.g., ["Q1 2026", "Q2 2026"])
     - 3+ years total: You MUST use "Years" (e.g., ["2020", "2021", "2022"])
 3.  **CHART DATA:** Create the 'data' array.
-    - First, identify all logical swimlanes (e.g., "Regulatory Drivers", "JPMorgan Chase"). Add an object for each: \`{ "title": "Swimlane Name", "isSwimlane": true, "entity": "Swimlane Name" }\`
+    - First, identify all logical swimlanes. **ADVANCED GANTT - STAKEHOLDER SWIMLANES:** For banking/enterprise projects, PREFER organizing by stakeholder departments:
+      * IT/Technology (technical implementation, infrastructure, systems)
+      * Compliance/Regulatory (regulatory approvals, compliance checkpoints, audits)
+      * Legal (contracts, legal reviews, governance)
+      * Business/Operations (business processes, training, rollout, customer-facing activities)
+      * If other logical groupings are more appropriate (e.g., "Regulatory Drivers", "JPMorgan Chase"), use those instead.
+    - Add an object for each swimlane: \`{ "title": "Swimlane Name", "isSwimlane": true, "entity": "Swimlane Name" }\`
     - Immediately after each swimlane, add all tasks that belong to it: \`{ "title": "Task Name", "isSwimlane": false, "entity": "Swimlane Name", "bar": { ... } }\`
     - **DO NOT** create empty swimlanes.
 4.  **BAR LOGIC:**
@@ -60,7 +66,34 @@ You MUST respond with *only* a valid JSON object matching the schema.
       * "medium" if regulatory review is required but some flexibility exists
       * "low" if regulatory involvement is routine oversight
     - If task has no regulatory dependency, you may omit the entire 'regulatoryFlags' object or set 'hasRegulatoryDependency' to false
-7.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
+7.  **TASK TYPE (EXECUTIVE-FIRST ENHANCEMENT):** For each task, classify its type to enable Executive View filtering:
+    - Set 'taskType' to one of these values:
+      * "milestone": Key deliverable, phase completion, major launch, significant achievement (e.g., "Go Live", "Phase 1 Complete", "Product Launch")
+      * "regulatory": Regulatory approval, compliance checkpoint, examination, filing deadline (e.g., "OCC Approval", "FDIC Review", "Compliance Audit")
+      * "decision": Executive decision point, budget approval, go/no-go gate, steering committee review (e.g., "Executive Approval", "Budget Gate", "Go/No-Go Decision")
+      * "task": Regular implementation work, development, testing, documentation (default for most tasks)
+    - Use this logic:
+      * If task has hasRegulatoryDependency=true → taskType should be "regulatory"
+      * If task title contains words like "Approval", "Decision", "Gate", "Review" (executive context) → taskType should be "decision"
+      * If task title contains words like "Launch", "Complete", "Go Live", "Delivery", "Milestone" → taskType should be "milestone"
+      * Otherwise → taskType should be "task"
+    - **IMPORTANT:** Executive View will only show tasks where taskType is "milestone", "regulatory", or "decision"
+8.  **CRITICAL PATH (ADVANCED GANTT ENHANCEMENT):** For each task, determine if it's on the critical path:
+    - Set 'isCriticalPath' to true if the task meets BOTH criteria:
+      * The task is time-sensitive (delays would push the final project deadline)
+      * The task has no schedule slack (no buffer time, must start/end on specific dates)
+    - Use this logic to identify critical path tasks:
+      * Tasks explicitly mentioned as "critical" or "blocking" in research
+      * Tasks with strict regulatory deadlines
+      * Tasks that other tasks depend on (predecessors to multiple tasks)
+      * Tasks on the longest sequence of dependent activities
+    - Set 'isCriticalPath' to false for tasks with:
+      * Schedule flexibility or slack time
+      * Can be delayed without affecting project completion
+      * Parallel tasks that aren't blocking
+    - If research mentions "critical path" explicitly, prioritize those tasks
+    - **IMPORTANT:** Typically 20-40% of tasks are on critical path (not all tasks!)
+9.  **SANITIZATION:** All string values MUST be valid JSON strings. You MUST properly escape any characters that would break JSON, such as double quotes (\") and newlines (\\n), within the string value itself.`;
 
 /**
  * Task Analysis System Prompt
@@ -439,9 +472,18 @@ export const GANTT_CHART_SCHEMA = {
               deadline: { type: "string" },
               criticalityLevel: { type: "string", enum: ["high", "medium", "low"] }
             }
+          },
+          taskType: {
+            type: "string",
+            enum: ["milestone", "regulatory", "decision", "task"],
+            description: "Task classification for Executive View filtering"
+          },
+          isCriticalPath: {
+            type: "boolean",
+            description: "Whether this task is on the critical path (delays would push final deadline)"
           }
         },
-        required: ["title", "isSwimlane", "entity"]
+        required: ["title", "isSwimlane", "entity", "taskType", "isCriticalPath"]
       }
     },
     legend: {
@@ -981,7 +1023,29 @@ ANALYSIS FRAMEWORK:
    - Craft a 2-3 sentence "elevator pitch" that captures the essence
    - Include the "so what" - why this matters to the organization NOW
 
-6. COMPETITIVE & MARKET INTELLIGENCE (BANKING ENHANCEMENT)
+6. KEY METRICS DASHBOARD (EXECUTIVE-FIRST ENHANCEMENT)
+   - Provide exactly 6 high-level executive metrics in this specific order:
+     1. Total Investment: Estimated total cost (e.g., "$2.4M" or "15-20% cost reduction")
+     2. Time to Value: Timeline to ROI or project completion (e.g., "9 months" or "Q3 2026")
+     3. Regulatory Risk: Count of high-priority regulatory checkpoints (e.g., "3 High Priority" or "Low Risk")
+     4. ROI Projection: Projected return on investment (e.g., "340% in 18 months" or "Not Applicable")
+     5. Critical Path Status: Current status of critical path (e.g., "On Track" or "At Risk - 2 delays")
+     6. Vendor Lock-in: Vendor dependency risk level (e.g., "Medium Risk" or "Low - Multi-vendor strategy")
+   - Use concise values (4-8 words max per metric)
+   - If data unavailable, use "TBD" or "Not Specified"
+
+7. TOP 3 STRATEGIC PRIORITIES (EXECUTIVE-FIRST ENHANCEMENT)
+   - Identify the 3 MOST CRITICAL priorities that must happen first
+   - For each priority, provide:
+     * title: Brief priority name (4-8 words)
+     * description: Why this is critical (1-2 sentences)
+     * bankingContext: Banking-specific considerations (regulatory deadlines, compliance requirements, market timing)
+     * dependencies: External parties involved (vendors, regulators, partners)
+     * deadline: When this must be completed (or null if flexible)
+   - Order by criticality (most critical first)
+   - Focus on strategic decisions, not tactical tasks
+
+8. COMPETITIVE & MARKET INTELLIGENCE (BANKING ENHANCEMENT)
    - Analyze competitive positioning:
      * Market timing: Are we early adopters, fast followers, or catching up?
      * Competitor moves: What have major competitors (JPMorgan, Wells Fargo, Bank of America, regional banks) done in this space?
@@ -990,7 +1054,7 @@ ANALYSIS FRAMEWORK:
    - Look for competitive mentions, market trends, and industry adoption data in research
    - If no competitive data in research, provide general banking industry context
 
-7. INDUSTRY BENCHMARKS (BANKING ENHANCEMENT)
+9. INDUSTRY BENCHMARKS (BANKING ENHANCEMENT)
    - Compare this initiative to banking industry standards:
      * Time to Market: How does the timeline compare to typical bank IT projects? (Industry average: 12-18 months for similar initiatives)
      * Investment Level: Is this cost-competitive? (Industry median: Varies by project type, typically $2-5M for digital banking initiatives)
@@ -1011,8 +1075,40 @@ export const EXECUTIVE_SUMMARY_SCHEMA = {
   properties: {
     executiveSummary: {
       type: "object",
-      required: ["drivers", "dependencies", "risks", "keyInsights", "strategicNarrative", "metadata"],
+      required: ["drivers", "dependencies", "risks", "keyInsights", "strategicNarrative", "metadata", "keyMetricsDashboard", "strategicPriorities"],
       properties: {
+        // EXECUTIVE-FIRST ENHANCEMENT: Key Metrics Dashboard
+        keyMetricsDashboard: {
+          type: "object",
+          properties: {
+            totalInvestment: { type: "string" },
+            timeToValue: { type: "string" },
+            regulatoryRisk: { type: "string" },
+            roiProjection: { type: "string" },
+            criticalPathStatus: { type: "string" },
+            vendorLockIn: { type: "string" }
+          },
+          required: ["totalInvestment", "timeToValue", "regulatoryRisk", "roiProjection", "criticalPathStatus", "vendorLockIn"]
+        },
+
+        // EXECUTIVE-FIRST ENHANCEMENT: Top 3 Strategic Priorities
+        strategicPriorities: {
+          type: "array",
+          minItems: 3,
+          maxItems: 3,
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              bankingContext: { type: "string" },
+              dependencies: { type: "string" },
+              deadline: { type: "string" }
+            },
+            required: ["title", "description", "bankingContext", "dependencies"]
+          }
+        },
+
         drivers: {
           type: "array",
           items: {

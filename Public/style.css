@@ -321,6 +321,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* ADVANCED GANTT: Critical Path Highlighting */
+.gantt-bar.critical-path {
+  border: 3px solid #DC3545; /* Bold red border */
+  box-shadow: 0 0 12px rgba(220, 53, 69, 0.6), 0 4px 8px rgba(0, 0, 0, 0.3); /* Red glow */
+  animation: critical-path-pulse 2.5s infinite;
+}
+
+@keyframes critical-path-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.6), 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.9), 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Critical path bars should be visually prominent even in light theme */
+.light-theme .gantt-bar.critical-path {
+  border: 3px solid #C82333; /* Slightly darker red for light theme */
+  box-shadow: 0 0 12px rgba(200, 35, 51, 0.5), 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 
 /* 13. Export Button and Edit Mode Toggle Styling */
 .export-container {
@@ -352,6 +374,46 @@
   background-color: #4a4a4a;
   cursor: not-allowed;
   transform: none; /* No lift when disabled */
+}
+
+/* Executive View Toggle Button (EXECUTIVE-FIRST ENHANCEMENT) */
+.executive-view-toggle-button {
+  font-family: 'Work Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #555555; /* Gray for detail view */
+  border: none;
+  border-radius: 8px;
+  padding: 16px 48px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+.executive-view-toggle-button:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* Critical Path View Toggle Button (ADVANCED GANTT ENHANCEMENT) */
+.critical-path-toggle-button {
+  font-family: 'Work Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #6C757D; /* Gray for all tasks view */
+  border: none;
+  border-radius: 8px;
+  padding: 16px 48px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+.critical-path-toggle-button:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
 /* Edit Mode Toggle Button */
@@ -3016,6 +3078,48 @@
   }
 }
 
+/* ADVANCED GANTT: Milestone Markers on Gantt Bars */
+.milestone-marker {
+  font-size: 16px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.milestone-marker.milestone-marker {
+  /* Gold color for milestone marker (💰) */
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
+}
+
+.milestone-marker.decision-marker {
+  /* Yellow-gold color for decision marker (★) */
+  color: #FFD700;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
+}
+
+.milestone-marker.regulatory-marker {
+  /* Diamond marker for regulatory (◆) - white with shadow */
+  color: #FFFFFF;
+  filter: drop-shadow(0 2px 4px rgba(238, 158, 32, 0.4));
+}
+
+/* Hover effect for milestone markers */
+.gantt-bar:hover .milestone-marker {
+  transform: translateY(-50%) scale(1.2);
+}
+
+/* Light theme overrides for milestone markers */
+.light-theme .milestone-marker.decision-marker {
+  color: #FF8C00; /* Darker orange for visibility */
+  filter: drop-shadow(0 2px 4px rgba(255, 140, 0, 0.6));
+}
+
+.light-theme .milestone-marker.regulatory-marker {
+  color: #003366; /* Dark blue for visibility */
+  filter: drop-shadow(0 2px 4px rgba(0, 51, 102, 0.4));
+}
+
 /* Regulatory Summary Box */
 .regulatory-summary-box {
   background: linear-gradient(135deg, #2a1a1a 0%, #1f1515 100%);
@@ -3901,6 +4005,7 @@ body.light-theme {
 
 /* Light theme for buttons */
 .light-theme .export-button,
+.light-theme .executive-view-toggle-button,
 .light-theme .edit-mode-toggle-button {
   background: rgba(0, 0, 0, 0.05);
   color: #1A1A1A;
@@ -3908,8 +4013,94 @@ body.light-theme {
 }
 
 .light-theme .export-button:hover,
+.light-theme .executive-view-toggle-button:hover,
 .light-theme .edit-mode-toggle-button:hover {
   background: rgba(0, 0, 0, 0.1);
+}
+
+/* EXECUTIVE-FIRST ENHANCEMENT: Light Mode for Key Metrics Dashboard */
+.light-theme .key-metrics-dashboard {
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  border: 1px solid #90CAF9;
+}
+
+.light-theme .key-metrics-dashboard .metrics-header h3 {
+  color: #003366;
+}
+
+.light-theme .key-metrics-dashboard .badge-executive {
+  background-color: rgba(25, 118, 210, 0.15);
+  color: #1565C0;
+}
+
+.light-theme .metric-item {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #90CAF9;
+}
+
+.light-theme .metric-item:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: #1976D2;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+}
+
+.light-theme .metric-label {
+  color: #1976D2;
+}
+
+.light-theme .metric-value {
+  color: #003366;
+}
+
+/* EXECUTIVE-FIRST ENHANCEMENT: Light Mode for Strategic Priorities */
+.light-theme .strategic-priorities {
+  background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+  border: 1px solid #EF9A9A;
+}
+
+.light-theme .strategic-priorities .priorities-header h3 {
+  color: #B71C1C;
+}
+
+.light-theme .strategic-priorities .badge-priority {
+  background-color: rgba(211, 47, 47, 0.15);
+  color: #C62828;
+}
+
+.light-theme .priority-item {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #EF9A9A;
+}
+
+.light-theme .priority-item:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: #E57373;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.2);
+}
+
+.light-theme .priority-number {
+  background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
+}
+
+.light-theme .priority-title {
+  color: #B71C1C;
+}
+
+.light-theme .priority-description {
+  color: #333333;
+}
+
+.light-theme .detail-label {
+  color: #1976D2;
+}
+
+.light-theme .detail-value {
+  color: #333333;
+}
+
+.light-theme .deadline-urgent {
+  color: #D32F2F;
+  font-weight: 700;
 }
 
 /* Ensure good contrast for all text in light mode */
@@ -4452,6 +4643,210 @@ body.dragging {
   color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: 500;
+}
+
+/* EXECUTIVE-FIRST ENHANCEMENT: Key Metrics Dashboard */
+.key-metrics-dashboard {
+  background: linear-gradient(135deg, #0f3460 0%, #1a4d7a 100%);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.key-metrics-dashboard.elevated {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.metrics-header {
+  margin-bottom: 24px;
+}
+
+.badge-executive {
+  background-color: rgba(52, 152, 219, 0.3);
+  color: #5DADE2;
+}
+
+.metrics-header h3 {
+  margin: 12px 0 0 0;
+  font-size: 36px;
+  font-weight: 600;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metrics-header h3 .icon {
+  font-size: 42px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.metric-item {
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.metric-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: 18px;
+  color: #A8D0E6;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 24px;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* EXECUTIVE-FIRST ENHANCEMENT: Strategic Priorities */
+.strategic-priorities {
+  background: linear-gradient(135deg, #1a2332 0%, #2a3f5f 100%);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.strategic-priorities.elevated {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.priorities-header {
+  margin-bottom: 24px;
+}
+
+.badge-priority {
+  background-color: rgba(231, 76, 60, 0.25);
+  color: #EC7063;
+}
+
+.priorities-header h3 {
+  margin: 12px 0 0 0;
+  font-size: 36px;
+  font-weight: 600;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.priorities-header h3 .icon {
+  font-size: 42px;
+}
+
+.priorities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.priority-item {
+  display: flex;
+  gap: 20px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.priority-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.priority-number {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: #FFFFFF;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.priority-content {
+  flex: 1;
+}
+
+.priority-title {
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.priority-description {
+  margin: 0 0 16px 0;
+  font-size: 22px;
+  color: #E8E8E8;
+  line-height: 1.6;
+}
+
+.priority-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.priority-detail-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 20px;
+}
+
+.detail-label {
+  color: #A8D0E6;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.detail-value {
+  color: #FFFFFF;
+  flex: 1;
+}
+
+.deadline-urgent {
+  color: #EC7063;
+  font-weight: 600;
 }
 
 /* Intelligence Grid */

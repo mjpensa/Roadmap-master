@@ -40,6 +40,8 @@ export class GanttChart {
     this.resizableGantt = null; // Phase 2: Bar resizing functionality
     this.contextMenu = null; // Phase 5: Context menu for color changing
     this.isEditMode = false; // Edit mode toggle - default is read-only
+    this.isExecutiveView = false; // EXECUTIVE-FIRST: Executive View toggle - shows only milestones/decisions/regulatory
+    this.isCriticalPathView = false; // ADVANCED GANTT: Critical Path View toggle - shows only critical path tasks
     this.titleElement = null; // Reference to the title element for edit mode
     this.legendElement = null; // Reference to the legend element for edit mode
     this.hamburgerMenu = null; // Hamburger menu for section navigation
@@ -95,6 +97,24 @@ export class GanttChart {
     const exportContainer = document.createElement('div');
     exportContainer.className = 'export-container';
 
+    // EXECUTIVE-FIRST: Executive View toggle button
+    const executiveViewBtn = document.createElement('button');
+    executiveViewBtn.id = 'executive-view-toggle-btn';
+    executiveViewBtn.className = 'executive-view-toggle-button';
+    executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
+    executiveViewBtn.title = 'Toggle Executive View (show only milestones, decisions, and regulatory checkpoints)';
+    executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
+    exportContainer.appendChild(executiveViewBtn);
+
+    // ADVANCED GANTT: Critical Path View toggle button
+    const criticalPathBtn = document.createElement('button');
+    criticalPathBtn.id = 'critical-path-toggle-btn';
+    criticalPathBtn.className = 'critical-path-toggle-button';
+    criticalPathBtn.textContent = this.isCriticalPathView ? '🔴 Critical Path: ON' : '🔵 All Tasks: ON';
+    criticalPathBtn.title = 'Toggle Critical Path View (show only tasks on critical path)';
+    criticalPathBtn.style.backgroundColor = this.isCriticalPathView ? '#DC3545' : '#6C757D';
+    exportContainer.appendChild(criticalPathBtn);
+
     // Edit mode toggle button
     const editModeBtn = document.createElement('button');
     editModeBtn.id = 'edit-mode-toggle-btn';
@@ -127,9 +147,12 @@ export class GanttChart {
     this._addHamburgerMenu();
 
     // Add listeners
+    this._addExecutiveViewToggleListener(); // EXECUTIVE-FIRST: Executive View toggle
+    this._addCriticalPathViewToggleListener(); // ADVANCED GANTT: Critical Path View toggle
     this._addEditModeToggleListener();
     this._addExportListener();
     this._addThemeToggleListener(); // BANKING ENHANCEMENT: Theme toggle
+    this._addKeyboardShortcuts(); // ADVANCED GANTT: Keyboard navigation
 
     // Add "Today" line
     const today = new Date();
@@ -443,9 +466,20 @@ export class GanttChart {
       barEl.setAttribute('data-color', bar.color || 'default');
       barEl.style.gridColumn = `${bar.startCol} / ${bar.endCol}`;
 
+      // ADVANCED GANTT: Add critical path styling
+      if (row.isCriticalPath) {
+        barEl.classList.add('critical-path');
+        barEl.setAttribute('data-critical-path', 'true');
+      }
+
       // BANKING ENHANCEMENT: Add regulatory icon if task has regulatory dependency
       if (row.regulatoryFlags && row.regulatoryFlags.hasRegulatoryDependency) {
         this._addRegulatoryIcon(barEl, row.regulatoryFlags);
+      }
+
+      // ADVANCED GANTT: Add milestone marker based on task type
+      if (row.taskType) {
+        this._addMilestoneMarker(barEl, row.taskType, row.title);
       }
 
       barAreaEl.appendChild(barEl);
@@ -504,6 +538,53 @@ export class GanttChart {
 
     barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
     barEl.appendChild(icon);
+  }
+
+  /**
+   * ADVANCED GANTT: Adds milestone marker icon based on task type
+   * @param {HTMLElement} barEl - The bar element to add the marker to
+   * @param {string} taskType - The type of task (milestone, regulatory, decision, task)
+   * @param {string} title - The task title for tooltip
+   * @private
+   */
+  _addMilestoneMarker(barEl, taskType, title) {
+    // Only add markers for strategic task types (not regular tasks)
+    if (taskType === 'task') return;
+
+    const marker = document.createElement('span');
+    marker.className = `milestone-marker ${taskType}-marker`;
+
+    // Set icon and tooltip based on task type
+    switch (taskType) {
+      case 'milestone':
+        marker.textContent = '💰';
+        marker.title = `Milestone: ${title}`;
+        break;
+      case 'regulatory':
+        // Regulatory already has 🏛️ icon, use ◆ for additional marker
+        marker.textContent = '◆';
+        marker.title = `Regulatory Checkpoint: ${title}`;
+        break;
+      case 'decision':
+        marker.textContent = '★';
+        marker.title = `Decision Point: ${title}`;
+        break;
+      default:
+        return; // Unknown type, don't add marker
+    }
+
+    // Position marker at end of bar (right side)
+    marker.style.position = 'absolute';
+    marker.style.right = '4px';
+    marker.style.top = '50%';
+    marker.style.transform = 'translateY(-50%)';
+    marker.style.zIndex = '10';
+    marker.style.fontSize = '16px';
+    marker.style.lineHeight = '1';
+    marker.style.cursor = 'help';
+
+    barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
+    barEl.appendChild(marker);
   }
 
   /**
@@ -722,6 +803,152 @@ export class GanttChart {
   }
 
   /**
+   * EXECUTIVE-FIRST: Adds Executive View toggle functionality
+   * Filters chart to show only milestones, decisions, and regulatory checkpoints
+   * @private
+   */
+  _addExecutiveViewToggleListener() {
+    const executiveViewBtn = document.getElementById('executive-view-toggle-btn');
+
+    if (!executiveViewBtn) {
+      console.warn('Executive view toggle button not found.');
+      return;
+    }
+
+    executiveViewBtn.addEventListener('click', () => {
+      this.isExecutiveView = !this.isExecutiveView;
+      executiveViewBtn.textContent = this.isExecutiveView ? '👔 Executive View: ON' : '📋 Detail View: ON';
+      executiveViewBtn.style.backgroundColor = this.isExecutiveView ? '#1976D2' : '#555555';
+
+      // Re-render the grid with filtered data
+      this._updateGridForExecutiveView();
+
+      console.log(`✓ ${this.isExecutiveView ? 'Executive View' : 'Detail View'} enabled`);
+    });
+  }
+
+  /**
+   * EXECUTIVE-FIRST: Updates the grid to show/hide tasks based on Executive View
+   * Shows only milestones, decisions, and regulatory checkpoints when enabled
+   * @private
+   */
+  _updateGridForExecutiveView() {
+    if (!this.gridElement) {
+      console.warn('Grid element not found for Executive View update');
+      return;
+    }
+
+    // Get all task rows (not swimlane rows)
+    const allRows = this.gridElement.querySelectorAll('.gantt-row');
+
+    allRows.forEach((row, index) => {
+      const dataItem = this.ganttData.data[index];
+
+      // Skip swimlanes - always show them
+      if (dataItem && dataItem.isSwimlane) {
+        row.style.display = '';
+        return;
+      }
+
+      // For tasks, check taskType
+      if (this.isExecutiveView) {
+        // Show only milestone, regulatory, and decision tasks
+        const taskType = dataItem?.taskType || 'task';
+        const isExecutiveTask = ['milestone', 'regulatory', 'decision'].includes(taskType);
+
+        if (isExecutiveTask) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else {
+        // Show all tasks in detail view
+        row.style.display = '';
+      }
+    });
+  }
+
+  /**
+   * ADVANCED GANTT: Adds Critical Path View toggle functionality
+   * Filters chart to show only tasks on the critical path
+   * @private
+   */
+  _addCriticalPathViewToggleListener() {
+    const criticalPathBtn = document.getElementById('critical-path-toggle-btn');
+
+    if (!criticalPathBtn) {
+      console.warn('Critical Path View toggle button not found.');
+      return;
+    }
+
+    criticalPathBtn.addEventListener('click', () => {
+      this.isCriticalPathView = !this.isCriticalPathView;
+      criticalPathBtn.textContent = this.isCriticalPathView ? '🔴 Critical Path: ON' : '🔵 All Tasks: ON';
+      criticalPathBtn.style.backgroundColor = this.isCriticalPathView ? '#DC3545' : '#6C757D';
+
+      // Re-render the grid with filtered data
+      this._updateGridForCriticalPathView();
+
+      console.log(`✓ ${this.isCriticalPathView ? 'Critical Path View' : 'All Tasks View'} enabled`);
+    });
+  }
+
+  /**
+   * ADVANCED GANTT: Updates the grid to show/hide tasks based on Critical Path View
+   * Shows only tasks on the critical path when enabled
+   * @private
+   */
+  _updateGridForCriticalPathView() {
+    if (!this.gridElement) {
+      console.warn('Grid element not found for Critical Path View update');
+      return;
+    }
+
+    // Get all rows (both labels and bar areas)
+    // Each task has 2 elements: label (.gantt-row-label) and bar area (.gantt-bar-area)
+    // We need to show/hide both elements together
+    const allLabels = this.gridElement.querySelectorAll('.gantt-row-label');
+    const allBarAreas = this.gridElement.querySelectorAll('.gantt-bar-area');
+
+    allLabels.forEach((label, index) => {
+      const dataItem = this.ganttData.data[index];
+
+      // Skip swimlanes - always show them
+      if (dataItem && dataItem.isSwimlane) {
+        label.style.display = '';
+        if (allBarAreas[index]) {
+          allBarAreas[index].style.display = '';
+        }
+        return;
+      }
+
+      // For tasks, check isCriticalPath
+      if (this.isCriticalPathView) {
+        // Show only critical path tasks
+        const isCriticalPath = dataItem?.isCriticalPath || false;
+
+        if (isCriticalPath) {
+          label.style.display = '';
+          if (allBarAreas[index]) {
+            allBarAreas[index].style.display = '';
+          }
+        } else {
+          label.style.display = 'none';
+          if (allBarAreas[index]) {
+            allBarAreas[index].style.display = 'none';
+          }
+        }
+      } else {
+        // Show all tasks
+        label.style.display = '';
+        if (allBarAreas[index]) {
+          allBarAreas[index].style.display = '';
+        }
+      }
+    });
+  }
+
+  /**
    * Adds edit mode toggle functionality
    * @private
    */
@@ -819,6 +1046,82 @@ export class GanttChart {
         toggleBtn.querySelector('.theme-label').textContent = 'Light Mode';
       }
     });
+  }
+
+  /**
+   * ADVANCED GANTT: Adds keyboard shortcuts for quick navigation
+   * E = Executive View, T = Timeline (Roadmap), D = Detail View, P = Presentation
+   * @private
+   */
+  _addKeyboardShortcuts() {
+    // Add keyboard event listener to document
+    document.addEventListener('keydown', (e) => {
+      // Ignore if user is typing in an input field
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+      }
+
+      // Ignore if modifier keys are pressed (Ctrl, Alt, Meta)
+      if (e.ctrlKey || e.altKey || e.metaKey) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      switch (key) {
+        case 'e':
+          // E = Executive View (toggle ON)
+          if (!this.isExecutiveView) {
+            const executiveViewBtn = document.getElementById('executive-view-toggle-btn');
+            if (executiveViewBtn) {
+              executiveViewBtn.click();
+              console.log('⌨️ Keyboard shortcut: E (Executive View)');
+            }
+          }
+          break;
+
+        case 'd':
+          // D = Detail View (toggle Executive View OFF)
+          if (this.isExecutiveView) {
+            const executiveViewBtn = document.getElementById('executive-view-toggle-btn');
+            if (executiveViewBtn) {
+              executiveViewBtn.click();
+              console.log('⌨️ Keyboard shortcut: D (Detail View)');
+            }
+          }
+          break;
+
+        case 't':
+          // T = Timeline (navigate to roadmap view)
+          if (this.router) {
+            this.router.navigate('roadmap');
+            console.log('⌨️ Keyboard shortcut: T (Timeline/Roadmap)');
+          }
+          break;
+
+        case 'p':
+          // P = Presentation (navigate to presentation view)
+          if (this.router) {
+            this.router.navigate('presentation');
+            console.log('⌨️ Keyboard shortcut: P (Presentation)');
+          }
+          break;
+
+        case 's':
+          // S = Summary (navigate to executive summary view)
+          if (this.router) {
+            this.router.navigate('executive-summary');
+            console.log('⌨️ Keyboard shortcut: S (Summary)');
+          }
+          break;
+
+        default:
+          // No action for other keys
+          break;
+      }
+    });
+
+    console.log('⌨️ Keyboard shortcuts enabled: E=Executive, D=Detail, T=Timeline, P=Presentation, S=Summary');
   }
 
   /**
