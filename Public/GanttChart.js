@@ -159,6 +159,15 @@ export class GanttChart {
     themeToggleBtn.innerHTML = '<span class="theme-icon">☀️</span><span class="theme-label">Light Mode</span>';
     exportContainer.appendChild(themeToggleBtn);
 
+    // FEATURE #8: Copy Share URL button (persistent database storage)
+    const copyUrlBtn = document.createElement('button');
+    copyUrlBtn.id = 'copy-url-btn';
+    copyUrlBtn.className = 'copy-url-button';
+    copyUrlBtn.textContent = '🔗 Copy Share URL';
+    copyUrlBtn.title = 'Copy shareable URL to clipboard (chart is saved to database)';
+    copyUrlBtn.setAttribute('aria-label', 'Copy shareable URL to clipboard');
+    exportContainer.appendChild(copyUrlBtn);
+
     // Append to container
     this.container.appendChild(this.chartWrapper);
     this.container.appendChild(exportContainer);
@@ -172,6 +181,7 @@ export class GanttChart {
     this._addEditModeToggleListener();
     this._addExportListener();
     this._addThemeToggleListener(); // BANKING ENHANCEMENT: Theme toggle
+    this._addCopyUrlListener(); // FEATURE #8: Copy share URL
     this._addKeyboardShortcuts(); // ADVANCED GANTT: Keyboard navigation
 
     // Add "Today" line
@@ -1373,6 +1383,102 @@ export class GanttChart {
         this._announceToScreenReader('Dark theme enabled');
       }
     });
+  }
+
+  /**
+   * FEATURE #8: Adds Copy Share URL button functionality
+   * Copies the current chart URL to clipboard for sharing
+   * @private
+   */
+  _addCopyUrlListener() {
+    const copyUrlBtn = document.getElementById('copy-url-btn');
+    if (!copyUrlBtn) {
+      console.warn('Copy URL button not found.');
+      return;
+    }
+
+    copyUrlBtn.addEventListener('click', async () => {
+      // Get current URL (chart.html?id=abc123)
+      const currentUrl = window.location.href;
+
+      try {
+        // Copy to clipboard
+        await navigator.clipboard.writeText(currentUrl);
+
+        // Visual feedback
+        const originalText = copyUrlBtn.textContent;
+        copyUrlBtn.textContent = '✓ URL Copied!';
+        copyUrlBtn.style.backgroundColor = '#50AF7B'; // Green
+
+        // Show notification
+        this._showNotification('Chart URL copied to clipboard! Share this link to give others access to this chart.', 'success');
+
+        // ACCESSIBILITY: Announce to screen readers
+        this._announceToScreenReader('Chart URL copied to clipboard');
+
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          copyUrlBtn.textContent = originalText;
+          copyUrlBtn.style.backgroundColor = ''; // Reset to default
+        }, 2000);
+
+        console.log('✓ Chart URL copied to clipboard:', currentUrl);
+      } catch (err) {
+        console.error('Failed to copy URL:', err);
+
+        // Fallback: Show URL in alert
+        alert(`Copy this URL to share:\n\n${currentUrl}`);
+
+        // Show error notification
+        this._showNotification('Could not copy URL automatically. Please copy it from the address bar.', 'error');
+      }
+    });
+  }
+
+  /**
+   * FEATURE #8: Shows a temporary notification message
+   * @param {string} message - The message to display
+   * @param {string} type - The notification type ('success', 'error', 'info')
+   * @private
+   */
+  _showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `chart-notification chart-notification-${type}`;
+    notification.textContent = message;
+    notification.setAttribute('role', 'alert');
+    notification.setAttribute('aria-live', 'polite');
+
+    // Style notification
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      background: ${type === 'success' ? '#50AF7B' : type === 'error' ? '#DC3545' : '#1976D2'};
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 10001;
+      max-width: 400px;
+      font-family: 'Work Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      animation: slideInRight 0.3s ease-out;
+    `;
+
+    // Add to body
+    document.body.appendChild(notification);
+
+    // Remove after 5 seconds
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 5000);
   }
 
   /**

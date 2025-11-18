@@ -20,3 +20,9 @@ Environment variables
 macOS
 
 .DS_Store
+
+Database
+
+roadmap.db
+roadmap.db-shm
+roadmap.db-wal

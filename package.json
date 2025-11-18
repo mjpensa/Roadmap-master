@@ -12,6 +12,7 @@
     "test:integration": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest tests/integration"
   },
   "dependencies": {
+    "better-sqlite3": "^12.4.1",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
