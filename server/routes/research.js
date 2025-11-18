@@ -39,7 +39,7 @@ import {
   getProvenanceAuditQuery,
   getExecutiveSummaryQuery
 } from '../prompts-research.js';
-import { apiLimiter, strictLimiter } from '../middleware.js';
+import { apiLimiter, strictLimiter, uploadMiddleware } from '../middleware.js';
 import {
   createSession,
   getSession,
@@ -123,7 +123,7 @@ function isValidProvider(provider) {
  * Uploads research files with LLM provider attribution
  * Body: FormData with files and provider metadata
  */
-router.post('/api/research/upload', strictLimiter, async (req, res) => {
+router.post('/api/research/upload', uploadMiddleware.array('files'), strictLimiter, async (req, res) => {
   try {
     // Files are uploaded via multer middleware (configured in server.js)
     const files = req.files;

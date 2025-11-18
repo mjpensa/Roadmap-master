@@ -89,8 +89,8 @@ app.use(configureTimeout);
 app.use('/', chartRoutes);
 app.use('/', analysisRoutes);
 app.use('/', analyticsRoutes);
-// Research synthesis routes (with upload middleware for /api/research/upload)
-app.use('/', uploadMiddleware.array('files'), researchRoutes);
+// Research synthesis routes (upload middleware applied per-route in research.js)
+app.use('/', researchRoutes);
 // Semantic gantt routes (upload middleware applied per-route in semantic-gantt.js)
 app.use('/', semanticRoutes);
 
