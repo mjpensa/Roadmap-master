@@ -13,6 +13,7 @@ import { ContextMenu } from './ContextMenu.js';
 import { ExecutiveSummary } from './ExecutiveSummary.js';
 import { PresentationSlides } from './PresentationSlides.js';
 import { HamburgerMenu } from './HamburgerMenu.js';
+import { BimodalGanttController } from './BimodalGanttController.js';
 
 // Import Router (loaded as global from Router.js)
 // Note: Router.js is loaded via script tag in chart.html and exposed as window.Router
@@ -50,6 +51,7 @@ export class GanttChart {
     this.executiveSummary = null; // Reference to ExecutiveSummary component
     this.presentationSlides = null; // Reference to PresentationSlides component
     this.router = null; // Router for navigation between sections
+    this.bimodalController = null; // Semantic overlay controller (Phase 3: Semantic Overlay)
   }
 
   /**
@@ -86,6 +88,20 @@ export class GanttChart {
     this._createGrid();
 
     renderTimer.mark('Grid created');
+
+    // PHASE 3 SEMANTIC OVERLAY: Initialize bimodal controller if data is semantic
+    if (BimodalGanttController.isSemantic(this.ganttData)) {
+      console.log('[GanttChart] 🔬 Semantic data detected - initializing BimodalGanttController');
+      this.bimodalController = new BimodalGanttController(
+        this.ganttData,
+        this.chartWrapper,
+        this
+      );
+      this.bimodalController.initialize();
+      renderTimer.mark('Semantic overlay initialized');
+    } else {
+      console.log('[GanttChart] Standard roadmap data - semantic overlay not applicable');
+    }
 
     this._addLegend();
 
