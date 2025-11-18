@@ -21,7 +21,6 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import compression from 'compression';
 import cors from 'cors';
-import multer from 'multer';
 
 // Import configuration (validates environment on load)
 import { CONFIG } from './server/config.js';
@@ -34,9 +33,6 @@ import {
   uploadMiddleware,
   handleUploadErrors
 } from './server/middleware.js';
-
-// Import utilities for file validation
-import { getFileExtension } from './server/utils.js';
 
 // Import storage management
 import { startCleanupInterval } from './server/storage.js';
@@ -56,45 +52,6 @@ const __dirname = dirname(__filename);
 
 // Configure trust proxy for Railway deployment
 app.set('trust proxy', CONFIG.SERVER.TRUST_PROXY_HOPS);
-
-// --- Multer Configuration for Semantic Routes ---
-// Semantic routes need to accept both 'files' (file uploads) AND 'prompt' (text field)
-// Standard uploadMiddleware.array('files') only accepts files, causing "Unexpected field" errors
-const semanticUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: CONFIG.FILES.MAX_SIZE_BYTES,
-    files: CONFIG.FILES.MAX_COUNT,
-    fieldSize: CONFIG.FILES.MAX_FIELD_SIZE_BYTES
-  },
-  fileFilter: (req, file, cb) => {
-    // Validate file types - check both MIME type and extension
-    const allowedMimes = CONFIG.FILES.ALLOWED_MIMES;
-    const fileExtension = getFileExtension(file.originalname);
-    const allowedExtensions = CONFIG.FILES.ALLOWED_EXTENSIONS;
-
-    // Check if MIME type is allowed
-    if (allowedMimes.includes(file.mimetype)) {
-      // For application/octet-stream, verify the extension
-      if (file.mimetype === 'application/octet-stream') {
-        if (allowedExtensions.includes(fileExtension)) {
-          cb(null, true);
-        } else {
-          cb(new Error(CONFIG.ERRORS.INVALID_FILE_EXTENSION(fileExtension)));
-        }
-      } else {
-        cb(null, true);
-      }
-    } else {
-      cb(new Error(CONFIG.ERRORS.INVALID_FILE_TYPE(file.mimetype)));
-    }
-  }
-});
-
-// Create middleware that accepts any fields (files and text)
-// Note: .any() is less restrictive but allows us to accept both 'files' and 'prompt'
-// without field name restrictions. This is safe because we validate file types above.
-const semanticUploadMiddleware = semanticUpload.any();
 
 // --- Apply Middleware ---
 // Compression middleware (gzip/deflate)
@@ -134,8 +91,8 @@ app.use('/', analysisRoutes);
 app.use('/', analyticsRoutes);
 // Research synthesis routes (with upload middleware for /api/research/upload)
 app.use('/', uploadMiddleware.array('files'), researchRoutes);
-// Semantic gantt routes (with semantic-specific upload middleware that accepts both files AND prompt field)
-app.use('/', semanticUploadMiddleware, semanticRoutes);
+// Semantic gantt routes (upload middleware applied per-route in semantic-gantt.js)
+app.use('/', semanticRoutes);
 
 // --- Error Handling ---
 app.use(handleUploadErrors);
