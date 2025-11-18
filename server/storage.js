@@ -238,9 +238,27 @@ export function getJob(jobId) {
     createdAt: job.createdAt.getTime()
   };
 
-  if (job.chartId) {
+  // If job is complete and has a chartId, fetch the full chart data
+  if (job.chartId && job.status === 'complete') {
+    const chart = db.getChart(job.chartId);
+    if (chart) {
+      // Return the full chart data structure expected by the frontend
+      result.data = {
+        ...chart.ganttData,
+        executiveSummary: chart.executiveSummary,
+        presentationSlides: chart.presentationSlides,
+        sessionId: chart.sessionId,
+        chartId: job.chartId
+      };
+    } else {
+      // Chart not found, just return chartId
+      result.data = { chartId: job.chartId };
+    }
+  } else if (job.chartId) {
+    // Job not complete yet, or error - just return chartId
     result.data = { chartId: job.chartId };
   }
+
   if (job.error) {
     result.error = job.error;
   }
