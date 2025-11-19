@@ -378,9 +378,10 @@ select:focus-visible {
 }
 
 /* ADVANCED GANTT: Critical Path Highlighting */
+/* REMOVED: Critical path pulsing outline and animation
 .gantt-bar.critical-path {
-  border: 3px solid #DC3545; /* Bold red border */
-  box-shadow: 0 0 12px rgba(220, 53, 69, 0.6), 0 4px 8px rgba(0, 0, 0, 0.3); /* Red glow */
+  border: 3px solid #DC3545;
+  box-shadow: 0 0 12px rgba(220, 53, 69, 0.6), 0 4px 8px rgba(0, 0, 0, 0.3);
   animation: critical-path-pulse 2.5s infinite;
 }
 
@@ -393,11 +394,11 @@ select:focus-visible {
   }
 }
 
-/* Critical path bars should be visually prominent even in light theme */
 .light-theme .gantt-bar.critical-path {
-  border: 3px solid #C82333; /* Slightly darker red for light theme */
+  border: 3px solid #C82333;
   box-shadow: 0 0 12px rgba(200, 35, 51, 0.5), 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+*/
 
 
 /* 13. Export Button and Edit Mode Toggle Styling */
@@ -3110,6 +3111,7 @@ select:focus-visible {
 }
 
 /* ADVANCED GANTT: Milestone Markers on Gantt Bars */
+/* REMOVED: Milestone marker icons (💰 and ★)
 .milestone-marker {
   font-size: 16px;
   pointer-events: none;
@@ -3119,26 +3121,23 @@ select:focus-visible {
 }
 
 .milestone-marker.milestone-marker {
-  /* Gold color for milestone marker (💰) */
   filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
 }
 
 .milestone-marker.decision-marker {
-  /* Yellow-gold color for decision marker (★) */
   color: #FFD700;
   filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
 }
 
-/* Hover effect for milestone markers */
 .gantt-bar:hover .milestone-marker {
   transform: translateY(-50%) scale(1.2);
 }
 
-/* Light theme overrides for milestone markers */
 .light-theme .milestone-marker.decision-marker {
-  color: #FF8C00; /* Darker orange for visibility */
+  color: #FF8C00;
   filter: drop-shadow(0 2px 4px rgba(255, 140, 0, 0.6));
 }
+*/
 
 /* --- BANKING ENHANCEMENT: LIGHT MODE THEME (EXECUTIVE/PRESENTATION) --- */
 
