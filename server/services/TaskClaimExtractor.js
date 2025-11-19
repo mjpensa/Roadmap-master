@@ -1,169 +1,324 @@
-import { ClaimSchema } from '../models/ClaimModels.js';
-import { v4 as uuidv4 } from 'uuid';
+/**
+ * Task Claim Extractor Service
+ * Extracts atomic claims from BimodalGanttData tasks for validation
+ *
+ * Claim Types:
+ * - duration: Task duration estimates
+ * - startDate: Task start date specifications
+ * - endDate: Task end date specifications
+ * - dependency: Task dependency relationships
+ * - resource: Resource allocation claims
+ * - regulatory: Regulatory requirement claims
+ * - financial: Financial impact claims
+ */
 
 export class TaskClaimExtractor {
-  constructor(options = {}) {
-    this.logger = options.logger || console;
-    this.claimTypes = ['duration', 'dependency', 'resource', 'deadline', 'requirement'];
+  constructor() {
+    this.claimTypes = [
+      'duration',
+      'startDate',
+      'endDate',
+      'dependency',
+      'resource',
+      'regulatory',
+      'financial'
+    ];
   }
 
   /**
    * Extract all claims from a bimodal task
-   * @param {Object} bimodalTask - The task to extract claims from
-   * @returns {Array} Array of validated claims
+   * @param {Object} bimodalTask - Task from BimodalGanttData
+   * @returns {Promise<Array>} Array of extracted claims
    */
   async extractClaims(bimodalTask) {
     const claims = [];
 
-    try {
-      // Duration claim
-      if (bimodalTask.duration) {
-        const durationClaim = this.createDurationClaim(bimodalTask);
-        claims.push(ClaimSchema.parse(durationClaim));
-      }
-
-      // Start date claim
-      if (bimodalTask.startDate) {
-        const startDateClaim = this.createStartDateClaim(bimodalTask);
-        claims.push(ClaimSchema.parse(startDateClaim));
-      }
-
-      // Dependency claims
-      if (bimodalTask.dependencies && bimodalTask.dependencies.length > 0) {
-        const dependencyClaims = this.createDependencyClaims(bimodalTask);
-        dependencyClaims.forEach(claim => claims.push(ClaimSchema.parse(claim)));
-      }
-
-      // Regulatory requirement claim
-      if (bimodalTask.regulatoryRequirement?.isRequired) {
-        const regulatoryClaim = this.createRegulatoryClaim(bimodalTask);
-        claims.push(ClaimSchema.parse(regulatoryClaim));
-      }
-
-      // Resource claims (if present)
-      if (bimodalTask.resources) {
-        const resourceClaims = this.createResourceClaims(bimodalTask);
-        resourceClaims.forEach(claim => claims.push(ClaimSchema.parse(claim)));
-      }
-
-      this.logger.info(`Extracted ${claims.length} claims from task ${bimodalTask.id}`);
-      return claims;
-
-    } catch (error) {
-      this.logger.error(`Failed to extract claims from task ${bimodalTask.id}:`, error);
-      throw error;
-    }
-  }
-
-  createDurationClaim(task) {
-    return {
-      id: this.generateClaimId(task.id, 'duration'),
-      taskId: task.id,
-      claim: `Duration is ${task.duration.value} ${task.duration.unit}`,
-      claimType: 'duration',
-      source: this.extractSource(task, task.duration),
-      confidence: task.duration.confidence,
-      contradictions: [],
-      validatedAt: new Date().toISOString()
-    };
-  }
-
-  createStartDateClaim(task) {
-    return {
-      id: this.generateClaimId(task.id, 'startDate'),
-      taskId: task.id,
-      claim: `Starts on ${task.startDate.value}`,
-      claimType: 'deadline',
-      source: this.extractSource(task, task.startDate),
-      confidence: task.startDate.confidence,
-      contradictions: [],
-      validatedAt: new Date().toISOString()
-    };
-  }
-
-  createDependencyClaims(task) {
-    return task.dependencies.map((depId, index) => ({
-      id: this.generateClaimId(task.id, `dependency-${index}`),
-      taskId: task.id,
-      claim: `Depends on task ${depId}`,
-      claimType: 'dependency',
-      source: this.extractSource(task, { origin: 'explicit' }),
-      confidence: task.confidence,
-      contradictions: [],
-      validatedAt: new Date().toISOString()
-    }));
-  }
-
-  createRegulatoryClaim(task) {
-    return {
-      id: this.generateClaimId(task.id, 'regulatory'),
-      taskId: task.id,
-      claim: `Requires ${task.regulatoryRequirement.regulation} approval`,
-      claimType: 'requirement',
-      source: this.extractSource(task, task.regulatoryRequirement),
-      confidence: task.regulatoryRequirement.confidence,
-      contradictions: [],
-      validatedAt: new Date().toISOString()
-    };
-  }
-
-  createResourceClaims(task) {
-    // Placeholder for resource claims
-    return [];
-  }
-
-  extractSource(task, fieldData) {
-    if (fieldData?.sourceCitations && fieldData.sourceCitations.length > 0) {
-      return {
-        documentName: fieldData.sourceCitations[0].documentName,
-        provider: fieldData.sourceCitations[0].provider || 'INTERNAL',
-        citation: fieldData.sourceCitations[0]
-      };
+    // Duration claim
+    if (bimodalTask.duration) {
+      claims.push({
+        id: this.generateClaimId(bimodalTask.id, 'duration'),
+        taskId: bimodalTask.id,
+        taskName: bimodalTask.name,
+        claim: `Duration is ${bimodalTask.duration.value} ${bimodalTask.duration.unit}`,
+        claimType: 'duration',
+        source: this.extractSource(bimodalTask),
+        confidence: bimodalTask.duration.confidence || bimodalTask.confidence || 0.5,
+        origin: bimodalTask.origin,
+        contradictions: [],
+        validatedAt: new Date().toISOString(),
+        metadata: {
+          value: bimodalTask.duration.value,
+          unit: bimodalTask.duration.unit,
+          justification: bimodalTask.duration.justification
+        }
+      });
     }
 
-    if (fieldData?.inferenceRationale) {
-      return {
-        documentName: 'inferred',
-        provider: fieldData.inferenceRationale.llmProvider || 'GEMINI',
-        citation: null
-      };
+    // Start date claim
+    if (bimodalTask.startDate) {
+      claims.push({
+        id: this.generateClaimId(bimodalTask.id, 'startDate'),
+        taskId: bimodalTask.id,
+        taskName: bimodalTask.name,
+        claim: `Starts on ${bimodalTask.startDate.value}`,
+        claimType: 'startDate',
+        source: this.extractSource(bimodalTask),
+        confidence: bimodalTask.startDate.confidence || bimodalTask.confidence || 0.5,
+        origin: bimodalTask.origin,
+        contradictions: [],
+        validatedAt: new Date().toISOString(),
+        metadata: {
+          value: bimodalTask.startDate.value,
+          justification: bimodalTask.startDate.justification
+        }
+      });
     }
 
-    return {
-      documentName: 'inferred',
-      provider: 'GEMINI',
-      citation: null
-    };
-  }
+    // End date claim
+    if (bimodalTask.endDate) {
+      claims.push({
+        id: this.generateClaimId(bimodalTask.id, 'endDate'),
+        taskId: bimodalTask.id,
+        taskName: bimodalTask.name,
+        claim: `Ends on ${bimodalTask.endDate.value}`,
+        claimType: 'endDate',
+        source: this.extractSource(bimodalTask),
+        confidence: bimodalTask.endDate.confidence || bimodalTask.confidence || 0.5,
+        origin: bimodalTask.origin,
+        contradictions: [],
+        validatedAt: new Date().toISOString(),
+        metadata: {
+          value: bimodalTask.endDate.value,
+          justification: bimodalTask.endDate.justification
+        }
+      });
+    }
 
-  generateClaimId(taskId, claimType) {
-    // Generate a proper UUID for the claim ID
-    return uuidv4();
+    // Dependency claims
+    if (bimodalTask.dependencies && Array.isArray(bimodalTask.dependencies)) {
+      bimodalTask.dependencies.forEach((dep, idx) => {
+        claims.push({
+          id: this.generateClaimId(bimodalTask.id, `dependency-${idx}`),
+          taskId: bimodalTask.id,
+          taskName: bimodalTask.name,
+          claim: `Depends on task "${dep}"`,
+          claimType: 'dependency',
+          source: this.extractSource(bimodalTask),
+          confidence: bimodalTask.confidence || 0.5,
+          origin: bimodalTask.origin,
+          contradictions: [],
+          validatedAt: new Date().toISOString(),
+          metadata: {
+            dependencyId: dep,
+            dependencyIndex: idx
+          }
+        });
+      });
+    }
+
+    // Regulatory requirement claim
+    if (bimodalTask.regulatoryRequirement?.isRequired) {
+      claims.push({
+        id: this.generateClaimId(bimodalTask.id, 'regulatory'),
+        taskId: bimodalTask.id,
+        taskName: bimodalTask.name,
+        claim: `Requires ${bimodalTask.regulatoryRequirement.regulation} approval by ${bimodalTask.regulatoryRequirement.authority}`,
+        claimType: 'regulatory',
+        source: this.extractSource(bimodalTask),
+        confidence: bimodalTask.regulatoryRequirement.confidence || 0.9, // High confidence for regulatory
+        origin: 'explicit', // Regulatory requirements are explicit
+        contradictions: [],
+        validatedAt: new Date().toISOString(),
+        metadata: {
+          regulation: bimodalTask.regulatoryRequirement.regulation,
+          authority: bimodalTask.regulatoryRequirement.authority,
+          deadline: bimodalTask.regulatoryRequirement.deadline,
+          criticalityLevel: bimodalTask.regulatoryRequirement.criticalityLevel
+        }
+      });
+    }
+
+    // Financial impact claims
+    if (bimodalTask.financialImpact) {
+      const fi = bimodalTask.financialImpact;
+
+      if (fi.totalCost !== undefined) {
+        claims.push({
+          id: this.generateClaimId(bimodalTask.id, 'financial-cost'),
+          taskId: bimodalTask.id,
+          taskName: bimodalTask.name,
+          claim: `Total cost is $${fi.totalCost}`,
+          claimType: 'financial',
+          source: this.extractSource(bimodalTask),
+          confidence: fi.confidence || bimodalTask.confidence || 0.5,
+          origin: bimodalTask.origin,
+          contradictions: [],
+          validatedAt: new Date().toISOString(),
+          metadata: {
+            metricType: 'totalCost',
+            value: fi.totalCost,
+            breakdown: {
+              laborCosts: fi.laborCosts,
+              technologyCosts: fi.technologyCosts,
+              vendorCosts: fi.vendorCosts
+            }
+          }
+        });
+      }
+
+      if (fi.totalAnnualBenefit !== undefined) {
+        claims.push({
+          id: this.generateClaimId(bimodalTask.id, 'financial-benefit'),
+          taskId: bimodalTask.id,
+          taskName: bimodalTask.name,
+          claim: `Annual benefit is $${fi.totalAnnualBenefit}`,
+          claimType: 'financial',
+          source: this.extractSource(bimodalTask),
+          confidence: fi.confidence || bimodalTask.confidence || 0.5,
+          origin: bimodalTask.origin,
+          contradictions: [],
+          validatedAt: new Date().toISOString(),
+          metadata: {
+            metricType: 'totalAnnualBenefit',
+            value: fi.totalAnnualBenefit,
+            breakdown: {
+              revenueIncrease: fi.revenueIncrease,
+              costSavings: fi.costSavings,
+              riskReduction: fi.riskReduction
+            }
+          }
+        });
+      }
+
+      if (fi.firstYearROI !== undefined) {
+        claims.push({
+          id: this.generateClaimId(bimodalTask.id, 'financial-roi'),
+          taskId: bimodalTask.id,
+          taskName: bimodalTask.name,
+          claim: `First year ROI is ${fi.firstYearROI}%`,
+          claimType: 'financial',
+          source: this.extractSource(bimodalTask),
+          confidence: fi.confidence || bimodalTask.confidence || 0.5,
+          origin: bimodalTask.origin,
+          contradictions: [],
+          validatedAt: new Date().toISOString(),
+          metadata: {
+            metricType: 'firstYearROI',
+            value: fi.firstYearROI,
+            paybackPeriod: fi.paybackPeriod
+          }
+        });
+      }
+    }
+
+    return claims;
   }
 
   /**
-   * Batch extract claims from multiple tasks
+   * Extract source information from task
+   * @param {Object} task - BimodalGanttData task
+   * @returns {Object} Source metadata
    */
-  async extractBatchClaims(tasks) {
-    const results = [];
-
-    for (const task of tasks) {
-      try {
-        const claims = await this.extractClaims(task);
-        results.push({
-          taskId: task.id,
-          claims,
-          success: true
-        });
-      } catch (error) {
-        results.push({
-          taskId: task.id,
-          error: error.message,
-          success: false
-        });
-      }
+  extractSource(task) {
+    if (task.sourceCitations && task.sourceCitations.length > 0) {
+      const citation = task.sourceCitations[0];
+      return {
+        documentName: citation.documentName,
+        provider: citation.provider || 'INTERNAL',
+        citation: citation,
+        exactQuote: citation.exactQuote || null,
+        startChar: citation.startChar,
+        endChar: citation.endChar
+      };
     }
 
-    return results;
+    // No explicit citation - mark as inferred
+    return {
+      documentName: 'inferred',
+      provider: 'GEMINI',
+      citation: null,
+      exactQuote: null,
+      startChar: null,
+      endChar: null
+    };
+  }
+
+  /**
+   * Generate unique claim ID
+   * @param {string} taskId - Task identifier
+   * @param {string} claimType - Type of claim
+   * @returns {string} Unique claim ID
+   */
+  generateClaimId(taskId, claimType) {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `claim-${taskId}-${claimType}-${timestamp}-${random}`;
+  }
+
+  /**
+   * Extract all claims from multiple tasks
+   * @param {Array} tasks - Array of BimodalGanttData tasks
+   * @returns {Promise<Array>} Array of all claims
+   */
+  async extractAllClaims(tasks) {
+    const allClaims = [];
+
+    for (const task of tasks) {
+      const taskClaims = await this.extractClaims(task);
+      allClaims.push(...taskClaims);
+    }
+
+    return allClaims;
+  }
+
+  /**
+   * Get claim statistics
+   * @param {Array} claims - Array of claims
+   * @returns {Object} Statistics summary
+   */
+  getClaimStatistics(claims) {
+    const stats = {
+      totalClaims: claims.length,
+      byType: {},
+      byOrigin: { explicit: 0, inferred: 0 },
+      byConfidence: { high: 0, medium: 0, low: 0 },
+      cited: 0,
+      uncited: 0
+    };
+
+    // Count by type
+    this.claimTypes.forEach(type => {
+      stats.byType[type] = claims.filter(c => c.claimType === type).length;
+    });
+
+    // Count by origin
+    claims.forEach(claim => {
+      if (claim.origin === 'explicit') {
+        stats.byOrigin.explicit++;
+      } else {
+        stats.byOrigin.inferred++;
+      }
+
+      // Count by confidence level
+      if (claim.confidence >= 0.8) {
+        stats.byConfidence.high++;
+      } else if (claim.confidence >= 0.5) {
+        stats.byConfidence.medium++;
+      } else {
+        stats.byConfidence.low++;
+      }
+
+      // Count cited vs uncited
+      if (claim.source.citation) {
+        stats.cited++;
+      } else {
+        stats.uncited++;
+      }
+    });
+
+    return stats;
   }
 }
+
+// Export singleton instance
+export const taskClaimExtractor = new TaskClaimExtractor();
