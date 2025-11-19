@@ -244,19 +244,20 @@ export class GanttChart {
    * @private
    */
   _addTitle() {
-    // Create a container for the title row that will hold both title and logo
+    // Create a container for the title row that will hold title, hamburger menu, and logo
     this.titleContainer = document.createElement('div');
     this.titleContainer.className = 'gantt-title-container';
 
-    // Use flexbox to align title and logo
+    // Use flexbox to align title and logo, with hamburger menu absolutely centered
     this.titleContainer.style.display = 'flex';
     this.titleContainer.style.justifyContent = 'space-between';
-    this.titleContainer.style.alignItems = 'center'; // Vertically center logo with title
-    this.titleContainer.style.gap = '32px'; // Space between title and logo
+    this.titleContainer.style.alignItems = 'center'; // Vertically center all elements
+    this.titleContainer.style.gap = '32px'; // Space between elements
     this.titleContainer.style.padding = '29px'; // Match original title padding
     this.titleContainer.style.borderBottom = '1px solid #0D0D0D';
     this.titleContainer.style.backgroundColor = '#0c2340';
     this.titleContainer.style.borderRadius = '8px 8px 0 0';
+    this.titleContainer.style.position = 'relative'; // For absolute positioning of hamburger menu
 
     // Create the title text element
     this.titleElement = document.createElement('div');
@@ -320,8 +321,16 @@ export class GanttChart {
     this.hamburgerMenu = new HamburgerMenu(this.router);
     const menuElement = this.hamburgerMenu.render();
 
-    // Append directly to the document body so it stays fixed on screen
-    document.body.appendChild(menuElement);
+    // Add class to position it in the title row
+    menuElement.classList.add('in-title-row');
+
+    // Append to the title container (centered between title and logo)
+    if (this.titleContainer) {
+      this.titleContainer.appendChild(menuElement);
+    } else {
+      // Fallback to body if titleContainer doesn't exist
+      document.body.appendChild(menuElement);
+    }
 
     // Initialize the router with component references
     if (this.router) {
@@ -764,47 +773,6 @@ export class GanttChart {
     });
   }
 
-  /**
-   * ADVANCED GANTT: Adds milestone marker icon based on task type
-   * @param {HTMLElement} barEl - The bar element to add the marker to
-   * @param {string} taskType - The type of task (milestone, decision, task)
-   * @param {string} title - The task title for tooltip
-   * @private
-   */
-  _addMilestoneMarker(barEl, taskType, title) {
-    // Only add markers for strategic task types (not regular tasks)
-    if (taskType === 'task') return;
-
-    const marker = document.createElement('span');
-    marker.className = `milestone-marker ${taskType}-marker`;
-
-    // Set icon and tooltip based on task type
-    switch (taskType) {
-      case 'milestone':
-        marker.textContent = '💰';
-        marker.title = `Milestone: ${title}`;
-        break;
-      case 'decision':
-        marker.textContent = '★';
-        marker.title = `Decision Point: ${title}`;
-        break;
-      default:
-        return; // Unknown type, don't add marker
-    }
-
-    // Position marker at end of bar (right side)
-    marker.style.position = 'absolute';
-    marker.style.right = '4px';
-    marker.style.top = '50%';
-    marker.style.transform = 'translateY(-50%)';
-    marker.style.zIndex = '10';
-    marker.style.fontSize = '16px';
-    marker.style.lineHeight = '1';
-    marker.style.cursor = 'help';
-
-    barEl.style.position = 'relative'; // Ensure bar is positioned for absolute child
-    barEl.appendChild(marker);
-  }
 
   /**
    * Adds the legend if present in data
@@ -2130,30 +2098,48 @@ export class GanttChart {
 
   /**
    * Updates the legend to include all colors used in the gantt chart
+   * Orders colors by their first appearance in the chart (top to bottom)
    * @private
    */
   _updateLegendWithUsedColors() {
-    // Get all unique colors used in the gantt chart
-    const usedColors = new Set();
+    // Collect colors in the order they first appear in the chart (top to bottom)
+    const colorOrder = [];
+    const seenColors = new Set();
+
     this.ganttData.data.forEach(row => {
-      if (row.bar && row.bar.color) {
-        usedColors.add(row.bar.color);
+      if (row.bar && row.bar.color && !seenColors.has(row.bar.color)) {
+        colorOrder.push(row.bar.color);
+        seenColors.add(row.bar.color);
       }
     });
 
-    // Check which colors are missing from the legend
-    const legendColors = new Set(this.ganttData.legend.map(item => item.color));
+    // Create a map of existing legend items by color for quick lookup
+    const existingLegendMap = new Map();
+    this.ganttData.legend.forEach(item => {
+      existingLegendMap.set(item.color, item.label);
+    });
 
-    // Add missing colors to the legend with placeholder labels
-    usedColors.forEach(color => {
-      if (!legendColors.has(color)) {
-        this.ganttData.legend.push({
+    // Rebuild legend array in chronological order
+    const newLegend = [];
+    colorOrder.forEach(color => {
+      if (existingLegendMap.has(color)) {
+        // Preserve existing label
+        newLegend.push({
+          color: color,
+          label: existingLegendMap.get(color)
+        });
+      } else {
+        // Add new color with placeholder label
+        newLegend.push({
           color: color,
           label: `[Define ${this._formatColorName(color)}]`
         });
         console.log(`✓ Added new color "${color}" to legend`);
       }
     });
+
+    // Replace legend with reordered version
+    this.ganttData.legend = newLegend;
   }
 
   /**

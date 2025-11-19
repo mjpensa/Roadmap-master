@@ -6279,6 +6279,17 @@ body.dragging {
   z-index: 10001; /* Above everything else */
 }
 
+/* Hamburger menu positioned in title row (centered between title and logo) */
+.hamburger-menu-container.in-title-row {
+  position: absolute; /* Position absolutely within title container */
+  left: 50%; /* Start at center */
+  transform: translateX(-50%); /* Center the element */
+  top: 50%; /* Vertical center */
+  transform: translate(-50%, -50%); /* Center both horizontally and vertically */
+  z-index: 10; /* Above title and logo */
+  margin: 0; /* Reset margins */
+}
+
 .hamburger-button {
   width: 50px;
   height: 50px;
