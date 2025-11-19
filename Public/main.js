@@ -428,11 +428,11 @@ async function pollForJobCompletion(jobId, generateBtn) {
         console.log('Job completed successfully');
 
         // Handle semantic mode differently (returns chartId, not full data)
-        if (window.isSemanticMode && job.chartId) {
-          console.log('Semantic mode: Fetching chart data with chartId:', job.chartId);
+        if (window.isSemanticMode && job.data?.chartId) {
+          console.log('Semantic mode: Fetching chart data with chartId:', job.data.chartId);
 
           // Fetch the full semantic chart data
-          const chartResponse = await fetch(`/api/semantic-gantt/${job.chartId}`);
+          const chartResponse = await fetch(`/api/semantic-gantt/${job.data.chartId}`);
           if (!chartResponse.ok) {
             throw new Error(`Failed to fetch semantic chart: ${chartResponse.status}`);
           }
@@ -446,7 +446,16 @@ async function pollForJobCompletion(jobId, generateBtn) {
           const standardData = BimodalDataAdapter.ensureStandardFormat(bimodalData);
           console.log('✅ Conversion complete - timeColumns:', standardData.timeColumns?.length, 'data:', standardData.data?.length);
 
-          return standardData; // Return converted standard format
+          // CRITICAL: Add chartId and sessionId to standardData (they're not in BimodalGanttData)
+          standardData.chartId = chartData.chartId;
+          standardData.sessionId = chartData.metadata?.sessionId || null;
+
+          console.log('✅ Added chartId and sessionId to standardData:', {
+            chartId: standardData.chartId,
+            sessionId: standardData.sessionId
+          });
+
+          return standardData; // Return converted standard format with IDs
         }
 
         // Standard mode: data is directly in job.data
