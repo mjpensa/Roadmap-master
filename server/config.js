@@ -61,6 +61,9 @@ export const CONFIG = {
     MAX_OUTPUT_TOKENS_CHART: 65536,
     MAX_OUTPUT_TOKENS_ANALYSIS: 65536,
     MAX_OUTPUT_TOKENS_QA: 8192,
+    THINKING_BUDGET_ANALYSIS: 24576, // Maximum thinking tokens for task analysis (complex reasoning)
+    THINKING_BUDGET_RESEARCH: 24576, // Maximum thinking tokens for research synthesis
+    THINKING_BUDGET_EXECUTIVE: 16384, // Thinking tokens for executive summaries
     TEMPERATURE_STRUCTURED: 0,
     TEMPERATURE_QA: 0.1,
     TOP_P: 1,

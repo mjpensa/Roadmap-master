@@ -180,7 +180,10 @@ ${researchTextCache}`;
           maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
           temperature: 0.7,
           topP: CONFIG.API.TOP_P,
-          topK: CONFIG.API.TOP_K
+          topK: CONFIG.API.TOP_K,
+          thinkingConfig: {
+            thinkingBudget: CONFIG.API.THINKING_BUDGET_EXECUTIVE
+          }
         }
       };
 
