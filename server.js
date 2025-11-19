@@ -43,6 +43,7 @@ import analysisRoutes from './server/routes/analysis.js';
 import analyticsRoutes from './server/routes/analytics.js';
 import researchRoutes from './server/routes/research.js';
 import semanticRoutes from './server/routes/semantic-gantt.js';
+import validatedSemanticRoutes from './server/routes/semantic-gantt-validated.js';
 
 // --- Server Setup ---
 const app = express();
@@ -93,6 +94,8 @@ app.use('/', analyticsRoutes);
 app.use('/', researchRoutes);
 // Semantic gantt routes (upload middleware applied per-route in semantic-gantt.js)
 app.use('/', semanticRoutes);
+// Validated semantic gantt routes with cross-validation pipeline
+app.use('/', validatedSemanticRoutes);
 
 // --- Error Handling ---
 app.use(handleUploadErrors);
