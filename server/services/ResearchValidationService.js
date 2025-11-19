@@ -4,6 +4,7 @@ import { CitationVerifier } from './CitationVerifier.js';
 import { ContradictionDetector } from './ContradictionDetector.js';
 import { ProvenanceAuditor } from './ProvenanceAuditor.js';
 import { ConfidenceCalibrator } from './ConfidenceCalibrator.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export class ResearchValidationService {
   constructor(options = {}) {
@@ -95,8 +96,13 @@ export class ResearchValidationService {
     for (const existingClaim of allClaims) {
       const contradiction = await this.contradictionDetector.detectContradiction(claim, existingClaim);
       if (contradiction) {
-        contradictions.push(contradiction);
-        this.claimLedger.addContradiction(contradiction);
+        // Add ID for ledger storage
+        const contradictionWithId = {
+          id: uuidv4(),
+          ...contradiction
+        };
+        contradictions.push(contradictionWithId);
+        this.claimLedger.addContradiction(contradictionWithId);
       }
     }
 
