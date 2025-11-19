@@ -23,16 +23,35 @@ const DEFAULT_EXPIRATION_DAYS = 30;
  * @returns {Database} SQLite database instance
  */
 function initializeDatabase() {
-  // Create database file if it doesn't exist
-  const db = new Database(DB_PATH, { verbose: console.log });
+  console.log(`[Database] Initializing database at ${DB_PATH}`);
 
-  // Enable WAL mode for better concurrency
-  db.pragma('journal_mode = WAL');
+  // Create database file if it doesn't exist
+  const db = new Database(DB_PATH, {
+    verbose: console.log,
+    timeout: 5000 // 5 second timeout to prevent hanging
+  });
+
+  // Use DELETE mode instead of WAL for ephemeral filesystems
+  // WAL mode can cause issues on Railway due to additional files (-wal, -shm)
+  db.pragma('journal_mode = DELETE');
+  console.log('[Database] Journal mode set to DELETE (ephemeral filesystem compatible)');
+
+  // Set busy timeout to prevent SQLITE_BUSY errors
+  db.pragma('busy_timeout = 5000');
 
   // Create tables if they don't exist
   createTables(db);
 
   console.log(`✓ Database initialized at ${DB_PATH}`);
+
+  // WARNING: Railway uses ephemeral filesystems
+  if (process.env.RAILWAY_ENVIRONMENT) {
+    console.warn('⚠️  WARNING: Running on Railway with ephemeral filesystem!');
+    console.warn('⚠️  SQLite database will be DELETED on every container restart!');
+    console.warn('⚠️  For persistent storage, use Railway Postgres plugin or external database.');
+    console.warn('⚠️  Charts will be lost on: deployments, crashes, scaling events.');
+  }
+
   return db;
 }
 
