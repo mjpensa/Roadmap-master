@@ -18,7 +18,7 @@ import { createSession, storeChart, getChart, createJob, updateJob, completeJob,
 import { getDeterministicClient } from '../gemini-deterministic.js';
 import { semanticValidator } from '../validation/semantic-repair.js';
 import { strictLimiter, apiLimiter, semanticUploadMiddleware } from '../middleware.js';
-import { trackEvent, createSemanticChart, getSemanticChart } from '../database.js';
+import { trackEvent } from '../database.js';
 
 const router = express.Router();
 
@@ -168,26 +168,14 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
 
     console.log(`[Semantic Job ${jobId}] About to call storeChart with sessionId: ${sessionId}`);
     const chartId = storeChart(chartDataWithEnhancements, sessionId);
-    console.log(`[Semantic Job ${jobId}] storeChart succeeded, chartId: ${chartId}`);
-
-    // Store in database (persistent)
-    try {
-      console.log(`[Semantic Job ${jobId}] About to call createSemanticChart`);
-      console.log(`[Semantic Job ${jobId}] Parameters: chartId=${chartId}, sessionId=${sessionId}, repairs=${validationResult.repairs?.length || 0} items`);
-
-      createSemanticChart(chartId, sessionId, semanticData, {
-        factCount: semanticData.statistics.explicitTasks,
-        inferenceCount: semanticData.statistics.inferredTasks,
-        averageConfidence: semanticData.statistics.averageConfidence,
-        dataQualityScore: semanticData.statistics.dataQualityScore
-      }, validationResult.repairs);
-
-      console.log(`[Semantic Job ${jobId}] createSemanticChart succeeded`);
-      console.log(`[Semantic Job ${jobId}] Chart persisted to database: ${chartId}`);
-    } catch (dbError) {
-      console.error(`[Semantic Job ${jobId}] Database persistence failed:`, dbError.message);
-      // Continue anyway - chart is in memory
-    }
+    console.log(`[Semantic Job ${jobId}] ✅ storeChart succeeded, chartId: ${chartId} (in-memory, 1-hour expiration)`);
+    console.log(`[Semantic Job ${jobId}] Semantic metadata:`, {
+      factCount: semanticData.statistics.explicitTasks,
+      inferenceCount: semanticData.statistics.inferredTasks,
+      averageConfidence: semanticData.statistics.averageConfidence,
+      dataQualityScore: semanticData.statistics.dataQualityScore,
+      repairsApplied: validationResult.repairs?.length || 0
+    });
 
     // Track analytics event
     try {
@@ -293,31 +281,13 @@ router.get('/api/semantic-gantt/:chartId', apiLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid chart ID' });
     }
 
-    console.log(`[Semantic API] Retrieving chart: ${chartId}`);
+    console.log(`[Semantic API] Retrieving chart from in-memory storage: ${chartId}`);
 
-    // Try in-memory first (fastest)
-    let chart = getChart(chartId);
-
-    // Fallback to database if not in memory
-    if (!chart) {
-      console.log(`[Semantic API] Chart not in memory, checking database...`);
-      try {
-        const dbChart = getSemanticChart(chartId);
-        if (dbChart) {
-          chart = {
-            ganttData: JSON.parse(dbChart.ganttData),
-            executiveSummary: null,
-            presentationSlides: null,
-            sessionId: dbChart.sessionId
-          };
-          console.log(`[Semantic API] Chart retrieved from database`);
-        }
-      } catch (dbError) {
-        console.error(`[Semantic API] Database retrieval error:`, dbError.message);
-      }
-    }
+    // Get chart from in-memory storage
+    const chart = getChart(chartId);
 
     if (!chart) {
+      console.log(`[Semantic API] Chart not found in memory: ${chartId}`);
       return res.status(404).json({ error: 'Chart not found' });
     }
 
@@ -328,17 +298,17 @@ router.get('/api/semantic-gantt/:chartId', apiLimiter, async (req, res) => {
       console.error('[Semantic API] Analytics tracking failed:', analyticsError.message);
     }
 
-    // Return chart data
+    // Return chart data (chart.data contains the ganttData from storeChart)
     res.json({
       chartId,
-      ganttData: chart.ganttData,
+      ganttData: chart.data,
       metadata: {
         mode: 'semantic',
         deterministic: true,
-        factCount: chart.ganttData?.statistics?.explicitTasks || 0,
-        inferenceCount: chart.ganttData?.statistics?.inferredTasks || 0,
-        averageConfidence: chart.ganttData?.statistics?.averageConfidence || 0,
-        dataQualityScore: chart.ganttData?.statistics?.dataQualityScore || 0,
+        factCount: chart.data?.statistics?.explicitTasks || 0,
+        inferenceCount: chart.data?.statistics?.inferredTasks || 0,
+        averageConfidence: chart.data?.statistics?.averageConfidence || 0,
+        dataQualityScore: chart.data?.statistics?.dataQualityScore || 0,
         sessionId: chart.sessionId
       }
     });
