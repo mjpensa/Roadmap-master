@@ -1077,7 +1077,7 @@ ${fileContents[idx]}
 }
 ```
 
-**Cleanup**: Runs every 5 minutes, removes entries older than 1 hour
+**Cleanup**: Runs every 5 minutes, removes expired charts/sessions (30 days) and old jobs (1 hour)
 
 **Database Persistence (server/database.js)** [NEW v2.2.0] - For long-term storage:
 
@@ -1482,7 +1482,7 @@ npm run test:integration
 **Solution**: Click "Toggle Edit Mode" button (should turn green)
 
 **Symptom**: Changes not persisting
-**Solution**: Chart expired (1-hour limit), regenerate chart
+**Solution**: Chart expired (30-day limit), regenerate chart
 
 ### Export Fails
 
