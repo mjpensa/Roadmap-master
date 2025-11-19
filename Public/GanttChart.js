@@ -532,15 +532,17 @@ export class GanttChart {
       barEl.style.gridColumn = `${bar.startCol} / ${bar.endCol}`;
 
       // ADVANCED GANTT: Add critical path styling
-      if (row.isCriticalPath) {
-        barEl.classList.add('critical-path');
-        barEl.setAttribute('data-critical-path', 'true');
-      }
+      // REMOVED: Critical path styling with pulsing outline
+      // if (row.isCriticalPath) {
+      //   barEl.classList.add('critical-path');
+      //   barEl.setAttribute('data-critical-path', 'true');
+      // }
 
       // ADVANCED GANTT: Add milestone marker based on task type
-      if (row.taskType) {
-        this._addMilestoneMarker(barEl, row.taskType, row.title);
-      }
+      // REMOVED: Milestone markers (icons on bars)
+      // if (row.taskType) {
+      //   this._addMilestoneMarker(barEl, row.taskType, row.title);
+      // }
 
       barAreaEl.appendChild(barEl);
     }
