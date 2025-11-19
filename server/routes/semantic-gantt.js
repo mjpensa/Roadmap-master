@@ -150,14 +150,14 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
     const semanticData = validationResult.data;
     console.log(`[Semantic Job ${jobId}] Validation complete - ${validationResult.stats.totalRepairs} repairs applied`);
 
-    // Store chart (in-memory)
-    const chartId = `SEMCHART-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    storeChart(chartId, {
+    // Store chart data with unique ID for URL-based sharing
+    // Note: storeChart generates its own chartId and returns it
+    const chartDataWithEnhancements = {
       ganttData: semanticData,
       executiveSummary: null, // Can be generated later
-      presentationSlides: null, // Can be generated later
-      sessionId: sessionId
-    });
+      presentationSlides: null // Can be generated later
+    };
+    const chartId = storeChart(chartDataWithEnhancements, sessionId);
 
     // Store in database (persistent)
     try {
@@ -187,8 +187,13 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
       console.error(`[Semantic Job ${jobId}] Analytics tracking failed:`, analyticsError.message);
     }
 
-    // Mark job as complete
-    completeJob(jobId, chartId);
+    // Mark job as complete with full chart data
+    const completeData = {
+      ...semanticData,  // Spread the semantic chart data (tasks, dependencies, projectSummary, etc.)
+      sessionId,
+      chartId
+    };
+    completeJob(jobId, completeData);
     console.log(`[Semantic Job ${jobId}] ✅ COMPLETE - Chart ID: ${chartId}`);
 
   } catch (error) {
