@@ -9,6 +9,9 @@ import { CONFIG } from './config.js';
 // Cross-LLM Research Synthesis Feature
 import { ResearchSynthesizer } from './ResearchSynthesizer.js';
 
+// Semantic Chart Adapter
+import { BimodalDataAdapter } from './BimodalDataAdapter.js';
+
 // Define supported file types for frontend validation using centralized config
 const SUPPORTED_FILE_MIMES = CONFIG.FILES.SUPPORTED_MIMES;
 const SUPPORTED_FILE_EXTENSIONS = CONFIG.FILES.SUPPORTED_EXTENSIONS;
@@ -437,7 +440,13 @@ async function pollForJobCompletion(jobId, generateBtn) {
           const chartData = await chartResponse.json();
           console.log('Semantic chart data received:', chartData);
 
-          return chartData.ganttData; // Return the ganttData from semantic chart
+          // Convert BimodalGanttData to standard format using adapter
+          const bimodalData = chartData.ganttData;
+          console.log('🔬 Converting BimodalGanttData to standard format');
+          const standardData = BimodalDataAdapter.ensureStandardFormat(bimodalData);
+          console.log('✅ Conversion complete - timeColumns:', standardData.timeColumns?.length, 'data:', standardData.data?.length);
+
+          return standardData; // Return converted standard format
         }
 
         // Standard mode: data is directly in job.data
@@ -631,32 +640,61 @@ async function handleChartGenerate(event) {
       throw new Error('Invalid chart data structure: Expected object, received ' + typeof ganttData);
     }
 
-    if (!ganttData.timeColumns) {
-      console.error('Invalid data structure - missing timeColumns. Keys:', Object.keys(ganttData), 'timeColumns value:', ganttData.timeColumns);
-      throw new Error('Invalid chart data structure: Missing timeColumns field');
-    }
+    // Check if this is semantic/bimodal data
+    const isSemanticData = ganttData.tasks && Array.isArray(ganttData.tasks) &&
+                          (ganttData.generatedAt || ganttData.determinismSeed !== undefined);
 
-    if (!Array.isArray(ganttData.timeColumns)) {
-      console.error('Invalid data structure - timeColumns is not an array. Type:', typeof ganttData.timeColumns, 'Value:', ganttData.timeColumns);
-      throw new Error('Invalid chart data structure: timeColumns is not an array (type: ' + typeof ganttData.timeColumns + ')');
-    }
+    if (isSemanticData) {
+      // Validate BimodalGanttData structure
+      console.log('🔬 Semantic chart data detected - validating BimodalGanttData structure');
 
-    if (!ganttData.data) {
-      console.error('Invalid data structure - missing data. Keys:', Object.keys(ganttData), 'data value:', ganttData.data);
-      throw new Error('Invalid chart data structure: Missing data field');
-    }
+      if (!Array.isArray(ganttData.tasks)) {
+        console.error('Invalid semantic data - tasks is not an array. Type:', typeof ganttData.tasks);
+        throw new Error('Invalid semantic chart data: tasks must be an array');
+      }
 
-    if (!Array.isArray(ganttData.data)) {
-      console.error('Invalid data structure - data is not an array. Type:', typeof ganttData.data, 'Value:', ganttData.data);
-      throw new Error('Invalid chart data structure: data is not an array (type: ' + typeof ganttData.data + ')');
-    }
+      if (!ganttData.dependencies || !Array.isArray(ganttData.dependencies)) {
+        console.error('Invalid semantic data - dependencies is not an array. Type:', typeof ganttData.dependencies);
+        throw new Error('Invalid semantic chart data: dependencies must be an array');
+      }
 
-    console.log('✓ Data structure validation passed - timeColumns:', ganttData.timeColumns.length, 'data:', ganttData.data.length);
+      if (ganttData.tasks.length === 0) {
+        console.warn("AI returned valid but empty semantic data.", ganttData);
+        throw new Error('The AI was unable to find any tasks in the provided documents. Please check your files or try a different prompt.');
+      }
 
-    // Check for empty data
-    if (ganttData.timeColumns.length === 0 || ganttData.data.length === 0) {
-      console.warn("AI returned valid but empty data.", ganttData);
-      throw new Error('The AI was unable to find any tasks or time columns in the provided documents. Please check your files or try a different prompt.');
+      console.log('✓ Semantic data structure validation passed - tasks:', ganttData.tasks.length, 'dependencies:', ganttData.dependencies.length);
+    } else {
+      // Validate standard Gantt chart structure
+      console.log('📊 Standard chart data detected - validating standard Gantt structure');
+
+      if (!ganttData.timeColumns) {
+        console.error('Invalid data structure - missing timeColumns. Keys:', Object.keys(ganttData), 'timeColumns value:', ganttData.timeColumns);
+        throw new Error('Invalid chart data structure: Missing timeColumns field');
+      }
+
+      if (!Array.isArray(ganttData.timeColumns)) {
+        console.error('Invalid data structure - timeColumns is not an array. Type:', typeof ganttData.timeColumns, 'Value:', ganttData.timeColumns);
+        throw new Error('Invalid chart data structure: timeColumns is not an array (type: ' + typeof ganttData.timeColumns + ')');
+      }
+
+      if (!ganttData.data) {
+        console.error('Invalid data structure - missing data. Keys:', Object.keys(ganttData), 'data value:', ganttData.data);
+        throw new Error('Invalid chart data structure: Missing data field');
+      }
+
+      if (!Array.isArray(ganttData.data)) {
+        console.error('Invalid data structure - data is not an array. Type:', typeof ganttData.data, 'Value:', ganttData.data);
+        throw new Error('Invalid chart data structure: data is not an array (type: ' + typeof ganttData.data + ')');
+      }
+
+      console.log('✓ Data structure validation passed - timeColumns:', ganttData.timeColumns.length, 'data:', ganttData.data.length);
+
+      // Check for empty data
+      if (ganttData.timeColumns.length === 0 || ganttData.data.length === 0) {
+        console.warn("AI returned valid but empty data.", ganttData);
+        throw new Error('The AI was unable to find any tasks or time columns in the provided documents. Please check your files or try a different prompt.');
+      }
     }
 
     // 9. Open in new tab
