@@ -126,6 +126,28 @@ export function getChart(chartId) {
   const chart = db.getChart(chartId);
 
   if (!chart) {
+    console.log(`❌ Chart ${chartId} not found in database`);
+    return null;
+  }
+
+  console.log(`📊 Retrieved chart ${chartId} from database`);
+  console.log(`  - ganttData type:`, typeof chart.ganttData);
+  console.log(`  - ganttData has timeColumns:`, chart.ganttData?.timeColumns ? 'yes' : 'no');
+  console.log(`  - ganttData has data:`, chart.ganttData?.data ? 'yes' : 'no');
+
+  // Validate ganttData structure
+  if (!chart.ganttData) {
+    console.error(`❌ Chart ${chartId} has null/undefined ganttData`);
+    return null;
+  }
+
+  if (!chart.ganttData.timeColumns || !Array.isArray(chart.ganttData.timeColumns)) {
+    console.error(`❌ Chart ${chartId} has invalid timeColumns:`, chart.ganttData.timeColumns);
+    return null;
+  }
+
+  if (!chart.ganttData.data || !Array.isArray(chart.ganttData.data)) {
+    console.error(`❌ Chart ${chartId} has invalid data array:`, chart.ganttData.data);
     return null;
   }
 
