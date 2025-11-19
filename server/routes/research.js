@@ -442,7 +442,10 @@ async function processContradictionDetection(jobId, sessionId, sessionData) {
         temperature: CONFIG.API.TEMPERATURE_STRUCTURED,
         maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_ANALYSIS,
         topP: CONFIG.API.TOP_P,
-        topK: CONFIG.API.TOP_K
+        topK: CONFIG.API.TOP_K,
+        thinkingConfig: {
+          thinkingBudget: CONFIG.API.THINKING_BUDGET_RESEARCH
+        }
       }
     };
 
@@ -545,7 +548,10 @@ async function processReportSynthesis(jobId, sessionId, sessionData) {
         temperature: CONFIG.API.TEMPERATURE_STRUCTURED,
         maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
         topP: CONFIG.API.TOP_P,
-        topK: CONFIG.API.TOP_K
+        topK: CONFIG.API.TOP_K,
+        thinkingConfig: {
+          thinkingBudget: CONFIG.API.THINKING_BUDGET_RESEARCH
+        }
       }
     };
 
@@ -645,7 +651,10 @@ async function processProvenanceAudit(jobId, sessionId, sessionData) {
         temperature: CONFIG.API.TEMPERATURE_STRUCTURED,
         maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_ANALYSIS,
         topP: CONFIG.API.TOP_P,
-        topK: CONFIG.API.TOP_K
+        topK: CONFIG.API.TOP_K,
+        thinkingConfig: {
+          thinkingBudget: CONFIG.API.THINKING_BUDGET_RESEARCH
+        }
       }
     };
 
@@ -803,7 +812,10 @@ async function processExecutiveSummary(jobId, sessionId, sessionData) {
         temperature: CONFIG.API.TEMPERATURE_QA,
         maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_ANALYSIS,
         topP: CONFIG.API.TOP_P,
-        topK: CONFIG.API.TOP_K
+        topK: CONFIG.API.TOP_K,
+        thinkingConfig: {
+          thinkingBudget: CONFIG.API.THINKING_BUDGET_EXECUTIVE
+        }
       }
     };
 
