@@ -413,11 +413,15 @@ export function cleanupExpired() {
   const db = getDatabase();
   const now = Date.now();
 
-  // Delete expired charts
+  // Delete expired charts (must be before sessions due to FK constraint)
   const deleteChartsStmt = db.prepare('DELETE FROM charts WHERE expiresAt < ?');
   const chartsResult = deleteChartsStmt.run(now);
 
-  // Delete expired sessions
+  // Delete expired semantic_charts (must be before sessions due to FK constraint)
+  const deleteSemanticChartsStmt = db.prepare('DELETE FROM semantic_charts WHERE expiresAt < ?');
+  const semanticChartsResult = deleteSemanticChartsStmt.run(now);
+
+  // Delete expired sessions (must be after charts and semantic_charts)
   const deleteSessionsStmt = db.prepare('DELETE FROM sessions WHERE expiresAt < ?');
   const sessionsResult = deleteSessionsStmt.run(now);
 
@@ -428,11 +432,12 @@ export function cleanupExpired() {
 
   const stats = {
     chartsDeleted: chartsResult.changes,
+    semanticChartsDeleted: semanticChartsResult.changes,
     sessionsDeleted: sessionsResult.changes,
     jobsDeleted: jobsResult.changes
   };
 
-  if (stats.chartsDeleted > 0 || stats.sessionsDeleted > 0 || stats.jobsDeleted > 0) {
+  if (stats.chartsDeleted > 0 || stats.semanticChartsDeleted > 0 || stats.sessionsDeleted > 0 || stats.jobsDeleted > 0) {
     console.log('✓ Cleanup completed:', stats);
   }
 
