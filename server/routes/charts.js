@@ -13,7 +13,7 @@ import { createSession, storeChart, getChart, updateChart, createJob, updateJob,
 import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter, uploadMiddleware } from '../middleware.js';
-import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
+import { trackEvent, getSemanticChart, getChart as getDbChart } from '../database.js'; // FEATURE #9: Analytics tracking
 
 const router = express.Router();
 
@@ -615,7 +615,7 @@ router.get('/job/:id', (req, res) => {
 
 /**
  * GET /chart/:id
- * Retrieves a chart by its ID
+ * Retrieves a chart by its ID (supports both regular and semantic charts)
  */
 router.get('/chart/:id', (req, res) => {
   const chartId = req.params.id;
@@ -627,10 +627,49 @@ router.get('/chart/:id', (req, res) => {
     return res.status(400).json({ error: CONFIG.ERRORS.INVALID_CHART_ID });
   }
 
-  const chart = getChart(chartId);
+  // Try in-memory storage first (fastest)
+  let chart = getChart(chartId);
+  let isSemantic = false;
+
+  // If not in memory, try database (both regular and semantic charts)
   if (!chart) {
-    console.log(`❌ Chart not found in storage: ${chartId}`);
-    console.log(`📋 Available chart IDs in storage: [listing not implemented]`);
+    console.log(`❌ Chart not found in memory, checking database...`);
+
+    try {
+      // Try regular charts table first
+      const dbChart = getDbChart(chartId);
+      if (dbChart) {
+        console.log(`✅ Found regular chart in database`);
+        chart = {
+          data: JSON.parse(dbChart.ganttData),
+          sessionId: dbChart.sessionId
+        };
+        // Add executive summary and presentation if available
+        if (dbChart.executiveSummary) {
+          chart.data.executiveSummary = JSON.parse(dbChart.executiveSummary);
+        }
+        if (dbChart.presentationSlides) {
+          chart.data.presentationSlides = JSON.parse(dbChart.presentationSlides);
+        }
+      } else {
+        // Try semantic charts table
+        const semanticChart = getSemanticChart(chartId);
+        if (semanticChart) {
+          console.log(`✅ Found semantic chart in database`);
+          chart = {
+            data: JSON.parse(semanticChart.ganttData),
+            sessionId: semanticChart.sessionId
+          };
+          isSemantic = true;
+        }
+      }
+    } catch (dbError) {
+      console.error(`❌ Database retrieval error:`, dbError.message);
+    }
+  }
+
+  if (!chart) {
+    console.log(`❌ Chart not found: ${chartId}`);
     return res.status(404).json({
       error: CONFIG.ERRORS.CHART_NOT_FOUND
     });
@@ -652,10 +691,10 @@ router.get('/chart/:id', (req, res) => {
     return res.status(500).json({ error: 'Chart data structure is invalid' });
   }
 
-  console.log(`✅ Chart ${chartId} found - returning ${chart.data.timeColumns.length} timeColumns and ${chart.data.data.length} tasks`);
+  console.log(`✅ Chart ${chartId} found - returning ${chart.data.timeColumns.length} timeColumns and ${chart.data.data.length} tasks ${isSemantic ? '(semantic mode)' : ''}`);
 
   // FEATURE #9: Track chart view
-  trackEvent('chart_viewed', {
+  trackEvent(isSemantic ? 'semantic_chart_viewed' : 'chart_viewed', {
     taskCount: chart.data.data.length,
     hasExecutiveSummary: !!chart.data.executiveSummary,
     hasPresentationSlides: !!chart.data.presentationSlides
@@ -665,7 +704,8 @@ router.get('/chart/:id', (req, res) => {
   const responseData = {
     ...chart.data,
     sessionId: chart.sessionId,
-    chartId: chartId
+    chartId: chartId,
+    isSemantic: isSemantic
   };
 
   console.log(`📤 Sending chart data with keys:`, Object.keys(responseData));
