@@ -99,8 +99,16 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
 
     // Create session for research context (reuse existing pattern)
     // Note: createSession generates its own sessionId and returns it
-    const sessionId = createSession(researchTextCache, researchFilesCache);
-    console.log(`[Semantic Job ${jobId}] Created session: ${sessionId}`);
+    console.log(`[Semantic Job ${jobId}] About to create session with ${researchFilesCache.length} files`);
+    let sessionId;
+    try {
+      sessionId = createSession(researchTextCache, researchFilesCache);
+      console.log(`[Semantic Job ${jobId}] ✅ Created session: ${sessionId}`);
+    } catch (sessionError) {
+      console.error(`[Semantic Job ${jobId}] ❌ Session creation failed:`, sessionError.message);
+      console.error(`[Semantic Job ${jobId}] Session error stack:`, sessionError.stack);
+      throw new Error(`Failed to create session: ${sessionError.message}`);
+    }
 
     // PASS 1: Extract Facts
     updateJob(jobId, {

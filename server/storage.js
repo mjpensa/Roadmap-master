@@ -55,14 +55,24 @@ export function startCleanupInterval() {
 export function createSession(researchText, researchFiles) {
   const sessionId = crypto.randomBytes(16).toString('hex');
 
-  // Convert expiration from CONFIG (1 hour) to days for database
-  const expirationDays = CONFIG.STORAGE.EXPIRATION_MS / (24 * 60 * 60 * 1000);
+  console.log(`[Storage] Creating session ${sessionId} with ${researchFiles.length} files`);
+  console.log(`[Storage] Research text length: ${researchText.length} characters`);
 
-  db.createSession(sessionId, researchText, researchFiles, expirationDays);
+  try {
+    // Convert expiration from CONFIG (1 hour) to days for database
+    const expirationDays = CONFIG.STORAGE.EXPIRATION_MS / (24 * 60 * 60 * 1000);
+    console.log(`[Storage] Expiration days: ${expirationDays}`);
 
-  console.log(`✅ Session ${sessionId} created in database`);
+    db.createSession(sessionId, researchText, researchFiles, expirationDays);
 
-  return sessionId;
+    console.log(`✅ Session ${sessionId} created in database`);
+
+    return sessionId;
+  } catch (error) {
+    console.error(`[Storage] ❌ Failed to create session ${sessionId}:`, error.message);
+    console.error(`[Storage] Error stack:`, error.stack);
+    throw error;
+  }
 }
 
 /**

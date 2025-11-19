@@ -179,20 +179,31 @@ export function createSession(sessionId, research, filenames, expirationDays = D
   const now = Date.now();
   const expiresAt = now + (expirationDays * 24 * 60 * 60 * 1000);
 
-  const stmt = db.prepare(`
-    INSERT INTO sessions (sessionId, research, filenames, createdAt, expiresAt)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+  console.log(`[Database] Creating session ${sessionId}, expiration: ${expirationDays} days`);
 
-  stmt.run(sessionId, research, JSON.stringify(filenames), now, expiresAt);
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO sessions (sessionId, research, filenames, createdAt, expiresAt)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-  return {
-    sessionId,
-    research,
-    filenames,
-    createdAt: new Date(now),
-    expiresAt: new Date(expiresAt)
-  };
+    stmt.run(sessionId, research, JSON.stringify(filenames), now, expiresAt);
+
+    console.log(`[Database] ✅ Session ${sessionId} inserted successfully`);
+
+    return {
+      sessionId,
+      research,
+      filenames,
+      createdAt: new Date(now),
+      expiresAt: new Date(expiresAt)
+    };
+  } catch (error) {
+    console.error(`[Database] ❌ Failed to insert session ${sessionId}:`, error.message);
+    console.error(`[Database] Error code:`, error.code);
+    console.error(`[Database] Error stack:`, error.stack);
+    throw error;
+  }
 }
 
 /**
