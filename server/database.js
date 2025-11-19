@@ -424,19 +424,28 @@ export function cleanupExpired() {
   const db = getDatabase();
   const now = Date.now();
 
-  // Delete expired charts (must be before sessions due to FK constraint)
-  const deleteChartsStmt = db.prepare('DELETE FROM charts WHERE expiresAt < ?');
+  // CRITICAL FIX: Delete charts that belong to expired sessions (not just expired charts)
+  // This prevents foreign key violations when deleting expired sessions
+
+  // Step 1: Delete all charts (expired or not) that reference expired sessions
+  const deleteChartsStmt = db.prepare(`
+    DELETE FROM charts
+    WHERE sessionId IN (SELECT sessionId FROM sessions WHERE expiresAt < ?)
+  `);
   const chartsResult = deleteChartsStmt.run(now);
 
-  // Delete expired semantic_charts (must be before sessions due to FK constraint)
-  const deleteSemanticChartsStmt = db.prepare('DELETE FROM semantic_charts WHERE expiresAt < ?');
+  // Step 2: Delete all semantic_charts (expired or not) that reference expired sessions
+  const deleteSemanticChartsStmt = db.prepare(`
+    DELETE FROM semantic_charts
+    WHERE sessionId IN (SELECT sessionId FROM sessions WHERE expiresAt < ?)
+  `);
   const semanticChartsResult = deleteSemanticChartsStmt.run(now);
 
-  // Delete expired sessions (must be after charts and semantic_charts)
+  // Step 3: Now safe to delete expired sessions (no FK references remain)
   const deleteSessionsStmt = db.prepare('DELETE FROM sessions WHERE expiresAt < ?');
   const sessionsResult = deleteSessionsStmt.run(now);
 
-  // Delete old jobs (older than 1 hour)
+  // Step 4: Delete old jobs (older than 1 hour)
   const oneHourAgo = now - (60 * 60 * 1000);
   const deleteJobsStmt = db.prepare('DELETE FROM jobs WHERE createdAt < ?');
   const jobsResult = deleteJobsStmt.run(oneHourAgo);
