@@ -220,61 +220,7 @@ describe('ResearchValidationService', () => {
     });
   });
 
-  describe('extractSource', () => {
-    it('should extract source from field with citations', () => {
-      const task = {
-        id: uuidv4(),
-        duration: {
-          sourceCitations: [{
-            documentName: 'test.pdf',
-            provider: 'INTERNAL',
-            exactQuote: 'test'
-          }]
-        }
-      };
-
-      const source = service.extractSource(task, 'duration');
-
-      expect(source.documentName).toBe('test.pdf');
-      expect(source.provider).toBe('INTERNAL');
-      expect(source.citation).toBeDefined();
-    });
-
-    it('should return inferred source when no citations', () => {
-      const task = {
-        id: uuidv4(),
-        duration: {
-          value: 10,
-          unit: 'days'
-        },
-        inferenceRationale: {
-          llmProvider: 'GEMINI'
-        }
-      };
-
-      const source = service.extractSource(task, 'duration');
-
-      expect(source.documentName).toBe('inferred');
-      expect(source.provider).toBe('GEMINI');
-      expect(source.citation).toBeNull();
-    });
-
-    it('should default to UNKNOWN provider when no rationale', () => {
-      const task = {
-        id: uuidv4(),
-        duration: {
-          value: 10,
-          unit: 'days'
-        }
-      };
-
-      const source = service.extractSource(task, 'duration');
-
-      expect(source.documentName).toBe('inferred');
-      expect(source.provider).toBe('UNKNOWN');
-      expect(source.citation).toBeNull();
-    });
-  });
+  // extractSource is now internal to TaskClaimExtractor - tested in TaskClaimExtractor.test.js
 
   describe('aggregateValidationResults', () => {
     it('should calculate citation coverage correctly', () => {

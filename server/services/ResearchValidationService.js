@@ -1,5 +1,9 @@
 import { ClaimLedger } from '../models/ClaimModels.js';
-import { v4 as uuidv4 } from 'uuid';
+import { TaskClaimExtractor } from './TaskClaimExtractor.js';
+import { CitationVerifier } from './CitationVerifier.js';
+import { ContradictionDetector } from './ContradictionDetector.js';
+import { ProvenanceAuditor } from './ProvenanceAuditor.js';
+import { ConfidenceCalibrator } from './ConfidenceCalibrator.js';
 
 export class ResearchValidationService {
   constructor(options = {}) {
@@ -10,6 +14,13 @@ export class ResearchValidationService {
       citationCoverageThreshold: options.citationCoverageThreshold || 0.75,
       ...options
     };
+
+    // Initialize validation services
+    this.claimExtractor = new TaskClaimExtractor({ logger: this.logger });
+    this.citationVerifier = new CitationVerifier({ logger: this.logger });
+    this.contradictionDetector = new ContradictionDetector({ logger: this.logger });
+    this.provenanceAuditor = new ProvenanceAuditor({ logger: this.logger });
+    this.confidenceCalibrator = new ConfidenceCalibrator({ logger: this.logger });
   }
 
   /**
@@ -61,105 +72,52 @@ export class ResearchValidationService {
   }
 
   /**
-   * Extract claims from a bimodal task
+   * Extract claims from a bimodal task (delegates to TaskClaimExtractor)
    */
   async extractTaskClaims(task) {
-    const claims = [];
-
-    // Duration claim
-    if (task.duration) {
-      claims.push({
-        id: uuidv4(),
-        taskId: task.id,
-        claim: `Task "${task.name}" takes ${task.duration.value} ${task.duration.unit}`,
-        claimType: 'duration',
-        source: this.extractSource(task, 'duration'),
-        confidence: task.duration.confidence,
-        contradictions: [],
-        validatedAt: new Date().toISOString()
-      });
-    }
-
-    // Start date claim
-    if (task.startDate) {
-      claims.push({
-        id: uuidv4(),
-        taskId: task.id,
-        claim: `Task "${task.name}" starts on ${task.startDate.value}`,
-        claimType: 'deadline',
-        source: this.extractSource(task, 'startDate'),
-        confidence: task.startDate.confidence,
-        contradictions: [],
-        validatedAt: new Date().toISOString()
-      });
-    }
-
-    // Dependency claims
-    if (task.dependencies && task.dependencies.length > 0) {
-      task.dependencies.forEach(depId => {
-        claims.push({
-          id: uuidv4(),
-          taskId: task.id,
-          claim: `Task "${task.name}" depends on task ${depId}`,
-          claimType: 'dependency',
-          source: this.extractSource(task, 'dependencies'),
-          confidence: task.confidence,
-          contradictions: [],
-          validatedAt: new Date().toISOString()
-        });
-      });
-    }
-
-    // Regulatory requirement claim
-    if (task.regulatoryRequirement?.isRequired) {
-      claims.push({
-        id: uuidv4(),
-        taskId: task.id,
-        claim: `Task "${task.name}" requires ${task.regulatoryRequirement.regulation} approval`,
-        claimType: 'requirement',
-        source: this.extractSource(task, 'regulatoryRequirement'),
-        confidence: task.regulatoryRequirement.confidence,
-        contradictions: [],
-        validatedAt: new Date().toISOString()
-      });
-    }
-
-    return claims;
+    return await this.claimExtractor.extractClaims(task);
   }
 
-  extractSource(task, field) {
-    const fieldData = task[field];
-
-    if (fieldData?.sourceCitations && fieldData.sourceCitations.length > 0) {
-      return {
-        documentName: fieldData.sourceCitations[0].documentName,
-        provider: fieldData.sourceCitations[0].provider || 'INTERNAL',
-        citation: fieldData.sourceCitations[0]
-      };
-    }
-
-    return {
-      documentName: 'inferred',
-      provider: task.inferenceRationale?.llmProvider || 'UNKNOWN',
-      citation: null
-    };
-  }
-
-  // Placeholder methods - to be implemented in validation pipeline
+  /**
+   * Verify citation for a claim
+   */
   async verifyCitation(claim, sourceDocuments) {
-    return { valid: true, reason: null };
+    return await this.citationVerifier.verifyCitation(claim.source?.citation, sourceDocuments);
   }
 
+  /**
+   * Check for contradictions with existing claims
+   */
   async checkContradictions(claim) {
-    return [];
+    const allClaims = this.claimLedger.getAllClaims();
+    const contradictions = [];
+
+    for (const existingClaim of allClaims) {
+      const contradiction = await this.contradictionDetector.detectContradiction(claim, existingClaim);
+      if (contradiction) {
+        contradictions.push(contradiction);
+        this.claimLedger.addContradiction(contradiction);
+      }
+    }
+
+    // Add claim to ledger after checking
+    this.claimLedger.addClaim(claim);
+
+    return contradictions;
   }
 
+  /**
+   * Audit provenance of a claim
+   */
   async auditProvenance(claim, sourceDocuments) {
-    return { score: 1.0, issues: [] };
+    return await this.provenanceAuditor.auditProvenance(claim, sourceDocuments);
   }
 
+  /**
+   * Calibrate confidence based on validation results
+   */
   async calibrateConfidence(claim, citationResult, contradictions, provenance) {
-    return claim;
+    return await this.confidenceCalibrator.calibrateConfidence(claim, citationResult, contradictions, provenance);
   }
 
   aggregateValidationResults(claims, contradictions) {
