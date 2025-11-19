@@ -9,6 +9,9 @@ import { CONFIG } from './config.js';
 // Cross-LLM Research Synthesis Feature
 import { ResearchSynthesizer } from './ResearchSynthesizer.js';
 
+// Semantic Chart Adapter
+import { BimodalDataAdapter } from './BimodalDataAdapter.js';
+
 // Define supported file types for frontend validation using centralized config
 const SUPPORTED_FILE_MIMES = CONFIG.FILES.SUPPORTED_MIMES;
 const SUPPORTED_FILE_EXTENSIONS = CONFIG.FILES.SUPPORTED_EXTENSIONS;
@@ -437,7 +440,13 @@ async function pollForJobCompletion(jobId, generateBtn) {
           const chartData = await chartResponse.json();
           console.log('Semantic chart data received:', chartData);
 
-          return chartData.ganttData; // Return the ganttData from semantic chart
+          // Convert BimodalGanttData to standard format using adapter
+          const bimodalData = chartData.ganttData;
+          console.log('🔬 Converting BimodalGanttData to standard format');
+          const standardData = BimodalDataAdapter.ensureStandardFormat(bimodalData);
+          console.log('✅ Conversion complete - timeColumns:', standardData.timeColumns?.length, 'data:', standardData.data?.length);
+
+          return standardData; // Return converted standard format
         }
 
         // Standard mode: data is directly in job.data
