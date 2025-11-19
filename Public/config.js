@@ -83,7 +83,7 @@ export const CONFIG = {
       NO_CHART_DATA: 'No chart data found. Please close this tab and try generating the chart again.',
       CHART_NOT_FOUND: 'Chart Not Found',
       CHART_EXPIRED: 'This chart may have expired or the link is invalid.',
-      CHART_AVAILABILITY: 'Charts are available for 1 hour after generation.',
+      CHART_AVAILABILITY: 'Charts are available for 30 days after generation.',
       SESSION_NOT_FOUND: 'Session not found or expired. Please regenerate the chart.',
       INVALID_CHART_ID: 'Invalid chart ID format',
       FILE_TOO_LARGE: 'File too large. Maximum size is 10MB per file.',
