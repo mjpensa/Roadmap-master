@@ -58,9 +58,9 @@ export const CONFIG = {
     BASE_URL: 'https://generativelanguage.googleapis.com/v1beta',
     RETRY_COUNT: 3,
     RETRY_BASE_DELAY_MS: 1000, // 1 second base delay
-    MAX_OUTPUT_TOKENS_CHART: 8192,
-    MAX_OUTPUT_TOKENS_ANALYSIS: 4096,
-    MAX_OUTPUT_TOKENS_QA: 1024,
+    MAX_OUTPUT_TOKENS_CHART: 65536,
+    MAX_OUTPUT_TOKENS_ANALYSIS: 65536,
+    MAX_OUTPUT_TOKENS_QA: 8192,
     TEMPERATURE_STRUCTURED: 0,
     TEMPERATURE_QA: 0.1,
     TOP_P: 1,
@@ -102,7 +102,7 @@ export const CONFIG = {
     CACHE_DETERMINISTIC_RESULTS: process.env.CACHE_SEMANTIC !== 'false',
     MIN_ACCEPTABLE_CONFIDENCE: 0.5, // Below this, inferences are rejected
     FACT_CONFIDENCE: 1.0, // Explicit facts always 100%
-    MAX_RESEARCH_CHARS: 100000, // Maximum research content characters to avoid token limits (100k chars ≈ 25k tokens)
+    MAX_RESEARCH_CHARS: 1000000, // Maximum research content characters (1M chars ≈ 250k tokens, well within Gemini 2.5 Flash's 1M token limit)
     // Gemini configuration for deterministic mode
     GEMINI: {
       MODEL: 'gemini-2.5-flash-preview-09-2025', // Must match API.GEMINI_MODEL
@@ -110,8 +110,8 @@ export const CONFIG = {
       TEMPERATURE: 0.0, // CRITICAL: Zero randomness
       TOP_K: 1, // CRITICAL: Only most likely token
       TOP_P: 0.0, // CRITICAL: No nucleus sampling
-      MAX_OUTPUT_TOKENS_FACTS: 16384, // Pass 1: Fact extraction (increased from 8192)
-      MAX_OUTPUT_TOKENS_INFERENCES: 65536 // Pass 2: Full structure (increased from 16384 to support complex research)
+      MAX_OUTPUT_TOKENS_FACTS: 65536, // Pass 1: Fact extraction (maximum for Gemini 2.5 Flash)
+      MAX_OUTPUT_TOKENS_INFERENCES: 65536 // Pass 2: Full structure (maximum for Gemini 2.5 Flash)
     }
   },
 

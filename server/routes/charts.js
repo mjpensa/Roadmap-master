@@ -237,7 +237,7 @@ ${researchTextCache.substring(0, 50000)}`; // Limit research content to avoid to
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: PRESENTATION_SLIDES_OUTLINE_SCHEMA,
-          maxOutputTokens: 2000,
+          maxOutputTokens: 8192,
           temperature: 0.7,
           topP: CONFIG.API.TOP_P,
           topK: CONFIG.API.TOP_K
@@ -390,7 +390,7 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: PRESENTATION_SLIDE_CONTENT_SCHEMA,
-            maxOutputTokens: 4000,
+            maxOutputTokens: 16384,
             temperature: 0.7,
             topP: CONFIG.API.TOP_P,
             topK: CONFIG.API.TOP_K
