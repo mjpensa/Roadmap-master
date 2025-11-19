@@ -157,16 +157,24 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
       executiveSummary: null, // Can be generated later
       presentationSlides: null // Can be generated later
     };
+
+    console.log(`[Semantic Job ${jobId}] About to call storeChart with sessionId: ${sessionId}`);
     const chartId = storeChart(chartDataWithEnhancements, sessionId);
+    console.log(`[Semantic Job ${jobId}] storeChart succeeded, chartId: ${chartId}`);
 
     // Store in database (persistent)
     try {
+      console.log(`[Semantic Job ${jobId}] About to call createSemanticChart`);
+      console.log(`[Semantic Job ${jobId}] Parameters: chartId=${chartId}, sessionId=${sessionId}, repairs=${validationResult.repairs?.length || 0} items`);
+
       createSemanticChart(chartId, sessionId, semanticData, {
         factCount: semanticData.statistics.explicitTasks,
         inferenceCount: semanticData.statistics.inferredTasks,
         averageConfidence: semanticData.statistics.averageConfidence,
         dataQualityScore: semanticData.statistics.dataQualityScore
       }, validationResult.repairs);
+
+      console.log(`[Semantic Job ${jobId}] createSemanticChart succeeded`);
       console.log(`[Semantic Job ${jobId}] Chart persisted to database: ${chartId}`);
     } catch (dbError) {
       console.error(`[Semantic Job ${jobId}] Database persistence failed:`, dbError.message);
@@ -175,6 +183,7 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
 
     // Track analytics event
     try {
+      console.log(`[Semantic Job ${jobId}] About to call trackEvent`);
       trackEvent('semantic_chart_generated', {
         chartId,
         sessionId,
@@ -183,8 +192,10 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
         inferenceCount: semanticData.statistics.inferredTasks,
         fileCount: researchFilesCache.length
       }, chartId, sessionId);
+      console.log(`[Semantic Job ${jobId}] trackEvent succeeded`);
     } catch (analyticsError) {
       console.error(`[Semantic Job ${jobId}] Analytics tracking failed:`, analyticsError.message);
+      console.error(`[Semantic Job ${jobId}] Analytics error stack:`, analyticsError.stack);
     }
 
     // Mark job as complete with full chart data
