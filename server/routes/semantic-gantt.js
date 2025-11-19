@@ -98,8 +98,8 @@ async function processSemanticChartGeneration(jobId, reqBody, files) {
     }
 
     // Create session for research context (reuse existing pattern)
-    const sessionId = `SEM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    createSession(sessionId, researchTextCache, researchFilesCache);
+    // Note: createSession generates its own sessionId and returns it
+    const sessionId = createSession(researchTextCache, researchFilesCache);
     console.log(`[Semantic Job ${jobId}] Created session: ${sessionId}`);
 
     // PASS 1: Extract Facts
