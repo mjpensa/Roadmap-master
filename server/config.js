@@ -184,7 +184,7 @@ export const CONFIG = {
     TASK_NAME_REQUIRED: 'Task name is required',
     QUESTION_TOO_LONG: 'Question too long (max 1000 characters)',
     INVALID_CHART_ID: 'Invalid chart ID format',
-    CHART_NOT_FOUND: 'Chart not found or expired. Charts are stored for 30 days after generation.',
+    CHART_NOT_FOUND: 'Chart not found or expired. Charts are available for 30 days after generation.',
     INVALID_JOB_ID: 'Invalid job ID format',
     JOB_NOT_FOUND: 'Job not found or expired. Jobs are available for 1 hour.',
     FILE_TOO_LARGE: 'File too large. Maximum size is 10MB per file.',
