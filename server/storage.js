@@ -108,12 +108,11 @@ export function storeChart(ganttData, sessionId) {
   const executiveSummary = ganttData.executiveSummary || null;
   const presentationSlides = ganttData.presentationSlides || null;
 
-  // Convert expiration from CONFIG (1 hour) to days for database
-  const expirationDays = CONFIG.STORAGE.EXPIRATION_MS / (24 * 60 * 60 * 1000);
+  // Use default 30-day expiration from database module
+  // Don't pass expirationDays parameter to use DEFAULT_EXPIRATION_DAYS (30 days)
+  db.saveChart(chartId, sessionId, gantt, executiveSummary, presentationSlides);
 
-  db.saveChart(chartId, sessionId, gantt, executiveSummary, presentationSlides, expirationDays);
-
-  console.log(`✅ Chart ${chartId} stored successfully in database`);
+  console.log(`✅ Chart ${chartId} stored successfully in database with 30-day expiration`);
 
   return chartId;
 }
