@@ -214,7 +214,7 @@ export class ContradictionDetector {
    */
   calculateNumericalSeverity(num1, num2) {
     const diff = Math.abs(num1 - num2);
-    const percentDiff = (diff / Math.max(num1, num2)) * 100;
+    const percentDiff = (diff / Math.min(num1, num2)) * 100;
 
     if (percentDiff > 50) return 'high';
     if (percentDiff > 25) return 'medium';
