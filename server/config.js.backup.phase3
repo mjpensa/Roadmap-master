@@ -157,12 +157,8 @@ export const CONFIG = {
     CLEANUP_INTERVAL_MS: 5 * 60 * 1000 // 5 minutes
   },
 
-  // Cache control (Phase 3 Enhancement: Result caching)
+  // Cache control
   CACHE: {
-    ENABLED: process.env.CACHE_ENABLED !== 'false',              // Enable caching by default
-    MAX_SIZE: parseInt(process.env.CACHE_MAX_SIZE, 10) || 100,  // Maximum cached items
-    TTL_MS: parseInt(process.env.CACHE_TTL_MS, 10) || 3600000,  // 1 hour TTL
-    CLEANUP_INTERVAL_MS: parseInt(process.env.CACHE_CLEANUP_MS, 10) || 300000, // 5 minutes cleanup
     STATIC_ASSETS_MAX_AGE: 86400 // 1 day in seconds
   },
 
