@@ -159,6 +159,104 @@ ${researchTextCache}`;
 
     console.log(`Job ${jobId}: Data validation passed - timeColumns: ${ganttData.timeColumns.length} items, data: ${ganttData.data.length} tasks`);
 
+    // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 2 ENHANCEMENT: EXTRACTION VALIDATION
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Validate extraction completeness
+     * Warns if task extraction appears insufficient relative to research volume
+     */
+    function validateExtraction(ganttData, researchText, jobId) {
+      // Calculate research metrics
+      const researchWords = researchText.split(/\s+/).filter(w => w.length > 0).length;
+      const researchLines = researchText.split('\n').filter(l => l.trim().length > 0).length;
+      const estimatedPages = Math.ceil(researchWords / 300); // ~300 words per page
+
+      // Count extracted tasks (exclude swimlanes)
+      const taskCount = ganttData.data?.reduce((sum, row) => {
+        if (row.isSwimlane) return sum;
+        return sum + 1;
+      }, 0) || 0;
+
+      // Calculate extraction targets
+      const minTasksByWords = Math.max(10, Math.floor(researchWords / 150)); // 1 task per 150 words
+      const minTasksByPages = Math.max(10, estimatedPages * 8); // 8 tasks per page
+      const expectedMinTasks = Math.min(minTasksByWords, minTasksByPages); // Use more conservative
+
+      // Calculate extraction metrics
+      const extractionRatio = (taskCount / researchWords * 1000).toFixed(2); // Tasks per 1000 words
+      const completenessPercent = Math.min(100, (taskCount / expectedMinTasks * 100).toFixed(0));
+
+      console.log(`\n[Extraction Validation] Job ${jobId}:`);
+      console.log(`  Research: ${researchWords} words (~${estimatedPages} pages, ${researchLines} lines)`);
+      console.log(`  Tasks extracted: ${taskCount}`);
+      console.log(`  Expected minimum: ${expectedMinTasks}`);
+      console.log(`  Extraction ratio: ${extractionRatio} tasks/1000 words`);
+      console.log(`  Completeness: ${completenessPercent}%`);
+
+      // Initialize metrics object
+      ganttData._extractionMetrics = {
+        researchWords,
+        researchLines,
+        estimatedPages,
+        taskCount,
+        expectedMinTasks,
+        extractionRatio: parseFloat(extractionRatio),
+        completenessPercent: parseInt(completenessPercent),
+        warnings: []
+      };
+
+      // Check for under-extraction
+      if (taskCount < expectedMinTasks) {
+        const deficit = expectedMinTasks - taskCount;
+        const severity = deficit > (expectedMinTasks * 0.5) ? 'high' : 'medium';
+
+        const warning = {
+          type: 'POSSIBLE_UNDER_EXTRACTION',
+          severity,
+          message: `Only ${taskCount} tasks extracted from ${researchWords} words of research. Expected minimum: ${expectedMinTasks} tasks (${deficit} task deficit).`,
+          recommendation: 'Consider regenerating for more comprehensive extraction. Review research for unextracted phases, milestones, or activities.',
+          extractionRatio: parseFloat(extractionRatio),
+          completenessPercent: parseInt(completenessPercent)
+        };
+
+        ganttData._extractionMetrics.warnings.push(warning);
+
+        console.warn(`\n⚠️  WARNING: Possible under-extraction detected`);
+        console.warn(`  Severity: ${severity.toUpperCase()}`);
+        console.warn(`  Task deficit: ${deficit} tasks (${completenessPercent}% completeness)`);
+        console.warn(`  Recommendation: ${warning.recommendation}`);
+      } else {
+        console.log(`✅ Extraction appears complete (${completenessPercent}% of target)`);
+      }
+
+      // Check extraction ratio
+      const typicalRatio = 5.0; // Typical good extraction: 5 tasks per 1000 words
+      if (parseFloat(extractionRatio) < typicalRatio) {
+        const ratioWarning = {
+          type: 'LOW_EXTRACTION_DENSITY',
+          severity: 'medium',
+          message: `Extraction density is ${extractionRatio} tasks/1000 words (typical: ${typicalRatio}). Research may contain more extractable tasks.`,
+          recommendation: 'Review research for missed milestones, dependencies, or sub-tasks.'
+        };
+
+        ganttData._extractionMetrics.warnings.push(ratioWarning);
+        console.warn(`\n⚠️  WARNING: Low extraction density`);
+        console.warn(`  Current: ${extractionRatio} tasks/1000 words`);
+        console.warn(`  Typical: ${typicalRatio} tasks/1000 words`);
+      }
+
+      return ganttData;
+    }
+
+    // Apply validation
+    validateExtraction(ganttData, researchTextCache, jobId);
+
+    // ═══════════════════════════════════════════════════════════
+    // END PHASE 2 ENHANCEMENT
+    // ═══════════════════════════════════════════════════════════
+
     // Update progress
     updateJob(jobId, {
       status: 'processing',
@@ -803,5 +901,127 @@ router.post('/update-task-color', express.json(), (req, res) => {
     });
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// ✨ PHASE 2 ENHANCEMENT: EXTRACTION METRICS ENDPOINT
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * GET /api/chart/:chartId/extraction-metrics
+ * Returns detailed extraction metrics for a generated chart
+ *
+ * Response includes:
+ * - Task extraction statistics
+ * - Research document metrics
+ * - Completeness assessment
+ * - Quality warnings
+ * - Extraction density analysis
+ */
+router.get('/api/chart/:chartId/extraction-metrics', apiLimiter, (req, res) => {
+  try {
+    const { chartId } = req.params;
+
+    // Validate chart ID format
+    if (!isValidChartId(chartId)) {
+      return res.status(400).json({
+        error: CONFIG.ERRORS.INVALID_CHART_ID
+      });
+    }
+
+    // Retrieve chart from storage
+    const chart = getChart(chartId);
+
+    if (!chart) {
+      return res.status(404).json({
+        error: CONFIG.ERRORS.CHART_NOT_FOUND
+      });
+    }
+
+    // Calculate real-time metrics from chart data
+    const ganttData = chart.ganttData || {};
+    const taskCount = ganttData.data?.reduce((sum, row) => {
+      if (row.isSwimlane) return sum;
+      return sum + 1;
+    }, 0) || 0;
+
+    const entityCount = ganttData.data?.filter(row => row.isSwimlane).length || 0;
+    const timeColumns = ganttData.timeColumns?.length || 0;
+
+    // Task type breakdown
+    const tasksByType = ganttData.data?.reduce((acc, row) => {
+      if (!row.isSwimlane) {
+        const type = row.taskType || 'task';
+        acc[type] = (acc[type] || 0) + 1;
+      }
+      return acc;
+    }, {}) || {};
+
+    // Critical path analysis
+    const criticalPathTasks = ganttData.data?.filter(row =>
+      !row.isSwimlane && row.isCriticalPath
+    ).length || 0;
+
+    // Build response
+    const metrics = {
+      chartId,
+      generatedAt: chart.createdAt,
+
+      // Extraction metrics (from generation)
+      extraction: ganttData._extractionMetrics || {
+        researchWords: 0,
+        researchLines: 0,
+        estimatedPages: 0,
+        taskCount,
+        expectedMinTasks: 0,
+        extractionRatio: 0,
+        completenessPercent: 100,
+        warnings: []
+      },
+
+      // Chart structure metrics
+      structure: {
+        totalTasks: taskCount,
+        totalSwimlanes: entityCount,
+        timeColumns,
+        avgTasksPerSwimlane: entityCount > 0 ? (taskCount / entityCount).toFixed(2) : 0,
+        tasksByType,
+        criticalPathTasks,
+        criticalPathPercent: taskCount > 0 ? ((criticalPathTasks / taskCount) * 100).toFixed(1) : 0
+      },
+
+      // Research input metrics
+      research: {
+        fileCount: chart.sessionId ? 1 : 0, // Basic fallback
+        filenames: []
+      },
+
+      // Quality indicators
+      quality: {
+        hasSwimlanes: entityCount > 0,
+        hasTimeColumns: timeColumns > 0,
+        hasTaskTypes: Object.keys(tasksByType).length > 1,
+        hasCriticalPath: criticalPathTasks > 0,
+        hasExecutiveSummary: !!chart.executiveSummary,
+        hasPresentationSlides: !!chart.presentationSlides
+      },
+
+      // Session info
+      sessionId: chart.sessionId
+    };
+
+    res.json(metrics);
+
+  } catch (error) {
+    console.error('[Extraction Metrics] Error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve extraction metrics',
+      details: error.message
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// END PHASE 2 ENHANCEMENT
+// ═══════════════════════════════════════════════════════════
 
 export default router;
