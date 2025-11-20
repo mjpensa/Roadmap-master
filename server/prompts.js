@@ -11,6 +11,105 @@ export const CHART_GENERATION_SYSTEM_PROMPT = `You are an expert project managem
 
 You MUST respond with *only* a valid JSON object matching the schema.
 
+// ═══════════════════════════════════════════════════════════
+// ✨ PHASE 2 ENHANCEMENT: MAXIMUM EXTRACTION RULES
+// ═══════════════════════════════════════════════════════════
+
+**🎯 EXTRACTION PHILOSOPHY - MAXIMUM INCLUSIVITY:**
+
+Your PRIMARY goal is to extract EVERY possible task, milestone, phase, and deliverable from the research. This is a "maximize recall" operation - it's better to include 100 tasks that users can filter than to miss 10 critical tasks.
+
+**MANDATORY EXTRACTION RULES:**
+
+1. **DEFAULT TO INCLUSION** - When uncertain whether something is a task, ALWAYS include it:
+   - Users can manually remove tasks, but cannot add tasks you miss
+   - Err on the side of over-extraction, not under-extraction
+   - If mentioned in research → Extract it
+
+2. **GRANULARITY GUIDELINES** - Extract at the MOST DETAILED level mentioned:
+   - If research says "Implementation phase includes setup, configuration, testing, and deployment"
+     → Create 4 separate tasks: "Setup", "Configuration", "Testing", "Deployment"
+   - If research mentions "Q2 activities include X, Y, and Z"
+     → Create 3 separate tasks for X, Y, Z
+   - If sub-phases, sub-steps, or components are listed
+     → Create individual tasks for EACH item
+   - NEVER combine multiple distinct activities into one task
+
+3. **EXTRACTION TRIGGERS** - Create a task for ANY mention of:
+
+   **Action Verbs** (Create task when you see):
+   - Planning: plan, design, architect, define, specify, outline, draft
+   - Implementation: implement, build, develop, create, code, construct, deploy
+   - Review: review, approve, validate, verify, inspect, audit, assess
+   - Testing: test, QA, validate, check, debug, troubleshoot
+   - Documentation: document, write, prepare, compile, publish
+   - Management: manage, coordinate, oversee, track, monitor
+   - Analysis: analyze, research, investigate, evaluate, study
+
+   **Time References** (Create task when you see):
+   - Explicit dates: "by Q2", "in March", "starting January 15"
+   - Duration statements: "over 6 months", "3-week sprint", "45-day period"
+   - Relative timing: "after X", "before Y", "during Phase 2"
+   - Frequency: "weekly reviews", "monthly checkpoints", "quarterly gates"
+
+   **Deliverables** (Create task when you see):
+   - Documents: report, plan, specification, documentation, presentation
+   - Systems: application, platform, database, infrastructure, integration
+   - Processes: workflow, procedure, protocol, framework
+   - Reviews: approval, sign-off, gate review, checkpoint, audit
+
+   **Phases/Stages** (Create task when you see):
+   - Phase indicators: "Phase 1", "Stage 2", "Step 3"
+   - Lifecycle stages: "Initial", "Preliminary", "Final", "Post-launch"
+   - Project stages: "Planning", "Execution", "Testing", "Deployment"
+   - Milestones: "Go-live", "Launch", "Completion", "Delivery"
+
+   **Dependencies** (Create task when you see):
+   - Prerequisite language: "requires", "depends on", "must complete", "prerequisite"
+   - Sequence indicators: "after X", "following Y", "once Z is done"
+   - Approval gates: "pending approval", "awaiting review", "requires sign-off"
+
+4. **NEVER OMIT TASKS BASED ON**:
+   - ❌ Perceived importance (include even "minor" tasks)
+   - ❌ Assumed redundancy (include similar but distinct tasks)
+   - ❌ Uncertainty about timing (use best estimates or mark as TBD)
+   - ❌ Ambiguous ownership (assign to most logical entity)
+   - ❌ Lack of explicit dates (estimate based on context)
+   - ❌ "Obvious" or "implied" steps (extract explicitly mentioned items only)
+
+5. **MINIMUM EXTRACTION TARGETS** (Quality Gates):
+
+   Based on research volume, you MUST meet these minimums:
+   - **1-2 page research**: Extract 10+ tasks minimum
+   - **3-5 page research**: Extract 20+ tasks minimum
+   - **6-10 page research**: Extract 40+ tasks minimum
+   - **10+ page research**: Extract 60+ tasks minimum
+
+   Calculate: **Minimum Tasks = (Research Pages × 8) or (Research Words ÷ 150)**
+
+   If your extraction falls below these targets, review research again for missed tasks.
+
+6. **EXTRACTION VALIDATION CHECKLIST** - Before finalizing, verify:
+   - [ ] Every section/heading in research has at least 1 task extracted
+   - [ ] Every action verb identified has corresponding task
+   - [ ] Every date/timeline reference has corresponding task
+   - [ ] Every deliverable mentioned has corresponding task
+   - [ ] Every dependency statement has corresponding tasks
+   - [ ] No "bundled" tasks combining multiple distinct activities
+   - [ ] All sub-items in lists are extracted as separate tasks
+
+7. **SUCCESS METRICS**:
+   - ✅ **COMPLETENESS** is the primary metric (not conciseness)
+   - ✅ Extract 90-95% of identifiable tasks from research
+   - ✅ Users should say "I have too much detail" not "You missed key tasks"
+   - ✅ Better to have 50 granular tasks than 10 high-level summaries
+
+**⚠️ CRITICAL REMINDER**: Your goal is MAXIMUM EXTRACTION. If you're unsure, EXTRACT IT.
+
+// ═══════════════════════════════════════════════════════════
+// END PHASE 2 ENHANCEMENT
+// ═══════════════════════════════════════════════════════════
+
 **CRITICAL LOGIC:**
 1.  **TIME HORIZON:** First, check the user's prompt for an *explicitly requested* time range (e.g., "2020-2030").
     - If found, use that range.
