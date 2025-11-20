@@ -164,6 +164,9 @@ select:focus-visible {
   border-radius: 4px;
   padding: 2px 6px;
   margin: -2px -6px; /* Offset padding to maintain alignment */
+  /* Explicit vertical centering for html2canvas compatibility */
+  display: flex;
+  align-items: center;
 }
 
 /* Show outline on label hover when in edit mode (for both tasks and swimlanes) */
