@@ -1,0 +1,226 @@
+# Remediation Report: Gemini API Schema Constraint Error
+
+## Executive Summary
+
+The Gemini API is rejecting chart generation requests due to excessive schema complexity in `GANTT_CHART_SCHEMA`. The solution is to follow the established pattern from commit 4c8951b, moving constraint validation from the JSON schema to post-generation code validation while preserving all Phase 2 extraction enhancement logic.
+
+## Problem Analysis
+
+### Root Cause
+The `GANTT_CHART_SCHEMA` contains multiple nested constraints that create a combinatorial explosion of states:
+- **500** max items in data array × **200** max timeColumns × multiple string length constraints
+- This exceeds Gemini's internal state limit for schema validation
+- The API rejects the request before any generation occurs
+
+### Current Architecture
+```
+Request Flow:
+1. Schema sent to Gemini API (FAILING HERE)
+2. AI generates structured data
+3. Post-generation extraction validation (Phase 2)
+4. Data storage and response
+```
+
+## Recommended Solution
+
+### 1. **Simplify GANTT_CHART_SCHEMA** (server/prompts.js:525-589)
+
+#### Remove These Constraints:
+```javascript
+// REMOVE all of these constraint types:
+minLength: 1        // String minimum length
+maxLength: 200      // String maximum length  
+minItems: 1         // Array minimum items
+maxItems: 500       // Array maximum items
+```
+
+#### Keep These Elements:
+```javascript
+// KEEP structural definitions:
+type: "object"
+type: "string"
+type: "array"
+properties: { ... }
+required: ["title", "timeColumns", "data"]
+items: { ... }
+```
+
+#### Simplified Schema Pattern:
+```javascript
+export const GANTT_CHART_SCHEMA = {
+  type: "object",
+  properties: {
+    title: {
+      type: "string"  // No min/max constraints
+    },
+    timeColumns: {
+      type: "array",  // No item limits
+      items: { type: "string" }
+    },
+    data: {
+      type: "array",  // No item limits
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string" },  // No length constraints
+          // ... other properties without constraints
+        }
+      }
+    }
+  },
+  required: ["title", "timeColumns", "data"]
+};
+```
+
+### 2. **Add Post-Generation Constraint Validation** (server/routes/charts.js)
+
+#### Create New Validation Function:
+Insert after line 283 (after `callGeminiForJson` returns):
+
+```javascript
+function validateConstraints(ganttData) {
+  // Title validation
+  if (!ganttData.title || ganttData.title.length === 0) {
+    throw new Error('Chart title is required and cannot be empty');
+  }
+  if (ganttData.title.length > 200) {
+    throw new Error(`Chart title exceeds 200 characters (got ${ganttData.title.length})`);
+  }
+  
+  // TimeColumns validation
+  if (!Array.isArray(ganttData.timeColumns)) {
+    throw new Error('timeColumns must be an array');
+  }
+  if (ganttData.timeColumns.length === 0) {
+    throw new Error('timeColumns array cannot be empty');
+  }
+  if (ganttData.timeColumns.length > 200) {
+    throw new Error(`timeColumns exceeds 200 items (got ${ganttData.timeColumns.length})`);
+  }
+  
+  // Data array validation
+  if (!Array.isArray(ganttData.data)) {
+    throw new Error('data must be an array');
+  }
+  if (ganttData.data.length === 0) {
+    throw new Error('data array cannot be empty');
+  }
+  if (ganttData.data.length > 500) {
+    throw new Error(`data array exceeds 500 items (got ${ganttData.data.length})`);
+  }
+  
+  // Validate each task item
+  ganttData.data.forEach((task, index) => {
+    if (!task.title || task.title.length === 0) {
+      throw new Error(`Task at index ${index} has empty title`);
+    }
+    if (task.title.length > 200) {
+      throw new Error(`Task at index ${index} title exceeds 200 characters`);
+    }
+  });
+  
+  // Legend validation (if present)
+  if (ganttData.legend) {
+    if (!Array.isArray(ganttData.legend)) {
+      throw new Error('legend must be an array');
+    }
+    if (ganttData.legend.length > 20) {
+      throw new Error(`legend exceeds 20 items (got ${ganttData.legend.length})`);
+    }
+  }
+}
+```
+
+#### Integration Point:
+```javascript
+// Line 283: After AI generation
+const ganttData = await callGeminiForJson(prompt, GANTT_CHART_SCHEMA, ...);
+
+// Existing validation (lines 286-298)
+if (!ganttData || typeof ganttData !== 'object') {
+  throw new Error('AI returned invalid data structure');
+}
+
+// NEW: Add constraint validation
+try {
+  validateConstraints(ganttData);
+} catch (error) {
+  logger.error('Chart data constraint validation failed:', error);
+  throw error;
+}
+
+// Existing Phase 2 extraction validation (lines 300+)
+const extractionResults = validateExtraction(ganttData, parsedContent);
+```
+
+### 3. **Preserve Phase 2 Enhancements**
+
+#### DO NOT MODIFY:
+- `validateExtraction()` function (lines 33-98)
+- Extraction metrics calculation
+- Quality gate thresholds
+- Logging of extraction performance
+- Task completeness scoring
+
+These remain untouched as they provide post-generation quality assurance.
+
+## Implementation Checklist
+
+- [ ] **Step 1**: Back up current `server/prompts.js` and `server/routes/charts.js`
+- [ ] **Step 2**: Simplify `GANTT_CHART_SCHEMA` removing all constraints
+- [ ] **Step 3**: Add `validateConstraints()` function to charts.js
+- [ ] **Step 4**: Call `validateConstraints()` after AI generation, before extraction validation
+- [ ] **Step 5**: Test with the failing research file
+- [ ] **Step 6**: Verify error messages are descriptive
+- [ ] **Step 7**: Confirm extraction validation still runs
+
+## Expected Outcomes
+
+### Before Fix:
+```
+Error: 400 - Schema produces too many states for serving
+Location: API request phase
+Impact: Complete failure, no chart generated
+```
+
+### After Fix:
+```
+Success Path:
+1. API accepts simplified schema ✓
+2. AI generates chart data ✓
+3. Constraint validation passes ✓
+4. Extraction validation runs ✓
+5. Chart delivered to user ✓
+
+Failure Path (invalid data):
+1. API accepts simplified schema ✓
+2. AI generates chart data ✓
+3. Constraint validation fails with descriptive error ✗
+   Example: "Chart title exceeds 200 characters (got 245)"
+```
+
+## Risk Mitigation
+
+1. **No functionality loss**: All constraints are enforced, just at a different stage
+2. **Better error messages**: Post-generation validation can provide more context
+3. **Follows proven pattern**: Identical approach to PRESENTATION_SLIDES_SCHEMA fix
+4. **Phase 2 intact**: Extraction validation continues to ensure quality
+
+## Testing Recommendations
+
+1. **Smoke Test**: Generate a simple chart to verify basic flow
+2. **Constraint Test**: Attempt to generate charts that violate each constraint
+3. **Extraction Test**: Verify Phase 2 metrics still calculate correctly
+4. **Performance Test**: Ensure no significant latency increase
+5. **Regression Test**: Use the uploaded research file that's currently failing
+
+## Conclusion
+
+This fix follows the established pattern from commit 4c8951b, moving constraint enforcement from the schema definition to post-generation validation. This approach:
+- Resolves the immediate Gemini API error
+- Preserves all Phase 2 sophistication
+- Maintains data quality standards
+- Provides better error messages
+- Uses proven, tested patterns
+
+The implementation is straightforward and low-risk, requiring changes to only two files while preserving all existing business logic and quality gates.
