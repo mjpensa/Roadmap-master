@@ -14,7 +14,6 @@ import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter, uploadMiddleware } from '../middleware.js';
 import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
-import { getCache } from '../cache.js'; // PHASE 3: Caching system
 
 const router = express.Router();
 
@@ -164,66 +163,6 @@ async function processChartGeneration(jobId, reqBody, files) {
 
       console.log(`Job ${jobId}: Processed ${processedFiles.length} files (${researchTextCache.length} characters total)`);
     }
-
-    // ═══════════════════════════════════════════════════════════
-    // ✨ PHASE 3 ENHANCEMENT: CACHE LOOKUP
-    // ═══════════════════════════════════════════════════════════
-
-    const cache = getCache();
-
-    // Generate cache key based on prompt and research
-    const cacheOptions = {
-      temperature: CONFIG.API.TEMPERATURE_STRUCTURED,
-      topP: CONFIG.API.TOP_P_STRUCTURED,
-      topK: CONFIG.API.TOP_K_STRUCTURED,
-      model: CONFIG.API.GEMINI_MODEL
-    };
-
-    const cacheKey = cache.generateKey(sanitizedPrompt, researchTextCache, cacheOptions);
-
-    console.log(`Job ${jobId}: Cache key: ${cacheKey.substring(0, 16)}...`);
-
-    // Try to get from cache
-    const cachedResult = cache.get(cacheKey);
-
-    if (cachedResult) {
-      console.log(`Job ${jobId}: ✅ Cache HIT - Returning cached result`);
-
-      // Create session for cached result
-      const sessionId = createSession(researchTextCache, researchFilesCache);
-
-      // Store chart with cached data
-      const chartId = storeChart(cachedResult, sessionId);
-
-      // Mark result as cached
-      const completeData = {
-        ...cachedResult,
-        sessionId,
-        chartId,
-        _cached: true,
-        _cacheAge: Math.round((Date.now() - (cachedResult._cachedAt || Date.now())) / 1000)
-      };
-
-      completeJob(jobId, completeData);
-
-      // Track cache hit
-      trackEvent('chart_generated', {
-        fromCache: true,
-        cacheHit: true,
-        taskCount: cachedResult.data?.length || 0,
-        generationTime: 0, // Instant from cache
-        fileCount: researchFilesCache.length
-      }, chartId, sessionId);
-
-      console.log(`Job ${jobId}: Completed from cache`);
-      return;
-    }
-
-    console.log(`Job ${jobId}: ❌ Cache MISS - Generating new chart`);
-
-    // ═══════════════════════════════════════════════════════════
-    // END PHASE 3 ENHANCEMENT
-    // ═══════════════════════════════════════════════════════════
 
     // Update progress
     updateJob(jobId, {
@@ -624,30 +563,13 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
     };
     const chartId = storeChart(chartDataWithEnhancements, sessionId);
 
-    // ═══════════════════════════════════════════════════════════
-    // ✨ PHASE 3 ENHANCEMENT: CACHE STORAGE
-    // ═══════════════════════════════════════════════════════════
-
-    // Store in cache for future requests
-    const cacheData = {
-      ...chartDataWithEnhancements,
-      _cachedAt: Date.now()
-    };
-    cache.set(cacheKey, cacheData);
-    console.log(`Job ${jobId}: ✅ Stored result in cache`);
-
-    // ═══════════════════════════════════════════════════════════
-    // END PHASE 3 ENHANCEMENT
-    // ═══════════════════════════════════════════════════════════
-
     // Update job status to complete
     const completeData = {
       ...ganttData,
       executiveSummary: executiveSummary,
       presentationSlides: presentationSlides,
       sessionId,
-      chartId,
-      _cached: false
+      chartId
     };
     console.log(`Job ${jobId}: Setting complete status with data keys:`, Object.keys(completeData));
     console.log(`Job ${jobId}: Final data structure:`, {
@@ -973,225 +895,5 @@ router.post('/update-task-color', express.json(), (req, res) => {
     });
   }
 });
-
-// ═══════════════════════════════════════════════════════════
-// ✨ PHASE 2 ENHANCEMENT: EXTRACTION METRICS ENDPOINT
-// ═══════════════════════════════════════════════════════════
-
-/**
- * GET /api/chart/:chartId/extraction-metrics
- * Returns detailed extraction metrics for a generated chart
- *
- * Response includes:
- * - Task extraction statistics
- * - Research document metrics
- * - Completeness assessment
- * - Quality warnings
- * - Extraction density analysis
- */
-router.get('/api/chart/:chartId/extraction-metrics', apiLimiter, (req, res) => {
-  try {
-    const { chartId } = req.params;
-
-    // Validate chart ID format
-    if (!isValidChartId(chartId)) {
-      return res.status(400).json({
-        error: CONFIG.ERRORS.INVALID_CHART_ID
-      });
-    }
-
-    // Retrieve chart from storage
-    const chart = getChart(chartId);
-
-    if (!chart) {
-      return res.status(404).json({
-        error: CONFIG.ERRORS.CHART_NOT_FOUND
-      });
-    }
-
-    // Calculate real-time metrics from chart data
-    const ganttData = chart.ganttData || {};
-    const taskCount = ganttData.data?.reduce((sum, row) => {
-      if (row.isSwimlane) return sum;
-      return sum + 1;
-    }, 0) || 0;
-
-    const entityCount = ganttData.data?.filter(row => row.isSwimlane).length || 0;
-    const timeColumns = ganttData.timeColumns?.length || 0;
-
-    // Task type breakdown
-    const tasksByType = ganttData.data?.reduce((acc, row) => {
-      if (!row.isSwimlane) {
-        const type = row.taskType || 'task';
-        acc[type] = (acc[type] || 0) + 1;
-      }
-      return acc;
-    }, {}) || {};
-
-    // Critical path analysis
-    const criticalPathTasks = ganttData.data?.filter(row =>
-      !row.isSwimlane && row.isCriticalPath
-    ).length || 0;
-
-    // Build response
-    const metrics = {
-      chartId,
-      generatedAt: chart.createdAt,
-
-      // Extraction metrics (from generation)
-      extraction: ganttData._extractionMetrics || {
-        researchWords: 0,
-        researchLines: 0,
-        estimatedPages: 0,
-        taskCount,
-        expectedMinTasks: 0,
-        extractionRatio: 0,
-        completenessPercent: 100,
-        warnings: []
-      },
-
-      // Chart structure metrics
-      structure: {
-        totalTasks: taskCount,
-        totalSwimlanes: entityCount,
-        timeColumns,
-        avgTasksPerSwimlane: entityCount > 0 ? (taskCount / entityCount).toFixed(2) : 0,
-        tasksByType,
-        criticalPathTasks,
-        criticalPathPercent: taskCount > 0 ? ((criticalPathTasks / taskCount) * 100).toFixed(1) : 0
-      },
-
-      // Research input metrics
-      research: {
-        fileCount: chart.sessionId ? 1 : 0, // Basic fallback
-        filenames: []
-      },
-
-      // Quality indicators
-      quality: {
-        hasSwimlanes: entityCount > 0,
-        hasTimeColumns: timeColumns > 0,
-        hasTaskTypes: Object.keys(tasksByType).length > 1,
-        hasCriticalPath: criticalPathTasks > 0,
-        hasExecutiveSummary: !!chart.executiveSummary,
-        hasPresentationSlides: !!chart.presentationSlides
-      },
-
-      // Session info
-      sessionId: chart.sessionId
-    };
-
-    res.json(metrics);
-
-  } catch (error) {
-    console.error('[Extraction Metrics] Error:', error);
-    res.status(500).json({
-      error: 'Failed to retrieve extraction metrics',
-      details: error.message
-    });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════
-// END PHASE 2 ENHANCEMENT
-// ═══════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════
-// ✨ PHASE 3 ENHANCEMENT: CACHE MANAGEMENT ENDPOINTS
-// ═══════════════════════════════════════════════════════════
-
-/**
- * GET /api/cache/stats
- * Returns cache statistics and performance metrics
- */
-router.get('/api/cache/stats', apiLimiter, (req, res) => {
-  try {
-    const cache = getCache();
-    const stats = cache.getStats();
-
-    res.json({
-      status: 'success',
-      timestamp: new Date().toISOString(),
-      cache: stats
-    });
-
-  } catch (error) {
-    console.error('[Cache Stats] Error:', error);
-    res.status(500).json({
-      error: 'Failed to retrieve cache statistics',
-      details: error.message
-    });
-  }
-});
-
-/**
- * GET /api/cache/entries
- * Returns detailed information about cache entries
- * Query params:
- *  - limit: Number of entries to return (default: 10, max: 100)
- */
-router.get('/api/cache/entries', apiLimiter, (req, res) => {
-  try {
-    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
-
-    const cache = getCache();
-    const entries = cache.getEntries(limit);
-    const stats = cache.getStats();
-
-    res.json({
-      status: 'success',
-      timestamp: new Date().toISOString(),
-      limit,
-      totalEntries: stats.size.current,
-      entries
-    });
-
-  } catch (error) {
-    console.error('[Cache Entries] Error:', error);
-    res.status(500).json({
-      error: 'Failed to retrieve cache entries',
-      details: error.message
-    });
-  }
-});
-
-/**
- * POST /api/cache/clear
- * Clears all cache entries (admin operation)
- * Requires admin authentication in production
- */
-router.post('/api/cache/clear', strictLimiter, (req, res) => {
-  try {
-    // TODO: Add admin authentication check in production
-    // if (!req.isAdmin) {
-    //   return res.status(403).json({ error: 'Unauthorized' });
-    // }
-
-    const cache = getCache();
-    const beforeSize = cache.cache.size;
-
-    cache.clear();
-
-    console.log(`[Cache] Manually cleared ${beforeSize} entries`);
-
-    res.json({
-      status: 'success',
-      message: `Cleared ${beforeSize} cache entries`,
-      clearedCount: beforeSize,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('[Cache Clear] Error:', error);
-    res.status(500).json({
-      error: 'Failed to clear cache',
-      details: error.message
-    });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════
-// END PHASE 3 ENHANCEMENT
-// ═══════════════════════════════════════════════════════════
 
 export default router;
