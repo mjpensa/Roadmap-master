@@ -31,3 +31,7 @@ roadmap.db-wal
 
 *.backup.*
 *.backup*.log
+
+# Server log files
+
+*.log
