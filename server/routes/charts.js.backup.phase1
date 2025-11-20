@@ -104,15 +104,9 @@ ${researchTextCache}`;
         responseMimeType: "application/json",
         responseSchema: GANTT_CHART_SCHEMA,
         maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
-
-        // DETERMINISTIC SETTINGS - Ensures 100% reproducible charts
-        temperature: CONFIG.API.TEMPERATURE_STRUCTURED,  // 0.0
-        topP: CONFIG.API.TOP_P_STRUCTURED,              // 1.0
-        topK: CONFIG.API.TOP_K_STRUCTURED,              // 1
-
-        // Additional determinism guarantees
-        candidateCount: 1,        // Single response candidate
-        stopSequences: []         // No early stopping
+        temperature: CONFIG.API.TEMPERATURE_STRUCTURED,
+        topP: CONFIG.API.TOP_P,
+        topK: CONFIG.API.TOP_K
       }
     };
 
@@ -183,14 +177,10 @@ ${researchTextCache}`;
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: EXECUTIVE_SUMMARY_SCHEMA,
-          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_EXECUTIVE,  // Explicit limit
-
-          // CREATIVE SETTINGS - Maintains eloquent, varied summaries
-          temperature: CONFIG.API.TEMPERATURE_CREATIVE,    // 0.7
-          topP: CONFIG.API.TOP_P_CREATIVE,                // 0.95
-          topK: CONFIG.API.TOP_K_CREATIVE,                // 40
-
-          candidateCount: 1
+          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
+          temperature: 0.7,
+          topP: CONFIG.API.TOP_P,
+          topK: CONFIG.API.TOP_K
           // NOTE: thinkingConfig temporarily disabled for chart generation
           // Re-enable after testing if it's causing JSON parsing issues
           // thinkingConfig: {
@@ -252,14 +242,10 @@ ${researchTextCache.substring(0, 50000)}`; // Limit research content to avoid to
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: PRESENTATION_SLIDES_OUTLINE_SCHEMA,
-          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_PRESENTATION,
-
-          // CREATIVE SETTINGS - Engaging slide structures
-          temperature: CONFIG.API.TEMPERATURE_CREATIVE,
-          topP: CONFIG.API.TOP_P_CREATIVE,
-          topK: CONFIG.API.TOP_K_CREATIVE,
-
-          candidateCount: 1
+          maxOutputTokens: 8192,
+          temperature: 0.7,
+          topP: CONFIG.API.TOP_P,
+          topK: CONFIG.API.TOP_K
         }
       };
 
@@ -409,14 +395,10 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: PRESENTATION_SLIDE_CONTENT_SCHEMA,
-            maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_PRESENTATION,
-
-            // CREATIVE SETTINGS - Eloquent slide content
-            temperature: CONFIG.API.TEMPERATURE_CREATIVE,
-            topP: CONFIG.API.TOP_P_CREATIVE,
-            topK: CONFIG.API.TOP_K_CREATIVE,
-
-            candidateCount: 1
+            maxOutputTokens: 16384,
+            temperature: 0.7,
+            topP: CONFIG.API.TOP_P,
+            topK: CONFIG.API.TOP_K
           }
         };
 

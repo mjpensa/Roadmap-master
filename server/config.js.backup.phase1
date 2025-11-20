@@ -58,36 +58,16 @@ export const CONFIG = {
     BASE_URL: 'https://generativelanguage.googleapis.com/v1beta',
     RETRY_COUNT: 3,
     RETRY_BASE_DELAY_MS: 1000, // 1 second base delay
-
-    // Token limits
     MAX_OUTPUT_TOKENS_CHART: 65536,
     MAX_OUTPUT_TOKENS_ANALYSIS: 65536,
     MAX_OUTPUT_TOKENS_QA: 8192,
-    MAX_OUTPUT_TOKENS_EXECUTIVE: 4096,      // NEW: Explicit limit for summaries
-    MAX_OUTPUT_TOKENS_PRESENTATION: 16384,  // NEW: Explicit limit for slides
-
-    // Thinking budgets
     THINKING_BUDGET_ANALYSIS: 24576, // Maximum thinking tokens for task analysis (complex reasoning)
     THINKING_BUDGET_RESEARCH: 24576, // Maximum thinking tokens for research synthesis
     THINKING_BUDGET_EXECUTIVE: 16384, // Thinking tokens for executive summaries
-
-    // === DETERMINISTIC SETTINGS (for structured data extraction) ===
-    // Use for: Chart generation, task analysis, research extraction
-    TEMPERATURE_STRUCTURED: 0.0,    // Zero randomness for reproducibility
-    TOP_P_STRUCTURED: 1.0,          // No nucleus sampling (consider all tokens)
-    TOP_K_STRUCTURED: 1,            // Only most likely token (deterministic)
-
-    // === CREATIVE SETTINGS (for narrative generation) ===
-    // Use for: Executive summaries, presentations, creative narratives
-    TEMPERATURE_CREATIVE: 0.7,      // 70% creativity for eloquent summaries
-    TOP_P_CREATIVE: 0.95,           // Diverse vocabulary (nucleus sampling)
-    TOP_K_CREATIVE: 40,             // Consider top 40 tokens for variety
-
-    // === BALANCED SETTINGS (for Q&A responses) ===
-    // Use for: Interactive Q&A, contextual responses
-    TEMPERATURE_QA: 0.5,            // Semi-creative (balanced)
-    TOP_P_QA: 0.9,                  // Moderate diversity
-    TOP_K_QA: 20                    // Moderate token choices
+    TEMPERATURE_STRUCTURED: 0,
+    TEMPERATURE_QA: 0.1,
+    TOP_P: 1,
+    TOP_K: 1
   },
 
   // File upload limits
