@@ -26,3 +26,8 @@ Database
 roadmap.db
 roadmap.db-shm
 roadmap.db-wal
+
+# Backup files
+
+*.backup.*
+*.backup
