@@ -178,21 +178,25 @@ export function handleUploadErrors(error, req, res, next) {
 }
 
 /**
- * Monitoring middleware - tracks all requests
- * Phase 4 Enhancement: Real-time metrics collection
+ * Monitoring middleware - tracks all requests for metrics
+ * Phase 4 Enhancement: Added for comprehensive monitoring
  */
-import { getMetricsCollector } from './monitoring.js';
-
 export function monitoringMiddleware(req, res, next) {
   const start = Date.now();
-  const metrics = getMetricsCollector();
 
-  // Track response
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    const success = res.statusCode < 400;
+  // Lazy load to avoid circular dependency
+  import('./monitoring.js').then(({ getMetricsCollector }) => {
+    const metrics = getMetricsCollector();
 
-    metrics.recordRequest(duration, success);
+    // Track response
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      const success = res.statusCode < 400;
+
+      metrics.recordRequest(duration, success);
+    });
+  }).catch(err => {
+    console.error('[Monitoring] Failed to load monitoring module:', err);
   });
 
   next();
