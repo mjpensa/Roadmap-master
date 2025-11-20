@@ -31,7 +31,8 @@ import {
   configureCacheControl,
   configureTimeout,
   uploadMiddleware,
-  handleUploadErrors
+  handleUploadErrors,
+  monitoringMiddleware
 } from './server/middleware.js';
 
 // Import storage management
@@ -44,6 +45,7 @@ import analyticsRoutes from './server/routes/analytics.js';
 import researchRoutes from './server/routes/research.js';
 import semanticRoutes from './server/routes/semantic-gantt.js';
 import validatedSemanticRoutes from './server/routes/semantic-gantt-validated.js';
+import monitoringRoutes from './server/routes/monitoring.js'; // PHASE 4: Monitoring
 
 // --- Server Setup ---
 const app = express();
@@ -85,6 +87,9 @@ app.use(express.static(join(__dirname, 'Public')));
 // Request timeout
 app.use(configureTimeout);
 
+// Monitoring middleware (PHASE 4: Track all requests for metrics)
+app.use(monitoringMiddleware);
+
 // --- Mount Routes ---
 // Mount routes without global upload middleware (upload middleware is applied per-route where needed)
 app.use('/', chartRoutes);
@@ -96,6 +101,8 @@ app.use('/', researchRoutes);
 app.use('/', semanticRoutes);
 // Validated semantic gantt routes with cross-validation pipeline
 app.use('/', validatedSemanticRoutes);
+// Monitoring and analytics routes (PHASE 4)
+app.use('/', monitoringRoutes);
 
 // --- Error Handling ---
 app.use(handleUploadErrors);
