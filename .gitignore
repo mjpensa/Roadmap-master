@@ -30,4 +30,4 @@ roadmap.db-wal
 # Backup files
 
 *.backup.*
-*.backup
+*.backup*.log
