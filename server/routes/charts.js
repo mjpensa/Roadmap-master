@@ -14,6 +14,7 @@ import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
 import { strictLimiter, apiLimiter, uploadMiddleware } from '../middleware.js';
 import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
+import { getMetricsCollector } from '../monitoring.js'; // Phase 4: Monitoring
 
 const router = express.Router();
 
@@ -608,6 +609,10 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
       fileCount: researchFilesCache.length
     }, chartId, sessionId);
 
+    // Phase 4: Record generation metrics
+    const metrics = getMetricsCollector();
+    metrics.recordGeneration(generationTime, taskCount, true);
+
     console.log(`Job ${jobId}: Successfully completed`);
 
   } catch (error) {
@@ -618,6 +623,11 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
       errorMessage: error.message,
       errorType: error.constructor.name
     }, null, null);
+
+    // Phase 4: Record error and failed generation
+    const metrics = getMetricsCollector();
+    metrics.recordError(error, { jobId, type: 'chart_generation' });
+    metrics.recordGeneration(0, 0, false);
 
     failJob(jobId, error.message);
   }

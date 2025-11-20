@@ -31,7 +31,8 @@ import {
   configureCacheControl,
   configureTimeout,
   uploadMiddleware,
-  handleUploadErrors
+  handleUploadErrors,
+  monitoringMiddleware
 } from './server/middleware.js';
 
 // Import storage management
@@ -44,6 +45,7 @@ import analyticsRoutes from './server/routes/analytics.js';
 import researchRoutes from './server/routes/research.js';
 import semanticRoutes from './server/routes/semantic-gantt.js';
 import validatedSemanticRoutes from './server/routes/semantic-gantt-validated.js';
+import monitoringRoutes from './server/routes/monitoring.js';
 
 // --- Server Setup ---
 const app = express();
@@ -66,6 +68,9 @@ app.use(cors({
   credentials: true,
   maxAge: 86400 // 24 hours
 }));
+
+// Monitoring middleware (Phase 4) - track all requests
+app.use(monitoringMiddleware);
 
 // Security headers
 app.use(configureHelmet());
@@ -96,6 +101,8 @@ app.use('/', researchRoutes);
 app.use('/', semanticRoutes);
 // Validated semantic gantt routes with cross-validation pipeline
 app.use('/', validatedSemanticRoutes);
+// Monitoring routes (Phase 4)
+app.use('/', monitoringRoutes);
 
 // --- Error Handling ---
 app.use(handleUploadErrors);

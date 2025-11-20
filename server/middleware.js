@@ -176,3 +176,24 @@ export function handleUploadErrors(error, req, res, next) {
 
   next();
 }
+
+/**
+ * Monitoring middleware - tracks all requests
+ * Phase 4 Enhancement: Real-time metrics collection
+ */
+import { getMetricsCollector } from './monitoring.js';
+
+export function monitoringMiddleware(req, res, next) {
+  const start = Date.now();
+  const metrics = getMetricsCollector();
+
+  // Track response
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const success = res.statusCode < 400;
+
+    metrics.recordRequest(duration, success);
+  });
+
+  next();
+}
