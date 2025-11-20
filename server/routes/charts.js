@@ -15,7 +15,7 @@ import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_G
 import { strictLimiter, apiLimiter, uploadMiddleware } from '../middleware.js';
 import { trackEvent } from '../database.js'; // FEATURE #9: Analytics tracking
 import { getCache } from '../cache.js'; // PHASE 3: Caching system
-import { getMetricsCollector } from '../monitoring.js'; // Phase 4: Monitoring
+import { getMetricsCollector } from '../monitoring.js'; // PHASE 4: Monitoring
 
 const router = express.Router();
 
@@ -215,6 +215,11 @@ async function processChartGeneration(jobId, reqBody, files) {
         generationTime: 0, // Instant from cache
         fileCount: researchFilesCache.length
       }, chartId, sessionId);
+
+      // PHASE 4: Record metrics for cache hit
+      const metrics = getMetricsCollector();
+      metrics.recordCacheAccess(true, 0); // Cache hit, instant duration
+      metrics.recordGeneration(0, cachedResult.data?.length || 0, true); // Success from cache
 
       console.log(`Job ${jobId}: Completed from cache`);
       return;
@@ -681,9 +686,10 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
       fileCount: researchFilesCache.length
     }, chartId, sessionId);
 
-    // Phase 4: Record generation metrics
+    // PHASE 4: Record metrics for successful generation
     const metrics = getMetricsCollector();
-    metrics.recordGeneration(generationTime, taskCount, true);
+    metrics.recordCacheAccess(false, generationTime); // Cache miss, full generation
+    metrics.recordGeneration(generationTime, taskCount, true); // Successful generation
 
     console.log(`Job ${jobId}: Successfully completed`);
 
@@ -696,10 +702,10 @@ Example: { "type": "simple", "title": "${slideOutline.title}", "content": ["Key 
       errorType: error.constructor.name
     }, null, null);
 
-    // Phase 4: Record error and failed generation
+    // PHASE 4: Record error metrics
     const metrics = getMetricsCollector();
     metrics.recordError(error, { jobId, type: 'chart_generation' });
-    metrics.recordGeneration(0, 0, false);
+    metrics.recordGeneration(0, 0, false); // Failed generation
 
     failJob(jobId, error.message);
   }

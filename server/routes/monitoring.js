@@ -4,10 +4,13 @@
  *
  * Endpoints:
  * - GET /api/monitoring/health - Health check
+ * - GET /api/monitoring/health/simple - Simple health check
  * - GET /api/monitoring/metrics - Real-time metrics
  * - GET /api/monitoring/system - System resources
  * - GET /api/monitoring/sla - SLA compliance
  * - GET /api/monitoring/dashboard - Complete dashboard data
+ * - GET /api/monitoring/analytics/summary - Analytics summary
+ * - GET /api/monitoring/analytics/overall - Overall analytics
  */
 
 import express from 'express';
@@ -234,7 +237,8 @@ router.get('/api/monitoring/dashboard', apiLimiter, async (req, res) => {
         uptime: metricsData.uptime,
         requestsPerMinute: metricsData.requestsPerMinute,
         requestsPerHour: metricsData.requestsPerHour,
-        errorRate: ((metricsData.requests.failed / metricsData.requests.total) * 100).toFixed(2),
+        errorRate: metricsData.requests.total > 0 ?
+          ((metricsData.requests.failed / metricsData.requests.total) * 100).toFixed(2) : '0.00',
         avgResponseTime: metricsData.requests.avgDuration
       },
 
