@@ -55,6 +55,36 @@ Your response MUST include ALL of these fields or the response will be rejected:
 If you fail to include these required fields, the entire response will be rejected and the chart generation will fail.
 
 // ═══════════════════════════════════════════════════════════
+// 🚨 CRITICAL: TITLE LENGTH CONSTRAINTS (Prevents API Truncation)
+// ═══════════════════════════════════════════════════════════
+
+**MANDATORY TITLE REQUIREMENTS:**
+
+1. **Project title**: Maximum 200 characters
+2. **Task/swimlane titles**: Maximum 300 characters
+3. **NEVER repeat text or metadata in titles**
+4. **NEVER include validation statistics in titles** (e.g., "(100% of tasks have...)")
+5. **Keep titles concise and descriptive**
+
+**❌ FORBIDDEN - DO NOT DO THIS:**
+```
+"title": "Regulatory & Policy (EU/US) Stream B: The Regulatory Chasm & Legal Gates (Theme: Regulatory Compliance & Legal Gates - Red) (CP: Yes, High Impact Decisions/Mandates) (30% of tasks are CP, 100% of decisions/milestones are CP) (14 tasks, 10 CP, 4 non-CP) (100% of tasks have entity data) (100% of tasks have title data)..."
+```
+This is FORBIDDEN - it repeats metadata and exceeds limits!
+
+**✅ CORRECT - DO THIS:**
+```
+"title": "Regulatory & Policy (EU/US) - Compliance & Legal Gates"
+```
+Concise, descriptive, under 300 characters.
+
+**WHY THIS MATTERS:**
+- Long titles cause API responses to exceed size limits (~200KB)
+- Truncated responses result in malformed JSON that cannot be parsed
+- This creates infinite retry loops that timeout the entire request
+- **If you generate titles longer than 300 characters, the entire chart generation WILL FAIL**
+
+// ═══════════════════════════════════════════════════════════
 // ✨ PHASE 2 ENHANCEMENT: MAXIMUM EXTRACTION RULES
 // ═══════════════════════════════════════════════════════════
 
@@ -573,7 +603,8 @@ export const GANTT_CHART_SCHEMA = {
   type: "object",
   properties: {
     title: {
-      type: "string"
+      type: "string",
+      maxLength: 200
     },
     timeColumns: {
       type: "array",
@@ -584,7 +615,10 @@ export const GANTT_CHART_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          title: { type: "string" },
+          title: {
+            type: "string",
+            maxLength: 300
+          },
           isSwimlane: { type: "boolean" },
           entity: { type: "string" },
           bar: {
