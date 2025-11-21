@@ -215,6 +215,17 @@ function validateConstraints(ganttData) {
  */
 async function processChartGeneration(jobId, reqBody, files) {
   try {
+    // ═══════════════════════════════════════════════════════════
+    // ⚡ PERFORMANCE TRACKING - Start Timer
+    // ═══════════════════════════════════════════════════════════
+
+    // Initialize global start times tracking object if needed
+    if (!global.chartGenerationStartTimes) {
+      global.chartGenerationStartTimes = {};
+    }
+    // Record start time for this job
+    global.chartGenerationStartTimes[jobId] = Date.now();
+
     // PHASE 2 FIX: Update job status with progress percentage
     updateJob(jobId, {
       status: 'processing',
@@ -623,6 +634,29 @@ ${researchTextCache}`;
     }
 
     console.log(`Job ${jobId}: Data validation passed - timeColumns: ${ganttData.timeColumns.length} items, data: ${ganttData.data.length} tasks`);
+
+    // ═══════════════════════════════════════════════════════════
+    // ⚡ PERFORMANCE METRICS LOGGING
+    // ═══════════════════════════════════════════════════════════
+
+    // Calculate generation time and log performance metrics
+    const generationEndTime = Date.now();
+    const generationDuration = generationEndTime - (global.chartGenerationStartTimes?.[jobId] || generationEndTime);
+    const taskCount = ganttData.data.filter(d => !d.isSwimlane).length;
+    const responseSize = JSON.stringify(ganttData).length;
+
+    console.log(`[Performance Metrics - Job ${jobId}]`);
+    console.log(`  Generation Time: ${generationDuration}ms (${(generationDuration/1000).toFixed(1)}s)`);
+    console.log(`  Task Count: ${taskCount} tasks`);
+    console.log(`  Research Size: ${(totalResearchChars/1000).toFixed(1)}KB`);
+    console.log(`  Response Size: ${(responseSize/1000).toFixed(1)}KB`);
+
+    if (generationDuration > 90000) console.warn(`  ⚠️ SLOW: Exceeded 90s target`);
+    if (responseSize > 60000) console.warn(`  ⚠️ LARGE: Response over 60KB`);
+    if (taskCount > 80) console.warn(`  ⚠️ EXCESSIVE: Too many tasks`);
+    if (generationDuration < 90000 && responseSize < 60000 && taskCount >= 20 && taskCount <= 60) {
+      console.log(`  ✅ SUCCESS: Within all targets`);
+    }
 
     // ═══════════════════════════════════════════════════════════
     // ✨ CONSTRAINT VALIDATION (Post-Generation)
