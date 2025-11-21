@@ -1,11 +1,13 @@
 /**
  * Gemini API Integration Module
  * Phase 4 Enhancement: Extracted from server.js
+ * Phase 3 Enhancement: Integrated metrics tracking
  * Handles all interactions with the Gemini AI API
  */
 
 import { CONFIG, getGeminiApiUrl } from './config.js';
 import { jsonrepair } from 'jsonrepair';
+import { getMetricsCollector } from './monitoring.js';
 
 const API_URL = getGeminiApiUrl();
 
@@ -256,6 +258,13 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
     console.log(`  - First 100 chars: ${extractedJsonText.substring(0, 100)}`);
     console.log(`  - Last 100 chars: ${extractedJsonText.substring(responseSize - 100)}`);
 
+    // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 3 ENHANCEMENT: METRICS TRACKING
+    // ═══════════════════════════════════════════════════════════
+    // Track response sizes and detect truncation for monitoring
+
+    let isTruncated = false;
+
     // CRITICAL: Check for suspicious truncation at ~60,001 character boundary
     // Error desc_1.md documents consistent truncation at exactly this point
     if (responseSize >= 60000 && responseSize <= 60010) {
@@ -270,9 +279,19 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
       if (!extractedJsonText.trim().endsWith('}')) {
         console.error(`  - ❌ TRUNCATION DETECTED: Response does not end with closing brace`);
         console.error(`  - Last 200 chars: ${extractedJsonText.substring(responseSize - 200)}`);
+        isTruncated = true;
       }
     }
     console.log(`${'='.repeat(60)}\n`);
+
+    // Record response size in metrics (for anomaly detection)
+    try {
+      const metrics = getMetricsCollector();
+      metrics.recordResponseSize(responseSize, isTruncated);
+    } catch (metricsError) {
+      // Don't fail the request if metrics recording fails
+      console.warn('[Metrics] Failed to record response size:', metricsError.message);
+    }
 
     // Clean up the JSON text before parsing
     // Remove markdown code blocks if present

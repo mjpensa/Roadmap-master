@@ -53,13 +53,17 @@ export function startCleanupInterval() {
       }
     }
 
+    // ✨ PHASE 3: Clean up old partial results
+    const partialResultsDeleted = cleanupPartialResults();
+
     // Log cleanup results
-    if (sessionsDeleted > 0 || chartsDeleted > 0 || jobsDeleted > 0) {
+    if (sessionsDeleted > 0 || chartsDeleted > 0 || jobsDeleted > 0 || partialResultsDeleted > 0) {
       console.log('\n📊 Cleanup Summary:');
       console.log(`  - Expired sessions: ${sessionsDeleted}`);
       console.log(`  - Expired charts: ${chartsDeleted}`);
       console.log(`  - Expired jobs: ${jobsDeleted}`);
-      console.log(`  - Total items cleaned: ${chartsDeleted + sessionsDeleted + jobsDeleted}`);
+      console.log(`  - Expired partial results: ${partialResultsDeleted}`);
+      console.log(`  - Total items cleaned: ${chartsDeleted + sessionsDeleted + jobsDeleted + partialResultsDeleted}`);
     }
 
     // Log current storage state
@@ -67,6 +71,7 @@ export function startCleanupInterval() {
     console.log(`  - Active sessions: ${sessionStore.size}`);
     console.log(`  - Active charts: ${chartStore.size}`);
     console.log(`  - Active jobs: ${jobStore.size}`);
+    console.log(`  - Active partial results: ${partialResultsStore.size}`);
     console.log(`  - Storage health: ✅ Good\n`);
 
   }, CONFIG.STORAGE.CLEANUP_INTERVAL_MS);
@@ -348,7 +353,145 @@ export function getStorageStats() {
     sessions: sessionStore.size,
     charts: chartStore.size,
     jobs: jobStore.size,
+    partialResults: partialResultsStore.size,
     type: 'in-memory',
     persistent: false
   };
 }
+
+// ═══════════════════════════════════════════════════════════
+// ✨ PHASE 3 ENHANCEMENT: PARTIAL RESULT CACHING
+// ═══════════════════════════════════════════════════════════
+/**
+ * Storage for partial/intermediate results during chart generation
+ * Allows resuming from last successful phase if a stage fails
+ *
+ * Use cases:
+ * - Chart generation succeeds, but executive summary fails → resume from summary
+ * - Chart and summary succeed, but slides fail → resume from slides
+ *
+ * Structure: Map<jobId, { ganttData?, executiveSummary?, presentationSlides?, timestamp }>
+ */
+const partialResultsStore = new Map();
+
+/**
+ * Stores partial result for a specific job phase
+ * @param {string} jobId - The job ID
+ * @param {string} phase - Phase name ('ganttData', 'executiveSummary', 'presentationSlides')
+ * @param {Object} data - The phase result data
+ */
+export function storePartialResult(jobId, phase, data) {
+  if (!jobId || !phase || !data) {
+    console.warn('[Partial Cache] Invalid parameters for storePartialResult');
+    return;
+  }
+
+  // Get existing partial results or create new entry
+  const existing = partialResultsStore.get(jobId) || {
+    jobId,
+    timestamp: Date.now()
+  };
+
+  // Store the phase result
+  existing[phase] = data;
+  existing.lastUpdated = Date.now();
+
+  partialResultsStore.set(jobId, existing);
+
+  console.log(`[Partial Cache] Stored ${phase} for job ${jobId}`);
+  console.log(`[Partial Cache] Current phases: ${Object.keys(existing).filter(k => !['jobId', 'timestamp', 'lastUpdated'].includes(k)).join(', ')}`);
+}
+
+/**
+ * Retrieves partial results for a job
+ * @param {string} jobId - The job ID
+ * @returns {Object|null} Partial results object or null if not found
+ */
+export function getPartialResults(jobId) {
+  const partials = partialResultsStore.get(jobId);
+
+  if (!partials) {
+    console.log(`[Partial Cache] No partial results found for job ${jobId}`);
+    return null;
+  }
+
+  console.log(`[Partial Cache] Retrieved partial results for job ${jobId}`);
+  console.log(`[Partial Cache] Available phases: ${Object.keys(partials).filter(k => !['jobId', 'timestamp', 'lastUpdated'].includes(k)).join(', ')}`);
+
+  return partials;
+}
+
+/**
+ * Checks if a specific phase result is cached
+ * @param {string} jobId - The job ID
+ * @param {string} phase - Phase name ('ganttData', 'executiveSummary', 'presentationSlides')
+ * @returns {boolean} True if phase is cached
+ */
+export function hasPartialResult(jobId, phase) {
+  const partials = partialResultsStore.get(jobId);
+  return partials && partials[phase] !== undefined;
+}
+
+/**
+ * Clears partial results for a job (call after successful completion)
+ * @param {string} jobId - The job ID
+ */
+export function clearPartialResults(jobId) {
+  const deleted = partialResultsStore.delete(jobId);
+
+  if (deleted) {
+    console.log(`[Partial Cache] Cleared partial results for job ${jobId}`);
+  } else {
+    console.log(`[Partial Cache] No partial results to clear for job ${jobId}`);
+  }
+}
+
+/**
+ * Gets summary of all partial results (for monitoring/debugging)
+ * @returns {Array} Array of partial result summaries
+ */
+export function getPartialResultsSummary() {
+  const summary = [];
+
+  for (const [jobId, partials] of partialResultsStore.entries()) {
+    const phases = Object.keys(partials).filter(k => !['jobId', 'timestamp', 'lastUpdated'].includes(k));
+    const age = Date.now() - partials.timestamp;
+
+    summary.push({
+      jobId,
+      phases,
+      phaseCount: phases.length,
+      ageMs: age,
+      ageMinutes: Math.round(age / 60000),
+      lastUpdated: partials.lastUpdated
+    });
+  }
+
+  return summary;
+}
+
+/**
+ * Cleans up old partial results (older than 1 hour)
+ * Called by the cleanup interval
+ */
+export function cleanupPartialResults() {
+  const oneHourAgo = Date.now() - CONFIG.STORAGE.EXPIRATION_MS;
+  let deleted = 0;
+
+  for (const [jobId, partials] of partialResultsStore.entries()) {
+    if (partials.timestamp < oneHourAgo) {
+      partialResultsStore.delete(jobId);
+      deleted++;
+    }
+  }
+
+  if (deleted > 0) {
+    console.log(`[Partial Cache] Cleaned up ${deleted} expired partial result(s)`);
+  }
+
+  return deleted;
+}
+
+// ═══════════════════════════════════════════════════════════
+// END PHASE 3 ENHANCEMENT
+// ═══════════════════════════════════════════════════════════
