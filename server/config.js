@@ -95,6 +95,12 @@ export const CONFIG = {
     MAX_SIZE_BYTES: 10 * 1024 * 1024, // 10MB per file
     MAX_COUNT: 500, // Increased to support folder uploads with many files
     MAX_FIELD_SIZE_BYTES: 200 * 1024 * 1024, // 200MB total - increased for folder uploads
+
+    // PHASE 1 FIX: Research content character limits (after file processing)
+    // These limits prevent exceeding Gemini context windows and response truncation
+    MAX_RESEARCH_CHARS: 50000, // 50KB for standard mode (conservative limit)
+    MAX_RESEARCH_CHARS_SEMANTIC: 100000, // 100KB for semantic mode (extended limit)
+
     ALLOWED_MIMES: [
       'text/markdown',
       'text/plain',
@@ -217,7 +223,10 @@ export const CONFIG = {
     RATE_LIMIT_EXCEEDED: 'Too many requests from this IP, please try again later.',
     STRICT_RATE_LIMIT_EXCEEDED: 'Too many chart generation requests. Please try again in 15 minutes.',
     INVALID_FILE_EXTENSION: (ext) => `Invalid file extension: .${ext}. Only .md, .txt, and .docx files are allowed.`,
-    INVALID_FILE_TYPE: (type) => `Invalid file type: ${type}. Only .md, .txt, and .docx files are allowed.`
+    INVALID_FILE_TYPE: (type) => `Invalid file type: ${type}. Only .md, .txt, and .docx files are allowed.`,
+
+    // PHASE 1 FIX: Research size validation error codes
+    RESEARCH_TOO_LARGE: 'RESEARCH_TOO_LARGE' // Error code for oversized research content
   }
 };
 
