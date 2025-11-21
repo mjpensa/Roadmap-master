@@ -478,7 +478,17 @@ async function pollForJobCompletion(jobId, generateBtn) {
 
         return job.data; // Return the chart data
       } else if (job.status === 'error' || job.status === 'failed') {
-        // Handle both 'error' and 'failed' statuses
+        // PHASE 1 FIX: Handle specific error codes with enhanced messaging
+        // Check if this is a RESEARCH_TOO_LARGE error with special handling
+        if (job.errorCode === 'RESEARCH_TOO_LARGE' && job.errorDetails) {
+          // Create a custom error object with all details for frontend display
+          const enhancedError = new Error(job.error || 'Research size limit exceeded');
+          enhancedError.code = 'RESEARCH_TOO_LARGE';
+          enhancedError.details = job.errorDetails;
+          throw enhancedError;
+        }
+
+        // Handle both 'error' and 'failed' statuses (generic fallback)
         throw new Error(job.error || 'Job failed with unknown error');
       } else if (job.status === 'processing' || job.status === 'pending') {
         // Job still processing, schedule next poll
@@ -725,7 +735,44 @@ async function handleChartGenerate(event) {
 
   } catch (error) {
     console.error("Error generating chart:", error);
-    errorMessage.textContent = `Error: ${error.message}`;
+
+    // PHASE 1 FIX: Enhanced error display for RESEARCH_TOO_LARGE
+    if (error.code === 'RESEARCH_TOO_LARGE' && error.details) {
+      // Build user-friendly message with size information and suggestions
+      const sizeKB = (error.details.currentSize / 1024).toFixed(1);
+      const limitKB = (error.details.maxSize / 1024).toFixed(1);
+
+      let messageHTML = `
+        <div style="color: #ef4444; font-weight: 600; margin-bottom: 8px;">
+          ⚠️ Research Size Limit Exceeded
+        </div>
+        <div style="color: #d1d5db; margin-bottom: 12px;">
+          ${error.message}
+        </div>
+        <div style="background: #1f2937; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+          <div style="color: #9ca3af; font-size: 14px;">
+            <strong>Your upload:</strong> ${sizeKB}KB<br>
+            <strong>Standard limit:</strong> ${limitKB}KB
+          </div>
+        </div>
+      `;
+
+      // Add semantic mode suggestion if applicable
+      if (error.details.suggestSemanticMode) {
+        const semanticLimitKB = (error.details.semanticMaxSize / 1024).toFixed(1);
+        messageHTML += `
+          <div style="background: #1e3a8a; padding: 12px; border-radius: 6px; color: #93c5fd;">
+            <strong>💡 Suggestion:</strong> Enable semantic mode (supports up to ${semanticLimitKB}KB) or reduce your file count.
+          </div>
+        `;
+      }
+
+      errorMessage.innerHTML = messageHTML;
+    } else {
+      // Generic error display (existing behavior)
+      errorMessage.textContent = `Error: ${error.message}`;
+    }
+
     errorMessage.style.display = 'block';
   } finally {
     // 10. Restore UI (always re-enable button)
