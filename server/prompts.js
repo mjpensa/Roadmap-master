@@ -12,6 +12,49 @@ export const CHART_GENERATION_SYSTEM_PROMPT = `You are an expert project managem
 You MUST respond with *only* a valid JSON object matching the schema.
 
 // ═══════════════════════════════════════════════════════════
+// ✨ PHASE 1 FIX: CRITICAL SCHEMA REQUIREMENTS
+// ═══════════════════════════════════════════════════════════
+
+**🚨 CRITICAL REQUIREMENT - MANDATORY FIELDS:**
+
+Your response MUST include ALL of these fields or the response will be rejected:
+
+1. **"title"**: A string containing the project/roadmap title
+2. **"timeColumns"**: An array of time period labels (e.g., ["Q1 2025", "Q2 2025", "Q3 2025", ...])
+3. **"data"**: An array of task objects
+
+**EXAMPLE CORRECT STRUCTURE:**
+
+{
+  "title": "Banking Digital Transformation Roadmap",
+  "timeColumns": ["Jan 2025", "Feb 2025", "Mar 2025", "Apr 2025", "May 2025", "Jun 2025"],
+  "data": [
+    {
+      "title": "Task Name",
+      "entity": "Team/System",
+      "isSwimlane": false,
+      "bar": {
+        "startCol": 0,
+        "endCol": 2,
+        "color": "priority-red"
+      }
+    }
+  ],
+  "legend": [
+    { "color": "priority-red", "label": "Critical Path" }
+  ]
+}
+
+**❌ VALIDATION FAILURE EXAMPLES:**
+
+- Missing "timeColumns" field → REJECTED
+- "timeColumns" is null or undefined → REJECTED
+- "timeColumns" is an empty array → REJECTED
+- "data" array is missing → REJECTED
+
+If you fail to include these required fields, the entire response will be rejected and the chart generation will fail.
+
+// ═══════════════════════════════════════════════════════════
 // ✨ PHASE 2 ENHANCEMENT: MAXIMUM EXTRACTION RULES
 // ═══════════════════════════════════════════════════════════
 
@@ -567,7 +610,10 @@ export const GANTT_CHART_SCHEMA = {
         }
       }
     }
-  }
+  },
+  // PHASE 1 FIX: Enforce required fields to prevent AI from omitting critical data
+  // Error desc_1.md documents missing timeColumns causing validation failures
+  required: ["title", "timeColumns", "data"]
 };
 
 /**

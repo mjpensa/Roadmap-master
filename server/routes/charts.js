@@ -272,6 +272,61 @@ async function processChartGeneration(jobId, reqBody, files) {
     }
 
     // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 1 FIX: RESEARCH SIZE VALIDATION
+    // ═══════════════════════════════════════════════════════════
+    // Prevents exceeding Gemini context windows and response truncation
+    // by enforcing character limits AFTER file processing but BEFORE AI calls
+
+    const totalResearchChars = researchTextCache.length;
+    const maxChars = CONFIG.FILES.MAX_RESEARCH_CHARS; // 50KB for standard mode
+    const semanticMaxChars = CONFIG.FILES.MAX_RESEARCH_CHARS_SEMANTIC; // 100KB for semantic mode
+
+    console.log(`[Chart Generation] Research size validation: ${totalResearchChars} chars (limit: ${maxChars})`);
+
+    if (totalResearchChars > maxChars) {
+      console.warn(`[Chart Generation] ⚠️  Research size ${totalResearchChars} exceeds standard mode limit ${maxChars}`);
+
+      // Check if semantic mode would accommodate this size
+      if (totalResearchChars <= semanticMaxChars) {
+        // Suggest semantic mode for inputs between 50KB-100KB
+        const errorMessage = `Your research (${(totalResearchChars / 1024).toFixed(1)}KB) exceeds the standard mode limit (${(maxChars / 1024).toFixed(1)}KB). Please try semantic mode or reduce your file count.`;
+
+        console.error(`[Chart Generation] Rejecting job ${jobId}: ${errorMessage}`);
+
+        failJob(jobId, {
+          error: errorMessage,
+          errorCode: CONFIG.ERRORS.RESEARCH_TOO_LARGE,
+          errorDetails: {
+            currentSize: totalResearchChars,
+            maxSize: maxChars,
+            suggestSemanticMode: true,
+            semanticMaxSize: semanticMaxChars
+          }
+        });
+
+        return; // Exit early - don't proceed with chart generation
+      } else {
+        // Reject inputs > 100KB outright
+        const errorMessage = `Your research (${(totalResearchChars / 1024).toFixed(1)}KB) exceeds the maximum allowed size (${(semanticMaxChars / 1024).toFixed(1)}KB). Please reduce the number or size of files.`;
+
+        console.error(`[Chart Generation] Rejecting job ${jobId}: ${errorMessage}`);
+
+        failJob(jobId, {
+          error: errorMessage,
+          errorCode: CONFIG.ERRORS.RESEARCH_TOO_LARGE,
+          errorDetails: {
+            currentSize: totalResearchChars,
+            maxSize: semanticMaxChars
+          }
+        });
+
+        return; // Exit early - don't proceed with chart generation
+      }
+    }
+
+    console.log(`[Chart Generation] ✅ Research size within limits: ${totalResearchChars} chars`);
+
+    // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 3 ENHANCEMENT: CACHE LOOKUP
     // ═══════════════════════════════════════════════════════════
 

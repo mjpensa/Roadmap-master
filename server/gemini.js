@@ -210,6 +210,40 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
 
     let extractedJsonText = result.candidates[0].content.parts[0].text;
 
+    // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 1 FIX: DETAILED RESPONSE SIZE LOGGING
+    // ═══════════════════════════════════════════════════════════
+    // Helps diagnose JSON truncation issues at 60,001 character boundary
+
+    const responseSize = extractedJsonText.length;
+    const responseSizeKB = (responseSize / 1024).toFixed(2);
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`[Gemini API] Response received:`);
+    console.log(`${'='.repeat(60)}`);
+    console.log(`  - Size: ${responseSize} characters`);
+    console.log(`  - Size (KB): ${responseSizeKB} KB`);
+    console.log(`  - First 100 chars: ${extractedJsonText.substring(0, 100)}`);
+    console.log(`  - Last 100 chars: ${extractedJsonText.substring(responseSize - 100)}`);
+
+    // CRITICAL: Check for suspicious truncation at ~60,001 character boundary
+    // Error desc_1.md documents consistent truncation at exactly this point
+    if (responseSize >= 60000 && responseSize <= 60010) {
+      console.error(`\n${'!'.repeat(60)}`);
+      console.error(`⚠️  WARNING: Response size near suspicious 60K truncation point!`);
+      console.error(`${'!'.repeat(60)}`);
+      console.error(`  - Exact size: ${responseSize} characters`);
+      console.error(`  - This matches the truncation pattern from error desc_1.md`);
+      console.error(`  - Last character: "${extractedJsonText.charAt(responseSize - 1)}"`);
+      console.error(`  - Ends with closing brace: ${extractedJsonText.trim().endsWith('}')}`);
+
+      if (!extractedJsonText.trim().endsWith('}')) {
+        console.error(`  - ❌ TRUNCATION DETECTED: Response does not end with closing brace`);
+        console.error(`  - Last 200 chars: ${extractedJsonText.substring(responseSize - 200)}`);
+      }
+    }
+    console.log(`${'='.repeat(60)}\n`);
+
     // Clean up the JSON text before parsing
     // Remove markdown code blocks if present
     extractedJsonText = extractedJsonText.trim();
@@ -235,6 +269,41 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
         const contextEnd = Math.min(extractedJsonText.length, errorPosition + 200);
         console.error('Problematic JSON (around error position):', extractedJsonText.substring(contextStart, contextEnd));
       }
+
+      // ═══════════════════════════════════════════════════════════
+      // ✨ PHASE 1 FIX: PRE-VALIDATION BEFORE REPAIR
+      // ═══════════════════════════════════════════════════════════
+      // Quick check: does the response even contain required fields?
+      // This provides faster failure diagnosis before expensive repair attempts
+
+      console.log('[Pre-Validation] Checking for required fields in raw response...');
+
+      // Check for critical field presence (string-based search)
+      const hasTimeColumnsString = extractedJsonText.includes('"timeColumns"');
+      const hasDataString = extractedJsonText.includes('"data"');
+      const hasTitleString = extractedJsonText.includes('"title"');
+
+      if (!hasTimeColumnsString) {
+        console.error('\n' + '!'.repeat(60));
+        console.error('❌ FATAL: Response missing "timeColumns" field entirely');
+        console.error('!'.repeat(60));
+        console.error('Response preview (first 1000 chars):');
+        console.error(extractedJsonText.substring(0, 1000));
+        console.error('\nThis indicates a prompt/schema enforcement failure.');
+        console.error('The AI did not follow the CRITICAL REQUIREMENT to include timeColumns.');
+        throw new Error(
+          'AI response missing required "timeColumns" field. ' +
+          'This is a prompt/schema enforcement failure. ' +
+          'Response size: ' + extractedJsonText.length + ' chars'
+        );
+      }
+
+      if (!hasDataString) {
+        console.error('❌ FATAL: Response missing "data" field entirely');
+        throw new Error('AI response missing required "data" field');
+      }
+
+      console.log('[Pre-Validation] ✅ Required fields present as strings, attempting repair...');
 
       // Try to repair the JSON using jsonrepair library
       try {
