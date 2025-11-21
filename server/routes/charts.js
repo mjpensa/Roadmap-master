@@ -8,7 +8,7 @@
 import express from 'express';
 import mammoth from 'mammoth';
 import { CONFIG } from '../config.js';
-import { sanitizePrompt, isValidChartId, isValidJobId } from '../utils.js';
+import { sanitizePrompt, isValidChartId, isValidJobId, chunkResearch, mergeChartData } from '../utils.js';
 import { createSession, storeChart, getChart, updateChart, createJob, updateJob, getJob, completeJob, failJob } from '../storage.js';
 import { callGeminiForJson } from '../gemini.js';
 import { CHART_GENERATION_SYSTEM_PROMPT, GANTT_CHART_SCHEMA, EXECUTIVE_SUMMARY_GENERATION_PROMPT, EXECUTIVE_SUMMARY_SCHEMA, PRESENTATION_SLIDES_OUTLINE_PROMPT, PRESENTATION_SLIDES_OUTLINE_SCHEMA, PRESENTATION_SLIDE_CONTENT_PROMPT, PRESENTATION_SLIDE_CONTENT_SCHEMA } from '../prompts.js';
@@ -352,6 +352,26 @@ async function processChartGeneration(jobId, reqBody, files) {
     });
 
     // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 3 ENHANCEMENT: PROGRESSIVE PROCESSING (CHUNKING)
+    // ═══════════════════════════════════════════════════════════
+    // For very large research inputs (>40KB), split into chunks to:
+    // 1. Prevent AI response truncation at 60K boundary
+    // 2. Improve processing reliability for large inputs
+    // 3. Enable parallel processing (future enhancement)
+
+    const CHUNK_THRESHOLD = 40000; // 40KB threshold for chunking
+    const useChunking = totalResearchChars > CHUNK_THRESHOLD;
+
+    if (useChunking) {
+      console.log(`[Chart Generation] Research size ${totalResearchChars} exceeds chunk threshold ${CHUNK_THRESHOLD}`);
+      console.log(`[Chart Generation] Enabling progressive processing with chunking`);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // END PHASE 3 ENHANCEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 3 ENHANCEMENT: CACHE LOOKUP
     // ═══════════════════════════════════════════════════════════
 
@@ -423,47 +443,142 @@ async function processChartGeneration(jobId, reqBody, files) {
       progressPercent: 30
     });
 
-    // Build user query
-    const geminiUserQuery = `${sanitizedPrompt}
+    // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 3 ENHANCEMENT: CHUNKED vs SINGLE CHART GENERATION
+    // ═══════════════════════════════════════════════════════════
+
+    let ganttData;
+
+    if (useChunking) {
+      // PROGRESSIVE PROCESSING: Split research into chunks and merge results
+      console.log(`[Chart Generation] Starting chunked processing for ${totalResearchChars} chars`);
+
+      // Split research into manageable chunks (default 40KB per chunk)
+      const chunks = chunkResearch(researchTextCache, 40000);
+      console.log(`[Chart Generation] Split into ${chunks.length} chunks`);
+
+      const chartChunks = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const chunkNum = i + 1;
+
+        console.log(`[Chart Generation] Processing chunk ${chunkNum}/${chunks.length} (${(chunk.size / 1024).toFixed(1)}KB)`);
+
+        // Update progress
+        const chunkProgress = 30 + Math.floor((i / chunks.length) * 30); // 30-60% for chunked processing
+        updateJob(jobId, {
+          status: 'processing',
+          progress: `Processing chunk ${chunkNum}/${chunks.length}... (${chunkProgress}%)`,
+          progressPercent: chunkProgress
+        });
+
+        // Build query for this chunk
+        const chunkQuery = `${sanitizedPrompt}
+
+**CRITICAL REMINDER:** You MUST escape all newlines (\\n) and double-quotes (\") found in the research content before placing them into the final JSON string values.
+
+**CHUNKED PROCESSING NOTE:** This is chunk ${chunkNum} of ${chunks.length}. Extract ALL tasks from this chunk. Results will be merged later.
+
+Research Content (Chunk ${chunkNum}/${chunks.length}):
+${chunk.text}`;
+
+        // Define payload for chunk
+        const chunkPayload = {
+          contents: [{ parts: [{ text: chunkQuery }] }],
+          systemInstruction: { parts: [{ text: CHART_GENERATION_SYSTEM_PROMPT }] },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: GANTT_CHART_SCHEMA,
+            maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
+
+            // DETERMINISTIC SETTINGS
+            temperature: CONFIG.API.TEMPERATURE_STRUCTURED,
+            topP: CONFIG.API.TOP_P_STRUCTURED,
+            topK: CONFIG.API.TOP_K_STRUCTURED,
+            candidateCount: 1,
+            stopSequences: []
+          }
+        };
+
+        // Call API for this chunk
+        const chunkResult = await callGeminiForJson(
+          chunkPayload,
+          CONFIG.API.RETRY_COUNT,
+          (attemptNum, error) => {
+            updateJob(jobId, {
+              status: 'processing',
+              progress: `Retrying chunk ${chunkNum}/${chunks.length} (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
+            });
+            console.log(`Job ${jobId}: Retrying chunk ${chunkNum} due to error: ${error.message}`);
+          }
+        );
+
+        chartChunks.push(chunkResult);
+        console.log(`[Chart Generation] ✓ Chunk ${chunkNum}/${chunks.length} completed: ${chunkResult.data?.length || 0} tasks extracted`);
+      }
+
+      // Merge all chunks into single chart
+      console.log(`[Chart Generation] Merging ${chartChunks.length} chart chunks`);
+      updateJob(jobId, {
+        status: 'processing',
+        progress: 'Merging chart chunks...',
+        progressPercent: 60
+      });
+
+      ganttData = mergeChartData(chartChunks);
+      console.log(`[Chart Generation] ✓ Merged chart: ${ganttData.data?.length || 0} total tasks, ${ganttData.timeColumns?.length || 0} time columns`);
+
+    } else {
+      // STANDARD PROCESSING: Single API call with full research
+      console.log(`[Chart Generation] Using standard single-call processing`);
+
+      // Build user query
+      const geminiUserQuery = `${sanitizedPrompt}
 
 **CRITICAL REMINDER:** You MUST escape all newlines (\\n) and double-quotes (\") found in the research content before placing them into the final JSON string values.
 
 Research Content:
 ${researchTextCache}`;
 
-    // Define the payload
-    const payload = {
-      contents: [{ parts: [{ text: geminiUserQuery }] }],
-      systemInstruction: { parts: [{ text: CHART_GENERATION_SYSTEM_PROMPT }] },
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: GANTT_CHART_SCHEMA,
-        maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
+      // Define the payload
+      const payload = {
+        contents: [{ parts: [{ text: geminiUserQuery }] }],
+        systemInstruction: { parts: [{ text: CHART_GENERATION_SYSTEM_PROMPT }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: GANTT_CHART_SCHEMA,
+          maxOutputTokens: CONFIG.API.MAX_OUTPUT_TOKENS_CHART,
 
-        // DETERMINISTIC SETTINGS - Ensures 100% reproducible charts
-        temperature: CONFIG.API.TEMPERATURE_STRUCTURED,  // 0.0
-        topP: CONFIG.API.TOP_P_STRUCTURED,              // 1.0
-        topK: CONFIG.API.TOP_K_STRUCTURED,              // 1
+          // DETERMINISTIC SETTINGS - Ensures 100% reproducible charts
+          temperature: CONFIG.API.TEMPERATURE_STRUCTURED,  // 0.0
+          topP: CONFIG.API.TOP_P_STRUCTURED,              // 1.0
+          topK: CONFIG.API.TOP_K_STRUCTURED,              // 1
 
-        // Additional determinism guarantees
-        candidateCount: 1,        // Single response candidate
-        stopSequences: []         // No early stopping
-      }
-    };
+          // Additional determinism guarantees
+          candidateCount: 1,        // Single response candidate
+          stopSequences: []         // No early stopping
+        }
+      };
 
-    // Call the API with retry callback to update job status
-    const ganttData = await callGeminiForJson(
-      payload,
-      CONFIG.API.RETRY_COUNT,
-      (attemptNum, error) => {
-        // Update job status to show retry attempt
-        updateJob(jobId, {
-          status: 'processing',
-          progress: `Retrying AI request (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
-        });
-        console.log(`Job ${jobId}: Retrying due to error: ${error.message}`);
-      }
-    );
+      // Call the API with retry callback to update job status
+      ganttData = await callGeminiForJson(
+        payload,
+        CONFIG.API.RETRY_COUNT,
+        (attemptNum, error) => {
+          // Update job status to show retry attempt
+          updateJob(jobId, {
+            status: 'processing',
+            progress: `Retrying AI request (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
+          });
+          console.log(`Job ${jobId}: Retrying due to error: ${error.message}`);
+        }
+      );
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // END PHASE 3 ENHANCEMENT
+    // ═══════════════════════════════════════════════════════════
 
     // Debug: Log what we received from AI
     console.log(`Job ${jobId}: Received ganttData from AI with keys:`, Object.keys(ganttData || {}));
