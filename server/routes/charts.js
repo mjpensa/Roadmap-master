@@ -642,19 +642,19 @@ ${researchTextCache}`;
     // Calculate generation time and log performance metrics
     const generationEndTime = Date.now();
     const generationDuration = generationEndTime - (global.chartGenerationStartTimes?.[jobId] || generationEndTime);
-    const taskCount = ganttData.data.filter(d => !d.isSwimlane).length;
+    const actualTaskCount = ganttData.data.filter(d => !d.isSwimlane).length;
     const responseSize = JSON.stringify(ganttData).length;
 
     console.log(`[Performance Metrics - Job ${jobId}]`);
     console.log(`  Generation Time: ${generationDuration}ms (${(generationDuration/1000).toFixed(1)}s)`);
-    console.log(`  Task Count: ${taskCount} tasks`);
+    console.log(`  Task Count: ${actualTaskCount} tasks`);
     console.log(`  Research Size: ${(totalResearchChars/1000).toFixed(1)}KB`);
     console.log(`  Response Size: ${(responseSize/1000).toFixed(1)}KB`);
 
     if (generationDuration > 90000) console.warn(`  ⚠️ SLOW: Exceeded 90s target`);
     if (responseSize > 60000) console.warn(`  ⚠️ LARGE: Response over 60KB`);
-    if (taskCount > 80) console.warn(`  ⚠️ EXCESSIVE: Too many tasks`);
-    if (generationDuration < 90000 && responseSize < 60000 && taskCount >= 20 && taskCount <= 60) {
+    if (actualTaskCount > 80) console.warn(`  ⚠️ EXCESSIVE: Too many tasks`);
+    if (generationDuration < 90000 && responseSize < 60000 && actualTaskCount >= 20 && actualTaskCount <= 60) {
       console.log(`  ✅ SUCCESS: Within all targets`);
     }
 
