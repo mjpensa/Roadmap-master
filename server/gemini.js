@@ -158,13 +158,21 @@ export async function retryWithBackoff(operation, retryCount = CONFIG.API.RETRY_
  */
 export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null) {
   return retryWithBackoff(async () => {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-    if (!response.ok) {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId); // Clear timeout if request succeeds
+
+      if (!response.ok) {
       let errorText = 'Unknown error';
       let errorData = null;
 
@@ -265,8 +273,14 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
 
     let isTruncated = false;
 
-    // CRITICAL: Check for suspicious truncation at ~60,001 character boundary
-    // Error desc_1.md documents consistent truncation at exactly this point
+    // CRITICAL: Check for suspicious truncation patterns
+    // 1. Original 60KB boundary (documented in error desc_1.md)
+    // 2. Very large responses (>100KB) that likely got truncated by API limits
+    // 3. Responses that don't end with proper JSON closing
+
+    const trimmedJson = extractedJsonText.trim();
+    const endsWithClosingBrace = trimmedJson.endsWith('}') || trimmedJson.endsWith('}]');
+
     if (responseSize >= 60000 && responseSize <= 60010) {
       console.error(`\n${'!'.repeat(60)}`);
       console.error(`⚠️  WARNING: Response size near suspicious 60K truncation point!`);
@@ -274,12 +288,38 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
       console.error(`  - Exact size: ${responseSize} characters`);
       console.error(`  - This matches the truncation pattern from error desc_1.md`);
       console.error(`  - Last character: "${extractedJsonText.charAt(responseSize - 1)}"`);
-      console.error(`  - Ends with closing brace: ${extractedJsonText.trim().endsWith('}')}`);
+      console.error(`  - Ends with closing brace: ${endsWithClosingBrace}`);
 
-      if (!extractedJsonText.trim().endsWith('}')) {
+      if (!endsWithClosingBrace) {
         console.error(`  - ❌ TRUNCATION DETECTED: Response does not end with closing brace`);
         console.error(`  - Last 200 chars: ${extractedJsonText.substring(responseSize - 200)}`);
         isTruncated = true;
+      }
+    }
+
+    // NEW: Check for very large responses that likely exceeded API limits
+    if (responseSize > 100000) {
+      console.warn(`\n${'!'.repeat(60)}`);
+      console.warn(`⚠️  WARNING: Very large response (${responseSizeKB}KB)!`);
+      console.warn(`${'!'.repeat(60)}`);
+      console.warn(`  - Size: ${responseSize} characters`);
+      console.warn(`  - This may exceed Gemini API output limits`);
+      console.warn(`  - Ends with closing brace: ${endsWithClosingBrace}`);
+
+      if (!endsWithClosingBrace) {
+        console.error(`  - ❌ TRUNCATION DETECTED: Response likely truncated by API`);
+        console.error(`  - Last 300 chars: ${extractedJsonText.substring(responseSize - 300)}`);
+        console.error(`  - This indicates AI is generating too much output`);
+        console.error(`  - CRITICAL: Failing immediately to avoid infinite retries`);
+        isTruncated = true;
+
+        // Throw non-retryable error for truncated large responses
+        throw new Error(
+          `AI response truncated at ${responseSizeKB}KB. ` +
+          `The AI is generating excessively verbose output that exceeds API limits. ` +
+          `This is not a transient error and retrying will not help. ` +
+          `Please reduce input size or simplify the prompt.`
+        );
       }
     }
     console.log(`${'='.repeat(60)}\n`);
@@ -418,6 +458,19 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
         console.error('Full JSON response:', extractedJsonText);
         throw parseError; // Throw the original error
       }
+    }
+    } catch (error) {
+      clearTimeout(timeoutId); // Clear timeout on error
+
+      // Handle timeout errors
+      if (error.name === 'AbortError') {
+        console.error('\n' + '='.repeat(60));
+        console.error('[Gemini API] Request timed out after 60 seconds');
+        console.error('='.repeat(60));
+        throw new Error('API request timed out after 60 seconds. The AI may be generating too much output.');
+      }
+
+      throw error; // Re-throw other errors
     }
   }, retryCount, onRetry);
 }
