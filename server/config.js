@@ -150,6 +150,21 @@ export const CONFIG = {
     RESPONSE_MS: 120000
   },
 
+  // PHASE 2 FIX: Job timeout and retry configuration
+  JOB: {
+    // Timeout for chart generation jobs (adjusts based on input size)
+    TIMEOUT_MS: 5 * 60 * 1000, // 5 minutes (default for standard inputs)
+    TIMEOUT_LARGE_INPUT_MS: 10 * 60 * 1000, // 10 minutes for large inputs (>30KB)
+
+    // Retry configuration
+    MAX_RETRIES: 3,
+    RETRY_DELAY_MS: 2000, // 2 seconds base delay
+    RETRY_EXPONENTIAL_BACKOFF: true, // Use exponential backoff (2s, 4s, 8s)
+
+    // Size threshold for extended timeout
+    LARGE_INPUT_THRESHOLD_CHARS: 30000 // 30KB - inputs above this get extended timeout
+  },
+
   // Rate limiting
   RATE_LIMIT: {
     WINDOW_MS: 15 * 60 * 1000, // 15 minutes
@@ -226,7 +241,28 @@ export const CONFIG = {
     INVALID_FILE_TYPE: (type) => `Invalid file type: ${type}. Only .md, .txt, and .docx files are allowed.`,
 
     // PHASE 1 FIX: Research size validation error codes
-    RESEARCH_TOO_LARGE: 'RESEARCH_TOO_LARGE' // Error code for oversized research content
+    RESEARCH_TOO_LARGE: 'RESEARCH_TOO_LARGE', // Error code for oversized research content
+
+    // PHASE 2 FIX: Additional structured error codes for enhanced error tracking
+    // Input validation errors
+    INVALID_FILE_TYPE_CODE: 'INVALID_FILE_TYPE',
+    FILE_TOO_LARGE_CODE: 'FILE_TOO_LARGE',
+
+    // AI API errors
+    AI_TIMEOUT: 'AI_TIMEOUT',
+    AI_JSON_TRUNCATED: 'AI_JSON_TRUNCATED',
+    AI_INVALID_RESPONSE: 'AI_INVALID_RESPONSE',
+    AI_MISSING_FIELD: 'AI_MISSING_FIELD',
+    AI_RATE_LIMIT: 'AI_RATE_LIMIT',
+    AI_QUOTA_EXCEEDED: 'AI_QUOTA_EXCEEDED',
+
+    // Job errors
+    JOB_TIMEOUT: 'JOB_TIMEOUT',
+    JOB_NOT_FOUND_CODE: 'JOB_NOT_FOUND',
+
+    // System errors
+    DATABASE_ERROR: 'DATABASE_ERROR',
+    CACHE_ERROR: 'CACHE_ERROR'
   }
 };
 
@@ -235,6 +271,7 @@ Object.freeze(CONFIG);
 Object.freeze(CONFIG.SERVER);
 Object.freeze(CONFIG.API);
 Object.freeze(CONFIG.FILES);
+Object.freeze(CONFIG.JOB); // PHASE 2: Freeze job configuration
 Object.freeze(CONFIG.RESEARCH_SYNTHESIS);
 Object.freeze(CONFIG.TIMEOUTS);
 Object.freeze(CONFIG.RATE_LIMIT);

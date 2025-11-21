@@ -327,6 +327,29 @@ async function processChartGeneration(jobId, reqBody, files) {
     console.log(`[Chart Generation] ✅ Research size within limits: ${totalResearchChars} chars`);
 
     // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 2 FIX: DYNAMIC TIMEOUT CALCULATION
+    // ═══════════════════════════════════════════════════════════
+    // Calculate appropriate timeout based on research size
+    // Large inputs (>30KB) get extended timeout to prevent premature failures
+
+    const isLargeInput = totalResearchChars > CONFIG.JOB.LARGE_INPUT_THRESHOLD_CHARS;
+    const jobTimeout = isLargeInput
+      ? CONFIG.JOB.TIMEOUT_LARGE_INPUT_MS  // 10 minutes for large inputs
+      : CONFIG.JOB.TIMEOUT_MS;              // 5 minutes for standard inputs
+
+    const timeoutMinutes = jobTimeout / 60000;
+    console.log(`[Chart Generation] Job timeout: ${timeoutMinutes} minutes (research: ${(totalResearchChars / 1024).toFixed(1)}KB${isLargeInput ? ' - LARGE INPUT' : ''})`);
+
+    // Update job with timeout information (stored in metadata for future reference)
+    updateJob(jobId, {
+      status: 'processing',
+      progress: `Processing ${files?.length || 0} file(s)...`,
+      timeout: jobTimeout,
+      researchSize: totalResearchChars,
+      isLargeInput: isLargeInput
+    });
+
+    // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 3 ENHANCEMENT: CACHE LOOKUP
     // ═══════════════════════════════════════════════════════════
 
@@ -889,11 +912,16 @@ router.post('/generate-chart', uploadMiddleware.array('researchFiles'), strictLi
 
   console.log(`Creating new job ${jobId} with ${req.files?.length || 0} files`);
 
+  // PHASE 2 FIX: Return estimated timeout for client polling
+  // Default to 5 minutes, will be updated based on actual research size during processing
+  const defaultTimeout = CONFIG.JOB.TIMEOUT_MS; // 5 minutes
+
   // Return job ID immediately (< 100ms response time)
   res.json({
     jobId,
     status: 'processing',
-    message: 'Chart generation started. Poll /job/:id for status updates.'
+    message: 'Chart generation started. Poll /job/:id for status updates.',
+    estimatedTimeout: defaultTimeout // milliseconds - client uses this for polling duration
   });
 
   console.log(`Job ${jobId} queued, starting background processing...`);

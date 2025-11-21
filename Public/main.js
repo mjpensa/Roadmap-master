@@ -368,9 +368,14 @@ document.addEventListener("DOMContentLoaded", () => {
  * @returns {Promise<Object>} The chart data when job is complete
  * @throws {Error} If job fails or times out
  */
-async function pollForJobCompletion(jobId, generateBtn) {
+async function pollForJobCompletion(jobId, generateBtn, estimatedTimeout = 5 * 60 * 1000) {
+  // PHASE 2 FIX: Use server-provided timeout for dynamic polling duration
   const POLL_INTERVAL = 1000; // Poll every 1 second
-  const MAX_ATTEMPTS = 300; // 5 minutes maximum (300 seconds)
+  const MAX_ATTEMPTS = Math.ceil(estimatedTimeout / POLL_INTERVAL); // Calculate based on server timeout
+  const timeoutMinutes = Math.ceil(estimatedTimeout / 60000);
+
+  console.log(`[Polling] Will poll up to ${MAX_ATTEMPTS} times (${timeoutMinutes} minute${timeoutMinutes > 1 ? 's' : ''})`);
+
   let attempts = 0;
   let isPolling = false; // Prevent concurrent polls
 
@@ -384,7 +389,7 @@ async function pollForJobCompletion(jobId, generateBtn) {
 
     // Check timeout before attempting
     if (attempts >= MAX_ATTEMPTS) {
-      throw new Error('Job timed out after 5 minutes. Please try again.');
+      throw new Error(`Job timed out after ${timeoutMinutes} minute${timeoutMinutes > 1 ? 's' : ''}. Please try again with a smaller research file.`);
     }
 
     isPolling = true;
@@ -635,18 +640,20 @@ async function handleChartGenerate(event) {
       throw new Error(errorText);
     }
 
-    // 7. Get job ID from response
+    // 7. Get job ID and timeout from response
     const jobResponse = await response.json();
     const jobId = jobResponse.jobId;
+    const estimatedTimeout = jobResponse.estimatedTimeout || (5 * 60 * 1000); // Default 5 minutes
 
     if (!jobId) {
       throw new Error('Server did not return a job ID');
     }
 
     console.log('Job started:', jobId);
+    console.log(`PHASE 2: Client will poll for up to ${estimatedTimeout / 60000} minutes`);
 
-    // 8. Poll for job completion
-    const ganttData = await pollForJobCompletion(jobId, generateBtn);
+    // 8. Poll for job completion with server-provided timeout
+    const ganttData = await pollForJobCompletion(jobId, generateBtn, estimatedTimeout);
 
     // Debug: Log the received data structure
     console.log('Received ganttData:', ganttData);
