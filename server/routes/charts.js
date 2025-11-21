@@ -524,7 +524,8 @@ ${chunk.text}`;
               progress: `Retrying chunk ${chunkNum}/${chunks.length} (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
             });
             console.log(`Job ${jobId}: Retrying chunk ${chunkNum} due to error: ${error.message}`);
-          }
+          },
+          CONFIG.API.TIMEOUT_CHART_GENERATION_MS  // Use 3-minute timeout for chart generation
         );
 
         chartChunks.push(chunkResult);
@@ -585,7 +586,8 @@ ${researchTextCache}`;
             progress: `Retrying AI request (attempt ${attemptNum + 1}/${CONFIG.API.RETRY_COUNT})...`
           });
           console.log(`Job ${jobId}: Retrying due to error: ${error.message}`);
-        }
+        },
+        CONFIG.API.TIMEOUT_CHART_GENERATION_MS  // Use 3-minute timeout for chart generation
       );
     }
 
