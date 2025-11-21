@@ -67,15 +67,15 @@ If you fail to include these required fields, the entire response will be reject
 5. **Keep titles concise and descriptive**
 
 **❌ FORBIDDEN - DO NOT DO THIS:**
-```
-"title": "Regulatory & Policy (EU/US) Stream B: The Regulatory Chasm & Legal Gates (Theme: Regulatory Compliance & Legal Gates - Red) (CP: Yes, High Impact Decisions/Mandates) (30% of tasks are CP, 100% of decisions/milestones are CP) (14 tasks, 10 CP, 4 non-CP) (100% of tasks have entity data) (100% of tasks have title data)..."
-```
+
+  title: "Regulatory & Policy (EU/US) Stream B: The Regulatory Chasm & Legal Gates (Theme: Regulatory Compliance & Legal Gates - Red) (CP: Yes, High Impact Decisions/Mandates) (30% of tasks are CP, 100% of decisions/milestones are CP) (14 tasks, 10 CP, 4 non-CP) (100% of tasks have entity data) (100% of tasks have title data)..."
+
 This is FORBIDDEN - it repeats metadata and exceeds limits!
 
 **✅ CORRECT - DO THIS:**
-```
-"title": "Regulatory & Policy (EU/US) - Compliance & Legal Gates"
-```
+
+  title: "Regulatory & Policy (EU/US) - Compliance & Legal Gates"
+
 Concise, descriptive, under 300 characters.
 
 **WHY THIS MATTERS:**
