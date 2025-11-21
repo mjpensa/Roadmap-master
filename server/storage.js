@@ -314,13 +314,27 @@ export function completeJob(jobId, data) {
 /**
  * Marks a job as failed with error message
  * @param {string} jobId - The job ID
- * @param {string} errorMessage - The error message
+ * @param {string|Object} errorMessage - The error message or error object
+ *   If object: { error: string, errorCode?: string, errorDetails?: object }
+ *   If string: error message
  */
 export function failJob(jobId, errorMessage) {
-  updateJob(jobId, {
-    status: 'error',
-    error: errorMessage || 'Unknown error occurred'
-  });
+  // Handle both string and object error formats
+  if (typeof errorMessage === 'object' && errorMessage !== null) {
+    // Object format: { error, errorCode, errorDetails }
+    updateJob(jobId, {
+      status: 'error',
+      error: errorMessage.error || 'Unknown error occurred',
+      errorCode: errorMessage.errorCode,
+      errorDetails: errorMessage.errorDetails
+    });
+  } else {
+    // String format: simple error message
+    updateJob(jobId, {
+      status: 'error',
+      error: errorMessage || 'Unknown error occurred'
+    });
+  }
 }
 
 /**

@@ -274,42 +274,28 @@ async function processChartGeneration(jobId, reqBody, files) {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ✨ PHASE 1 FIX: RESEARCH SIZE VALIDATION
+    // ✨ PHASE 1 FIX: RESEARCH SIZE VALIDATION (Updated for Phase 3 chunking)
     // ═══════════════════════════════════════════════════════════
-    // Prevents exceeding Gemini context windows and response truncation
-    // by enforcing character limits AFTER file processing but BEFORE AI calls
+    // Validates research size with awareness of Phase 3 chunking capability
+    // - Inputs ≤40KB: Normal processing, 50KB limit applies
+    // - Inputs >40KB: Chunking enabled, 200KB limit applies (5 chunks × 40KB)
 
     const totalResearchChars = researchTextCache.length;
-    const maxChars = CONFIG.FILES.MAX_RESEARCH_CHARS; // 50KB for standard mode
-    const semanticMaxChars = CONFIG.FILES.MAX_RESEARCH_CHARS_SEMANTIC; // 100KB for semantic mode
+    const CHUNK_THRESHOLD = 40000; // 40KB - matches Phase 3 chunking threshold
+    const MAX_WITH_CHUNKING = 200000; // 200KB - reasonable max with chunking (5 chunks)
+    const maxChars = CONFIG.FILES.MAX_RESEARCH_CHARS; // 50KB for non-chunked mode
 
-    console.log(`[Chart Generation] Research size validation: ${totalResearchChars} chars (limit: ${maxChars})`);
+    console.log(`[Chart Generation] Research size validation: ${totalResearchChars} chars`);
 
-    if (totalResearchChars > maxChars) {
-      console.warn(`[Chart Generation] ⚠️  Research size ${totalResearchChars} exceeds standard mode limit ${maxChars}`);
+    // Check if chunking will be used
+    const willUseChunking = totalResearchChars > CHUNK_THRESHOLD;
 
-      // Check if semantic mode would accommodate this size
-      if (totalResearchChars <= semanticMaxChars) {
-        // Suggest semantic mode for inputs between 50KB-100KB
-        const errorMessage = `Your research (${(totalResearchChars / 1024).toFixed(1)}KB) exceeds the standard mode limit (${(maxChars / 1024).toFixed(1)}KB). Please try semantic mode or reduce your file count.`;
+    if (willUseChunking) {
+      console.log(`[Chart Generation] Input size >40KB - chunking will be enabled (limit: ${(MAX_WITH_CHUNKING / 1024).toFixed(0)}KB)`);
 
-        console.error(`[Chart Generation] Rejecting job ${jobId}: ${errorMessage}`);
-
-        failJob(jobId, {
-          error: errorMessage,
-          errorCode: CONFIG.ERRORS.RESEARCH_TOO_LARGE,
-          errorDetails: {
-            currentSize: totalResearchChars,
-            maxSize: maxChars,
-            suggestSemanticMode: true,
-            semanticMaxSize: semanticMaxChars
-          }
-        });
-
-        return; // Exit early - don't proceed with chart generation
-      } else {
-        // Reject inputs > 100KB outright
-        const errorMessage = `Your research (${(totalResearchChars / 1024).toFixed(1)}KB) exceeds the maximum allowed size (${(semanticMaxChars / 1024).toFixed(1)}KB). Please reduce the number or size of files.`;
+      // With chunking, allow up to 200KB
+      if (totalResearchChars > MAX_WITH_CHUNKING) {
+        const errorMessage = `Your research (${(totalResearchChars / 1024).toFixed(1)}KB) exceeds the maximum allowed size (${(MAX_WITH_CHUNKING / 1024).toFixed(0)}KB). Please reduce the number or size of files.`;
 
         console.error(`[Chart Generation] Rejecting job ${jobId}: ${errorMessage}`);
 
@@ -318,15 +304,39 @@ async function processChartGeneration(jobId, reqBody, files) {
           errorCode: CONFIG.ERRORS.RESEARCH_TOO_LARGE,
           errorDetails: {
             currentSize: totalResearchChars,
-            maxSize: semanticMaxChars
+            maxSize: MAX_WITH_CHUNKING
           }
         });
 
-        return; // Exit early - don't proceed with chart generation
+        return; // Exit early
       }
-    }
 
-    console.log(`[Chart Generation] ✅ Research size within limits: ${totalResearchChars} chars`);
+      console.log(`[Chart Generation] ✅ Research size within chunking limits: ${totalResearchChars} chars`);
+    } else {
+      console.log(`[Chart Generation] Input size ≤40KB - standard processing (limit: ${(maxChars / 1024).toFixed(0)}KB)`);
+
+      // Without chunking, enforce 50KB limit
+      if (totalResearchChars > maxChars) {
+        console.warn(`[Chart Generation] ⚠️  Research size ${totalResearchChars} exceeds standard limit ${maxChars}`);
+
+        const errorMessage = `Your research (${(totalResearchChars / 1024).toFixed(1)}KB) exceeds the standard mode limit (${(maxChars / 1024).toFixed(1)}KB). Try uploading fewer or smaller files.`;
+
+        console.error(`[Chart Generation] Rejecting job ${jobId}: ${errorMessage}`);
+
+        failJob(jobId, {
+          error: errorMessage,
+          errorCode: CONFIG.ERRORS.RESEARCH_TOO_LARGE,
+          errorDetails: {
+            currentSize: totalResearchChars,
+            maxSize: maxChars
+          }
+        });
+
+        return; // Exit early
+      }
+
+      console.log(`[Chart Generation] ✅ Research size within standard limits: ${totalResearchChars} chars`);
+    }
 
     // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 2 FIX: DYNAMIC TIMEOUT CALCULATION
