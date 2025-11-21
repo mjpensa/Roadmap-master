@@ -104,10 +104,13 @@ function validateExtraction(ganttData, researchText, jobId) {
 /**
  * Validate data constraints after AI generation
  * These constraints were removed from GANTT_CHART_SCHEMA to prevent "too many states" API error
+ * Now validates: required fields, enum values, length limits
  * @param {Object} ganttData - The generated Gantt chart data
  * @throws {Error} If any constraint is violated
  */
 function validateConstraints(ganttData) {
+  const validTaskTypes = ['milestone', 'decision', 'task'];
+
   // Title validation
   if (!ganttData.title || ganttData.title.length === 0) {
     throw new Error('Chart title is required and cannot be empty');
@@ -140,23 +143,61 @@ function validateConstraints(ganttData) {
 
   // Validate each task item
   ganttData.data.forEach((task, index) => {
+    // Required field: title
     if (!task.title || task.title.length === 0) {
       throw new Error(`Task at index ${index} has empty title`);
     }
     if (task.title.length > 200) {
       throw new Error(`Task at index ${index} title exceeds 200 characters (got ${task.title.length})`);
     }
+
+    // Required field: isSwimlane
+    if (typeof task.isSwimlane !== 'boolean') {
+      throw new Error(`Task at index ${index} missing required field 'isSwimlane' (must be boolean)`);
+    }
+
+    // Required field: entity
+    if (typeof task.entity !== 'string') {
+      throw new Error(`Task at index ${index} missing required field 'entity' (must be string)`);
+    }
+
+    // Required field: taskType (with enum validation)
+    if (!task.taskType || typeof task.taskType !== 'string') {
+      throw new Error(`Task at index ${index} missing required field 'taskType'`);
+    }
+    if (!validTaskTypes.includes(task.taskType)) {
+      throw new Error(`Task at index ${index} has invalid taskType '${task.taskType}' (must be one of: ${validTaskTypes.join(', ')})`);
+    }
+
+    // Required field: isCriticalPath
+    if (typeof task.isCriticalPath !== 'boolean') {
+      throw new Error(`Task at index ${index} missing required field 'isCriticalPath' (must be boolean)`);
+    }
   });
 
-  // Legend validation (if present)
-  if (ganttData.legend) {
-    if (!Array.isArray(ganttData.legend)) {
-      throw new Error('legend must be an array');
-    }
-    if (ganttData.legend.length > 20) {
-      throw new Error(`legend exceeds 20 items (got ${ganttData.legend.length})`);
-    }
+  // Legend validation
+  if (!ganttData.legend) {
+    throw new Error('Legend is required');
   }
+  if (!Array.isArray(ganttData.legend)) {
+    throw new Error('legend must be an array');
+  }
+  if (ganttData.legend.length === 0) {
+    throw new Error('legend array cannot be empty');
+  }
+  if (ganttData.legend.length > 20) {
+    throw new Error(`legend exceeds 20 items (got ${ganttData.legend.length})`);
+  }
+
+  // Validate each legend item
+  ganttData.legend.forEach((item, index) => {
+    if (!item.color || typeof item.color !== 'string') {
+      throw new Error(`Legend item at index ${index} missing required field 'color'`);
+    }
+    if (!item.label || typeof item.label !== 'string') {
+      throw new Error(`Legend item at index ${index} missing required field 'label'`);
+    }
+  });
 
   console.log('[Constraint Validation] All constraints passed ✓');
 }
