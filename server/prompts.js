@@ -520,8 +520,11 @@ export function getQASystemPrompt(taskName, entity) {
 
 /**
  * Gantt Chart JSON Schema
- * SIMPLIFIED: Removed min/max constraints to prevent "too many states" API error
- * Constraints now enforced in post-generation validation (validateConstraints in charts.js)
+ * ULTRA-SIMPLIFIED: Removed ALL constraints to prevent "too many states" API error
+ * - Removed: required arrays (they create combinatorial state explosion)
+ * - Removed: enum constraints
+ * - Removed: description fields
+ * All validation now handled in post-generation code (validateConstraints in charts.js)
  */
 export const GANTT_CHART_SCHEMA = {
   type: "object",
@@ -538,9 +541,7 @@ export const GANTT_CHART_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          title: {
-            type: "string"
-          },
+          title: { type: "string" },
           isSwimlane: { type: "boolean" },
           entity: { type: "string" },
           bar: {
@@ -549,19 +550,11 @@ export const GANTT_CHART_SCHEMA = {
               startCol: { type: "number" },
               endCol: { type: "number" },
               color: { type: "string" }
-            },
+            }
           },
-          taskType: {
-            type: "string",
-            enum: ["milestone", "decision", "task"],
-            description: "Task classification for Executive View filtering"
-          },
-          isCriticalPath: {
-            type: "boolean",
-            description: "Whether this task is on the critical path (delays would push final deadline)"
-          }
-        },
-        required: ["title", "isSwimlane", "entity", "taskType", "isCriticalPath"]
+          taskType: { type: "string" },
+          isCriticalPath: { type: "boolean" }
+        }
       }
     },
     legend: {
@@ -571,12 +564,10 @@ export const GANTT_CHART_SCHEMA = {
         properties: {
           color: { type: "string" },
           label: { type: "string" }
-        },
-        required: ["color", "label"]
+        }
       }
     }
-  },
-  required: ["title", "timeColumns", "data", "legend"]
+  }
 };
 
 /**
