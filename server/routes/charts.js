@@ -274,16 +274,19 @@ async function processChartGeneration(jobId, reqBody, files) {
     }
 
     // ═══════════════════════════════════════════════════════════
+    // ✨ CONSTANTS: Research size thresholds (shared across validation and chunking)
+    // ═══════════════════════════════════════════════════════════
+    const totalResearchChars = researchTextCache.length;
+    const CHUNK_THRESHOLD = 40000; // 40KB - threshold for chunking activation
+    const MAX_WITH_CHUNKING = 200000; // 200KB - maximum size with chunking (5 chunks × 40KB)
+    const maxChars = CONFIG.FILES.MAX_RESEARCH_CHARS; // 50KB for non-chunked mode
+
+    // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 1 FIX: RESEARCH SIZE VALIDATION (Updated for Phase 3 chunking)
     // ═══════════════════════════════════════════════════════════
     // Validates research size with awareness of Phase 3 chunking capability
     // - Inputs ≤40KB: Normal processing, 50KB limit applies
     // - Inputs >40KB: Chunking enabled, 200KB limit applies (5 chunks × 40KB)
-
-    const totalResearchChars = researchTextCache.length;
-    const CHUNK_THRESHOLD = 40000; // 40KB - matches Phase 3 chunking threshold
-    const MAX_WITH_CHUNKING = 200000; // 200KB - reasonable max with chunking (5 chunks)
-    const maxChars = CONFIG.FILES.MAX_RESEARCH_CHARS; // 50KB for non-chunked mode
 
     console.log(`[Chart Generation] Research size validation: ${totalResearchChars} chars`);
 
@@ -369,7 +372,7 @@ async function processChartGeneration(jobId, reqBody, files) {
     // 2. Improve processing reliability for large inputs
     // 3. Enable parallel processing (future enhancement)
 
-    const CHUNK_THRESHOLD = 40000; // 40KB threshold for chunking
+    // CHUNK_THRESHOLD is declared at top of function (line 280)
     const useChunking = totalResearchChars > CHUNK_THRESHOLD;
 
     if (useChunking) {
