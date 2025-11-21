@@ -98,6 +98,70 @@ function validateExtraction(ganttData, researchText, jobId) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// ✨ CONSTRAINT VALIDATION (Post-Schema Simplification)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Validate data constraints after AI generation
+ * These constraints were removed from GANTT_CHART_SCHEMA to prevent "too many states" API error
+ * @param {Object} ganttData - The generated Gantt chart data
+ * @throws {Error} If any constraint is violated
+ */
+function validateConstraints(ganttData) {
+  // Title validation
+  if (!ganttData.title || ganttData.title.length === 0) {
+    throw new Error('Chart title is required and cannot be empty');
+  }
+  if (ganttData.title.length > 200) {
+    throw new Error(`Chart title exceeds 200 characters (got ${ganttData.title.length})`);
+  }
+
+  // TimeColumns validation
+  if (!Array.isArray(ganttData.timeColumns)) {
+    throw new Error('timeColumns must be an array');
+  }
+  if (ganttData.timeColumns.length === 0) {
+    throw new Error('timeColumns array cannot be empty');
+  }
+  if (ganttData.timeColumns.length > 200) {
+    throw new Error(`timeColumns exceeds 200 items (got ${ganttData.timeColumns.length})`);
+  }
+
+  // Data array validation
+  if (!Array.isArray(ganttData.data)) {
+    throw new Error('data must be an array');
+  }
+  if (ganttData.data.length === 0) {
+    throw new Error('data array cannot be empty');
+  }
+  if (ganttData.data.length > 500) {
+    throw new Error(`data array exceeds 500 items (got ${ganttData.data.length})`);
+  }
+
+  // Validate each task item
+  ganttData.data.forEach((task, index) => {
+    if (!task.title || task.title.length === 0) {
+      throw new Error(`Task at index ${index} has empty title`);
+    }
+    if (task.title.length > 200) {
+      throw new Error(`Task at index ${index} title exceeds 200 characters (got ${task.title.length})`);
+    }
+  });
+
+  // Legend validation (if present)
+  if (ganttData.legend) {
+    if (!Array.isArray(ganttData.legend)) {
+      throw new Error('legend must be an array');
+    }
+    if (ganttData.legend.length > 20) {
+      throw new Error(`legend exceeds 20 items (got ${ganttData.legend.length})`);
+    }
+  }
+
+  console.log('[Constraint Validation] All constraints passed ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
 // END PHASE 2 ENHANCEMENT
 // ═══════════════════════════════════════════════════════════
 
@@ -307,6 +371,14 @@ ${researchTextCache}`;
     }
 
     console.log(`Job ${jobId}: Data validation passed - timeColumns: ${ganttData.timeColumns.length} items, data: ${ganttData.data.length} tasks`);
+
+    // ═══════════════════════════════════════════════════════════
+    // ✨ CONSTRAINT VALIDATION (Post-Generation)
+    // ═══════════════════════════════════════════════════════════
+
+    console.log(`Job ${jobId}: Running constraint validation...`);
+    validateConstraints(ganttData);
+    console.log(`Job ${jobId}: Constraint validation passed ✓`);
 
     // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 2 ENHANCEMENT: VALIDATE EXTRACTION COMPLETENESS

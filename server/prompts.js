@@ -520,33 +520,26 @@ export function getQASystemPrompt(taskName, entity) {
 
 /**
  * Gantt Chart JSON Schema
- * Phase 2 Enhancement: Added minItems/maxItems constraints for validation
+ * SIMPLIFIED: Removed min/max constraints to prevent "too many states" API error
+ * Constraints now enforced in post-generation validation (validateConstraints in charts.js)
  */
 export const GANTT_CHART_SCHEMA = {
   type: "object",
   properties: {
     title: {
-      type: "string",
-      minLength: 1,              // NEW: Non-empty titles
-      maxLength: 200             // NEW: Prevent truncation issues
+      type: "string"
     },
     timeColumns: {
       type: "array",
-      minItems: 1,               // NEW: Require at least 1 time column
-      maxItems: 200,             // NEW: Prevent excessive columns
       items: { type: "string" }
     },
     data: {
       type: "array",
-      minItems: 1,               // NEW: Require at least 1 row (task or swimlane)
-      maxItems: 500,             // NEW: Prevent runaway extraction (up from implicit limit)
       items: {
         type: "object",
         properties: {
           title: {
-            type: "string",
-            minLength: 1,        // NEW: Non-empty titles
-            maxLength: 200       // NEW: Prevent truncation issues
+            type: "string"
           },
           isSwimlane: { type: "boolean" },
           entity: { type: "string" },
@@ -573,8 +566,6 @@ export const GANTT_CHART_SCHEMA = {
     },
     legend: {
       type: "array",
-      minItems: 1,               // NEW: Require at least 1 legend entry
-      maxItems: 20,              // NEW: Prevent excessive legend
       items: {
         type: "object",
         properties: {
