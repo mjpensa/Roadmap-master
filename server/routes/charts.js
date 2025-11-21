@@ -215,10 +215,11 @@ function validateConstraints(ganttData) {
  */
 async function processChartGeneration(jobId, reqBody, files) {
   try {
-    // Update job status to processing
+    // PHASE 2 FIX: Update job status with progress percentage
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Analyzing your request...'
+      progress: 'Analyzing your request... (1-2 minutes estimated)',
+      progressPercent: 10
     });
 
     const userPrompt = reqBody.prompt;
@@ -233,7 +234,8 @@ async function processChartGeneration(jobId, reqBody, files) {
     // Update progress
     updateJob(jobId, {
       status: 'processing',
-      progress: `Processing ${files?.length || 0} uploaded file(s)...`
+      progress: `Processing ${files?.length || 0} uploaded file(s)...`,
+      progressPercent: 15
     });
 
     // Extract text from uploaded files (Sort for determinism, process in parallel)
@@ -414,10 +416,11 @@ async function processChartGeneration(jobId, reqBody, files) {
     // END PHASE 3 ENHANCEMENT
     // ═══════════════════════════════════════════════════════════
 
-    // Update progress
+    // PHASE 2 FIX: Update progress with percentage and time estimate
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Generating chart data with AI...'
+      progress: 'Generating chart data with AI... (2-4 minutes estimated)',
+      progressPercent: 30
     });
 
     // Build user query
@@ -509,10 +512,11 @@ ${researchTextCache}`;
     // END PHASE 2 ENHANCEMENT
     // ═══════════════════════════════════════════════════════════
 
-    // Update progress
+    // PHASE 2 FIX: Update progress with percentage and time estimate
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Generating executive summary...'
+      progress: 'Creating executive summary... (1 minute estimated)',
+      progressPercent: 60
     });
 
     // NEW: Executive Summary Generation
@@ -577,10 +581,11 @@ ${researchTextCache}`;
       executiveSummary = null;
     }
 
-    // Update progress
+    // PHASE 2 FIX: Update progress with percentage and time estimate
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Generating presentation slides...'
+      progress: 'Building presentation slides... (1-2 minutes estimated)',
+      progressPercent: 80
     });
 
     // NEW: Presentation Slides Generation (Two-Phase Approach)
