@@ -68,7 +68,7 @@ export const CONFIG = {
     TIMEOUT_DEFAULT_MS: 60000,           // 60 seconds default timeout
 
     // Token limits
-    MAX_OUTPUT_TOKENS_CHART: 65536,
+    MAX_OUTPUT_TOKENS_CHART: 8192,           // REDUCED from 65536 - 20-40 tasks need ~6-8k tokens (aggressive performance optimization)
     MAX_OUTPUT_TOKENS_ANALYSIS: 65536,
     MAX_OUTPUT_TOKENS_QA: 8192,
     MAX_OUTPUT_TOKENS_EXECUTIVE: 4096,      // NEW: Explicit limit for summaries
