@@ -59,6 +59,14 @@ export const CONFIG = {
     RETRY_COUNT: 3,
     RETRY_BASE_DELAY_MS: 1000, // 1 second base delay
 
+    // API Timeouts (in milliseconds)
+    TIMEOUT_CHART_GENERATION_MS: 180000, // 3 minutes for chart generation (complex processing)
+    TIMEOUT_EXECUTIVE_SUMMARY_MS: 90000, // 90 seconds for executive summaries
+    TIMEOUT_PRESENTATION_MS: 90000,      // 90 seconds for presentation slides
+    TIMEOUT_TASK_ANALYSIS_MS: 60000,     // 60 seconds for task analysis
+    TIMEOUT_QA_MS: 30000,                // 30 seconds for Q&A responses
+    TIMEOUT_DEFAULT_MS: 60000,           // 60 seconds default timeout
+
     // Token limits
     MAX_OUTPUT_TOKENS_CHART: 65536,
     MAX_OUTPUT_TOKENS_ANALYSIS: 65536,

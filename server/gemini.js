@@ -153,14 +153,15 @@ export async function retryWithBackoff(operation, retryCount = CONFIG.API.RETRY_
  * @param {Object} payload - The API request payload
  * @param {number} retryCount - Number of retry attempts (default: 3)
  * @param {Function} onRetry - Optional callback for retry events (attempt, error)
+ * @param {number} timeoutMs - Timeout in milliseconds (default: from config)
  * @returns {Promise<Object>} Parsed JSON response
  * @throws {Error} If API call fails after all retries
  */
-export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null) {
+export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_COUNT, onRetry = null, timeoutMs = CONFIG.API.TIMEOUT_DEFAULT_MS) {
   return retryWithBackoff(async () => {
     // Create AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(API_URL, {
@@ -464,10 +465,11 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
 
       // Handle timeout errors
       if (error.name === 'AbortError') {
+        const timeoutSeconds = Math.floor(timeoutMs / 1000);
         console.error('\n' + '='.repeat(60));
-        console.error('[Gemini API] Request timed out after 60 seconds');
+        console.error(`[Gemini API] Request timed out after ${timeoutSeconds} seconds`);
         console.error('='.repeat(60));
-        throw new Error('API request timed out after 60 seconds. The AI may be generating too much output.');
+        throw new Error(`API request timed out after ${timeoutSeconds} seconds. The AI may be generating too much output.`);
       }
 
       throw error; // Re-throw other errors
