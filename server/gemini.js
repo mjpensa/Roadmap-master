@@ -178,6 +178,36 @@ export async function callGeminiForJson(payload, retryCount = CONFIG.API.RETRY_C
         console.error('Failed to read error response:', e);
       }
 
+      // ═══════════════════════════════════════════════════════════
+      // ✨ PHASE 2 FIX: ENHANCED ERROR LOGGING
+      // ═══════════════════════════════════════════════════════════
+      // Provide comprehensive error context for debugging
+
+      console.error('\n' + '='.repeat(60));
+      console.error('[Gemini API] Request failed:');
+      console.error('='.repeat(60));
+      console.error(`  - Error type: ${response.status === 429 ? 'Rate Limit' : 'HTTP Error'}`);
+      console.error(`  - Status code: ${response.status}`);
+      console.error(`  - Status text: ${response.statusText}`);
+
+      if (errorData) {
+        console.error(`  - Error details: ${JSON.stringify(errorData, null, 2)}`);
+      } else {
+        console.error(`  - Error text: ${errorText.substring(0, 500)}`);
+      }
+
+      // Log request details for reproducibility (without exposing sensitive data)
+      console.error('  - Request details:');
+      console.error(`    - Has system instruction: ${!!payload.systemInstruction}`);
+      console.error(`    - Has generation config: ${!!payload.generationConfig}`);
+      console.error(`    - Temperature: ${payload.generationConfig?.temperature}`);
+      console.error(`    - Max output tokens: ${payload.generationConfig?.maxOutputTokens}`);
+      if (payload.contents && payload.contents[0] && payload.contents[0].parts && payload.contents[0].parts[0]) {
+        const promptLength = payload.contents[0].parts[0].text?.length || 0;
+        console.error(`    - Prompt length: ${promptLength} characters`);
+      }
+      console.error('='.repeat(60) + '\n');
+
       // For 429 errors, create user-friendly message
       if (response.status === 429 && errorData) {
         const friendlyMessage = createQuotaErrorMessage(errorData);

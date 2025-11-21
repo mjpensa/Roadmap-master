@@ -368,9 +368,14 @@ document.addEventListener("DOMContentLoaded", () => {
  * @returns {Promise<Object>} The chart data when job is complete
  * @throws {Error} If job fails or times out
  */
-async function pollForJobCompletion(jobId, generateBtn) {
+async function pollForJobCompletion(jobId, generateBtn, estimatedTimeout = 5 * 60 * 1000) {
+  // PHASE 2 FIX: Use server-provided timeout for dynamic polling duration
   const POLL_INTERVAL = 1000; // Poll every 1 second
-  const MAX_ATTEMPTS = 300; // 5 minutes maximum (300 seconds)
+  const MAX_ATTEMPTS = Math.ceil(estimatedTimeout / POLL_INTERVAL); // Calculate based on server timeout
+  const timeoutMinutes = Math.ceil(estimatedTimeout / 60000);
+
+  console.log(`[Polling] Will poll up to ${MAX_ATTEMPTS} times (${timeoutMinutes} minute${timeoutMinutes > 1 ? 's' : ''})`);
+
   let attempts = 0;
   let isPolling = false; // Prevent concurrent polls
 
@@ -384,7 +389,7 @@ async function pollForJobCompletion(jobId, generateBtn) {
 
     // Check timeout before attempting
     if (attempts >= MAX_ATTEMPTS) {
-      throw new Error('Job timed out after 5 minutes. Please try again.');
+      throw new Error(`Job timed out after ${timeoutMinutes} minute${timeoutMinutes > 1 ? 's' : ''}. Please try again with a smaller research file.`);
     }
 
     isPolling = true;
@@ -418,9 +423,57 @@ async function pollForJobCompletion(jobId, generateBtn) {
       // Debug: Log job response
       console.log(`Poll attempt ${attempts}, job status:`, job.status, 'progress:', job.progress);
 
-      // Update button text with progress
+      // PHASE 2 FIX: Update button and show progress bar with percentage
       if (job.progress && generateBtn) {
-        generateBtn.textContent = job.progress;
+        const percent = job.progressPercent || 0;
+
+        // Update button text to show just the main message (not time estimate)
+        const mainMessage = job.progress.split('(')[0].trim();
+        generateBtn.textContent = mainMessage;
+
+        // Add or update progress bar below button
+        let progressContainer = document.getElementById('progress-bar-container');
+        if (!progressContainer) {
+          progressContainer = document.createElement('div');
+          progressContainer.id = 'progress-bar-container';
+          progressContainer.className = 'mt-4';
+          generateBtn.parentElement.insertBefore(progressContainer, generateBtn.nextSibling);
+        }
+
+        progressContainer.innerHTML = `
+          <div class="text-blue-400 font-semibold mb-2">
+            ${job.progress}
+          </div>
+          ${percent > 0 ? `
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+              <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                   style="width: ${percent}%"></div>
+            </div>
+            <div class="text-sm text-gray-400 mt-1">${percent}% complete</div>
+          ` : ''}
+          <div class="text-sm text-gray-400 mt-2">
+            Poll attempt ${attempts} (max: ${MAX_ATTEMPTS})
+          </div>
+        `;
+
+        // PHASE 2 FIX: Show "What's taking so long?" info after 2 minutes
+        if (attempts === 120 && job.status === 'processing') {
+          const infoDiv = document.createElement('div');
+          infoDiv.id = 'whats-taking-long-info';
+          infoDiv.className = 'mt-4 p-3 bg-blue-900 rounded text-sm text-gray-300';
+          infoDiv.innerHTML = `
+            <strong>💡 Why is this taking time?</strong>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li>Analyzing ${job.fileCount || 'multiple'} research document${job.fileCount > 1 ? 's' : ''}</li>
+              <li>AI generating comprehensive roadmap with ${job.isLargeInput ? 'large dataset' : 'detailed analysis'}</li>
+              <li>Creating executive summary and presentation slides</li>
+              <li>${job.isLargeInput ? 'Large projects may take up to 10 minutes' : 'Complex projects may take up to 5-8 minutes'}</li>
+            </ul>
+          `;
+
+          // Insert after progress container
+          progressContainer.parentElement.insertBefore(infoDiv, progressContainer.nextSibling);
+        }
       }
 
       // Check job status
@@ -475,6 +528,16 @@ async function pollForJobCompletion(jobId, generateBtn) {
         console.log('job.data.data is array:', job.data?.data ? Array.isArray(job.data.data) : false);
         console.log('job.data.data value:', job.data?.data);
         console.log('========================================');
+
+        // PHASE 2 FIX: Clean up progress bar on completion
+        const progressContainer = document.getElementById('progress-bar-container');
+        if (progressContainer) {
+          progressContainer.remove();
+        }
+        const infoDiv = document.getElementById('whats-taking-long-info');
+        if (infoDiv) {
+          infoDiv.remove();
+        }
 
         return job.data; // Return the chart data
       } else if (job.status === 'error' || job.status === 'failed') {
@@ -635,18 +698,20 @@ async function handleChartGenerate(event) {
       throw new Error(errorText);
     }
 
-    // 7. Get job ID from response
+    // 7. Get job ID and timeout from response
     const jobResponse = await response.json();
     const jobId = jobResponse.jobId;
+    const estimatedTimeout = jobResponse.estimatedTimeout || (5 * 60 * 1000); // Default 5 minutes
 
     if (!jobId) {
       throw new Error('Server did not return a job ID');
     }
 
     console.log('Job started:', jobId);
+    console.log(`PHASE 2: Client will poll for up to ${estimatedTimeout / 60000} minutes`);
 
-    // 8. Poll for job completion
-    const ganttData = await pollForJobCompletion(jobId, generateBtn);
+    // 8. Poll for job completion with server-provided timeout
+    const ganttData = await pollForJobCompletion(jobId, generateBtn, estimatedTimeout);
 
     // Debug: Log the received data structure
     console.log('Received ganttData:', ganttData);

@@ -215,10 +215,11 @@ function validateConstraints(ganttData) {
  */
 async function processChartGeneration(jobId, reqBody, files) {
   try {
-    // Update job status to processing
+    // PHASE 2 FIX: Update job status with progress percentage
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Analyzing your request...'
+      progress: 'Analyzing your request... (1-2 minutes estimated)',
+      progressPercent: 10
     });
 
     const userPrompt = reqBody.prompt;
@@ -233,7 +234,8 @@ async function processChartGeneration(jobId, reqBody, files) {
     // Update progress
     updateJob(jobId, {
       status: 'processing',
-      progress: `Processing ${files?.length || 0} uploaded file(s)...`
+      progress: `Processing ${files?.length || 0} uploaded file(s)...`,
+      progressPercent: 15
     });
 
     // Extract text from uploaded files (Sort for determinism, process in parallel)
@@ -327,6 +329,29 @@ async function processChartGeneration(jobId, reqBody, files) {
     console.log(`[Chart Generation] ✅ Research size within limits: ${totalResearchChars} chars`);
 
     // ═══════════════════════════════════════════════════════════
+    // ✨ PHASE 2 FIX: DYNAMIC TIMEOUT CALCULATION
+    // ═══════════════════════════════════════════════════════════
+    // Calculate appropriate timeout based on research size
+    // Large inputs (>30KB) get extended timeout to prevent premature failures
+
+    const isLargeInput = totalResearchChars > CONFIG.JOB.LARGE_INPUT_THRESHOLD_CHARS;
+    const jobTimeout = isLargeInput
+      ? CONFIG.JOB.TIMEOUT_LARGE_INPUT_MS  // 10 minutes for large inputs
+      : CONFIG.JOB.TIMEOUT_MS;              // 5 minutes for standard inputs
+
+    const timeoutMinutes = jobTimeout / 60000;
+    console.log(`[Chart Generation] Job timeout: ${timeoutMinutes} minutes (research: ${(totalResearchChars / 1024).toFixed(1)}KB${isLargeInput ? ' - LARGE INPUT' : ''})`);
+
+    // Update job with timeout information (stored in metadata for future reference)
+    updateJob(jobId, {
+      status: 'processing',
+      progress: `Processing ${files?.length || 0} file(s)...`,
+      timeout: jobTimeout,
+      researchSize: totalResearchChars,
+      isLargeInput: isLargeInput
+    });
+
+    // ═══════════════════════════════════════════════════════════
     // ✨ PHASE 3 ENHANCEMENT: CACHE LOOKUP
     // ═══════════════════════════════════════════════════════════
 
@@ -391,10 +416,11 @@ async function processChartGeneration(jobId, reqBody, files) {
     // END PHASE 3 ENHANCEMENT
     // ═══════════════════════════════════════════════════════════
 
-    // Update progress
+    // PHASE 2 FIX: Update progress with percentage and time estimate
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Generating chart data with AI...'
+      progress: 'Generating chart data with AI... (2-4 minutes estimated)',
+      progressPercent: 30
     });
 
     // Build user query
@@ -486,10 +512,11 @@ ${researchTextCache}`;
     // END PHASE 2 ENHANCEMENT
     // ═══════════════════════════════════════════════════════════
 
-    // Update progress
+    // PHASE 2 FIX: Update progress with percentage and time estimate
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Generating executive summary...'
+      progress: 'Creating executive summary... (1 minute estimated)',
+      progressPercent: 60
     });
 
     // NEW: Executive Summary Generation
@@ -554,10 +581,11 @@ ${researchTextCache}`;
       executiveSummary = null;
     }
 
-    // Update progress
+    // PHASE 2 FIX: Update progress with percentage and time estimate
     updateJob(jobId, {
       status: 'processing',
-      progress: 'Generating presentation slides...'
+      progress: 'Building presentation slides... (1-2 minutes estimated)',
+      progressPercent: 80
     });
 
     // NEW: Presentation Slides Generation (Two-Phase Approach)
@@ -889,11 +917,16 @@ router.post('/generate-chart', uploadMiddleware.array('researchFiles'), strictLi
 
   console.log(`Creating new job ${jobId} with ${req.files?.length || 0} files`);
 
+  // PHASE 2 FIX: Return estimated timeout for client polling
+  // Default to 5 minutes, will be updated based on actual research size during processing
+  const defaultTimeout = CONFIG.JOB.TIMEOUT_MS; // 5 minutes
+
   // Return job ID immediately (< 100ms response time)
   res.json({
     jobId,
     status: 'processing',
-    message: 'Chart generation started. Poll /job/:id for status updates.'
+    message: 'Chart generation started. Poll /job/:id for status updates.',
+    estimatedTimeout: defaultTimeout // milliseconds - client uses this for polling duration
   });
 
   console.log(`Job ${jobId} queued, starting background processing...`);
