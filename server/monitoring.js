@@ -54,6 +54,26 @@ class MetricsCollector {
       performance: {
         requestDurations: [],
         generationDurations: []
+      },
+      // ✨ PHASE 3 ENHANCEMENT: Response size tracking
+      responseSize: {
+        total: 0,
+        avgSize: 0,
+        minSize: Infinity,
+        maxSize: 0,
+        // Track responses near 60K truncation boundary
+        near60K: 0,       // 55KB-62KB responses
+        above60K: 0,      // >60KB responses
+        truncated: 0,     // Confirmed truncations
+        sizes: []         // Last 100 response sizes
+      },
+      // ✨ PHASE 3 ENHANCEMENT: Anomaly detection
+      anomalies: {
+        total: 0,
+        largResponses: 0,      // >55KB responses (near truncation)
+        highFailureRate: 0,     // >20% failure rate detected
+        slowProcessing: 0,      // >180s processing time
+        recent: []              // Last 20 anomalies
       }
     };
 
@@ -177,6 +197,175 @@ class MetricsCollector {
   }
 
   /**
+   * ✨ PHASE 3 ENHANCEMENT: Record AI response size
+   * Tracks response sizes, especially those near the 60K truncation boundary
+   * @param {number} sizeChars - Response size in characters
+   * @param {boolean} isTruncated - Whether response appears truncated
+   */
+  recordResponseSize(sizeChars, isTruncated = false) {
+    this.metrics.responseSize.total++;
+
+    // Track size statistics
+    this.metrics.responseSize.minSize = Math.min(this.metrics.responseSize.minSize, sizeChars);
+    this.metrics.responseSize.maxSize = Math.max(this.metrics.responseSize.maxSize, sizeChars);
+
+    // Store size for average calculation
+    this.metrics.responseSize.sizes.push(sizeChars);
+    if (this.metrics.responseSize.sizes.length > 100) {
+      this.metrics.responseSize.sizes.shift();
+    }
+
+    // Update average
+    this.metrics.responseSize.avgSize = this.calculateAverage(this.metrics.responseSize.sizes);
+
+    // Track responses near 60K boundary (55KB-62KB)
+    const sizeKB = sizeChars / 1024;
+    if (sizeKB >= 55 && sizeKB <= 62) {
+      this.metrics.responseSize.near60K++;
+
+      // Record anomaly for large responses
+      this.recordAnomaly('large_response', {
+        size: sizeChars,
+        sizeKB: sizeKB.toFixed(2),
+        message: `Response size ${sizeKB.toFixed(2)}KB near 60K truncation boundary`
+      });
+    }
+
+    // Track responses above 60K
+    if (sizeKB > 60) {
+      this.metrics.responseSize.above60K++;
+    }
+
+    // Track confirmed truncations
+    if (isTruncated) {
+      this.metrics.responseSize.truncated++;
+
+      this.recordAnomaly('truncated_response', {
+        size: sizeChars,
+        sizeKB: sizeKB.toFixed(2),
+        message: `Response truncated at ${sizeKB.toFixed(2)}KB`
+      });
+    }
+
+    console.log(`[Metrics] Response size: ${sizeKB.toFixed(2)}KB${isTruncated ? ' (TRUNCATED)' : ''}`);
+  }
+
+  /**
+   * ✨ PHASE 3 ENHANCEMENT: Record anomaly
+   * Detects and logs anomalous behavior
+   * @param {string} type - Anomaly type
+   * @param {object} details - Anomaly details
+   */
+  recordAnomaly(type, details = {}) {
+    this.metrics.anomalies.total++;
+
+    // Categorize anomaly
+    switch (type) {
+      case 'large_response':
+        this.metrics.anomalies.largResponses++;
+        break;
+      case 'high_failure_rate':
+        this.metrics.anomalies.highFailureRate++;
+        break;
+      case 'slow_processing':
+        this.metrics.anomalies.slowProcessing++;
+        break;
+      case 'truncated_response':
+        this.metrics.anomalies.largResponses++; // Count as large response anomaly
+        break;
+    }
+
+    // Store recent anomaly
+    this.metrics.anomalies.recent.unshift({
+      type,
+      details,
+      timestamp: Date.now()
+    });
+
+    // Keep only last 20 anomalies
+    if (this.metrics.anomalies.recent.length > 20) {
+      this.metrics.anomalies.recent.pop();
+    }
+
+    console.warn(`[Metrics] ⚠️  ANOMALY DETECTED: ${type}`, details);
+  }
+
+  /**
+   * ✨ PHASE 3 ENHANCEMENT: Check for anomalies in current metrics
+   * Runs periodic checks for anomalous behavior
+   * @returns {Array} List of detected anomalies
+   */
+  detectAnomalies() {
+    const anomalies = [];
+
+    // Check 1: High failure rate (>20%)
+    const totalRequests = this.metrics.requests.total;
+    const failedRequests = this.metrics.requests.failed;
+    if (totalRequests > 10) { // Only check if we have enough data
+      const failureRate = (failedRequests / totalRequests) * 100;
+      if (failureRate > 20) {
+        anomalies.push({
+          type: 'high_failure_rate',
+          severity: 'critical',
+          failureRate: failureRate.toFixed(2),
+          threshold: 20,
+          message: `Failure rate ${failureRate.toFixed(2)}% exceeds 20% threshold`
+        });
+
+        this.recordAnomaly('high_failure_rate', {
+          failureRate: failureRate.toFixed(2),
+          failed: failedRequests,
+          total: totalRequests
+        });
+      }
+    }
+
+    // Check 2: Slow processing (>180s average)
+    const avgGenTime = this.metrics.generation.avgDuration;
+    if (avgGenTime > 180000 && this.metrics.generation.total > 5) {
+      anomalies.push({
+        type: 'slow_processing',
+        severity: 'warning',
+        avgDuration: Math.round(avgGenTime / 1000),
+        threshold: 180,
+        message: `Average processing time ${Math.round(avgGenTime / 1000)}s exceeds 180s threshold`
+      });
+
+      this.recordAnomaly('slow_processing', {
+        avgDurationSec: Math.round(avgGenTime / 1000),
+        generationCount: this.metrics.generation.total
+      });
+    }
+
+    // Check 3: Large responses near truncation (>55KB)
+    const largeResponseRate = this.metrics.responseSize.total > 0
+      ? (this.metrics.responseSize.near60K / this.metrics.responseSize.total) * 100
+      : 0;
+
+    if (this.metrics.responseSize.near60K > 0 && largeResponseRate > 10) {
+      anomalies.push({
+        type: 'large_responses',
+        severity: 'warning',
+        count: this.metrics.responseSize.near60K,
+        rate: largeResponseRate.toFixed(2),
+        message: `${this.metrics.responseSize.near60K} responses near 60K truncation boundary (${largeResponseRate.toFixed(2)}% of total)`
+      });
+    }
+
+    // Check 4: Confirmed truncations
+    if (this.metrics.responseSize.truncated > 0) {
+      anomalies.push({
+        type: 'truncated_responses',
+        severity: 'critical',
+        count: this.metrics.responseSize.truncated,
+        message: `${this.metrics.responseSize.truncated} responses confirmed truncated`
+      });
+    }
+
+    return anomalies;
+  }
+
+  /**
    * Calculate average of array
    */
   calculateAverage(arr) {
@@ -231,7 +420,9 @@ class MetricsCollector {
       uptime: this.getUptime(),
       requestsPerMinute: this.getRequestsPerMinute(),
       requestsPerHour: this.getRequestsPerHour(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      // ✨ PHASE 3: Include anomaly detection results
+      currentAnomalies: this.detectAnomalies()
     };
   }
 
@@ -271,6 +462,25 @@ class MetricsCollector {
       performance: {
         requestDurations: [],
         generationDurations: []
+      },
+      // ✨ PHASE 3 ENHANCEMENT: Response size tracking
+      responseSize: {
+        total: 0,
+        avgSize: 0,
+        minSize: Infinity,
+        maxSize: 0,
+        near60K: 0,
+        above60K: 0,
+        truncated: 0,
+        sizes: []
+      },
+      // ✨ PHASE 3 ENHANCEMENT: Anomaly detection
+      anomalies: {
+        total: 0,
+        largResponses: 0,
+        highFailureRate: 0,
+        slowProcessing: 0,
+        recent: []
       }
     };
 
