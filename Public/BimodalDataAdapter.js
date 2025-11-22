@@ -240,15 +240,9 @@ export class BimodalDataAdapter {
     // First, add swimlane rows if they exist
     swimlanes.forEach(swimlane => {
       data.push({
-        name: swimlane.name,
+        title: swimlane.name,  // Changed from 'name' to 'title' for standard format
         entity: '',
-        startCol: 0,
-        endCol: 0,
-        startDate: '',
-        endDate: '',
-        color: 'mid-grey',
         isSwimlane: true,
-        description: `Confidence: ${Math.round((swimlane.confidence || 0) * 100)}%`,
         _semanticId: swimlane.id,
         _origin: swimlane.origin
       });
@@ -298,15 +292,14 @@ export class BimodalDataAdapter {
     const entity = this._getTaskEntity(task);
 
     return {
-      name: task.name,
+      title: task.name,  // Changed from 'name' to 'title' for standard format
       entity,
-      startCol,
-      endCol,
-      startDate: startDateValue || '',
-      endDate: endDateValue || '',
-      color,
+      bar: {  // Nest bar properties in 'bar' object for standard format
+        startCol,
+        endCol,
+        color
+      },
       isSwimlane: false,
-      description,
 
       // Preserve semantic metadata for BimodalGanttController
       _semanticId: task.id,
